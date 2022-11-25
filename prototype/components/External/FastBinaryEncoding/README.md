@@ -1,7 +1,5 @@
 # FastBinaryEncoding
 
-first install https://github.com/chronoxor/CppCommon...
-
 Installation instructions at https://chronoxor.github.io/FastBinaryEncoding
 
 After building, you should get FastBinaryEncoding/bin/fbec. Put this somewhere that's in your path (/usr/local/bin).
