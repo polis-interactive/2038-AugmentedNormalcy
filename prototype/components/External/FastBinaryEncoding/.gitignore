@@ -1,6 +1,6 @@
 *
 
 !.gitignore
-!create_example.cpp
+!create.cpp
 !proto.fbe
 !README.md
