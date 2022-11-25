@@ -218,16 +218,14 @@ int main(int argc, char **argv) {
                 {
                     // We've successfully decoded some frames; create an encoder now.
 
-                    bOut10 = nOutBitDepth ? nOutBitDepth > 8 : dec.GetBitDepth() > 8;
-                    pEnc.reset(new NvEncoderCuda(cuContext, dec.GetWidth(), dec.GetHeight(),
-                        bOut10 ? NV_ENC_BUFFER_FORMAT_YUV420_10BIT : NV_ENC_BUFFER_FORMAT_NV12));
+                    pEnc.reset(new NvEncoderCuda(cuContext, dec.GetWidth(), dec.GetHeight(), NV_ENC_BUFFER_FORMAT_NV12));
 
                     NV_ENC_INITIALIZE_PARAMS initializeParams = { NV_ENC_INITIALIZE_PARAMS_VER };
                     NV_ENC_CONFIG encodeConfig = { NV_ENC_CONFIG_VER };
                     initializeParams.encodeConfig = &encodeConfig;
                     pEnc->CreateDefaultEncoderParams(&initializeParams, encodeCLIOptions.GetEncodeGUID(), encodeCLIOptions.GetPresetGUID(), encodeCLIOptions.GetTuningInfo());
 
-                    encodeCLIOptions.SetInitParams(&initializeParams, bOut10 ? NV_ENC_BUFFER_FORMAT_YUV420_10BIT : NV_ENC_BUFFER_FORMAT_NV12);
+                    encodeCLIOptions.SetInitParams(&initializeParams, NV_ENC_BUFFER_FORMAT_NV12);
 
                     pEnc->CreateEncoder(&initializeParams);
                 }

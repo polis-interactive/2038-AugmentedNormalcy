@@ -55,8 +55,8 @@ find_package(CUDA)
 set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_50,code=\"sm_50,compute_50\")
-if(NOT "${CUDA_NVCC_FLAGS}" MATCHES "-std=c\\+\\+11" )
-    list(APPEND CUDA_NVCC_FLAGS -std=c++11)
+if(NOT "${CUDA_NVCC_FLAGS}" MATCHES "-std=c\\+\\+17" )
+    list(APPEND CUDA_NVCC_FLAGS -std=c++17)
 endif()
 
 cuda_add_executable(${PROJECT_NAME}  ${APP_SOURCES} ${NV_ENC_SOURCES} ${NV_ENC_CUDA_UTILS} ${NV_ENC_HDRS})

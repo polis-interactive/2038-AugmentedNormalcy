@@ -11,8 +11,8 @@ cmake_minimum_required(VERSION 3.7)
 
 project(scratch-video_sdk)
 
-# Set C++11 for all projects and disable non-standard extensions
-set(CMAKE_CXX_STANDARD 11)
+# Set C++17 for all projects and disable non-standard extensions
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 

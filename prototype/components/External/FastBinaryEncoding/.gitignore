@@ -1,0 +1,6 @@
+.*
+
+!.gitignore
+!create_example.cpp
+!proto.fbe
+!README.md
