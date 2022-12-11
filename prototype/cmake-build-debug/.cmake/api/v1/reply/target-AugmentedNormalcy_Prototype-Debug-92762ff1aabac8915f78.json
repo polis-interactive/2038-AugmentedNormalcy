@@ -1,0 +1,71 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "libAugmentedNormalcy_Prototype.a"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library"
+		],
+		"files" : 
+		[
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 45,
+				"parent" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 1,
+			"id" : "sqlite3::@caa0b79f6b649755c4ba"
+		},
+		{
+			"backtrace" : 1,
+			"id" : "SQLiteCpp::@21e90e63ae767fbde207"
+		}
+	],
+	"id" : "AugmentedNormalcy_Prototype::@6890427a1f51a3e7e1df",
+	"name" : "AugmentedNormalcy_Prototype",
+	"nameOnDisk" : "libAugmentedNormalcy_Prototype.a",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Header Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"path" : "internal/infrastructure/udp/context.hpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

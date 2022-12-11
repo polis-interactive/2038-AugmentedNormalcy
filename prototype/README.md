@@ -1,5 +1,11 @@
 # Notes
 
+## Installing cuda
+
+DONT TRUST APT REPOSITORY PACKAGES. Install apt-purge all existing nvidia drivers and follow these instructions
+
+https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html
+
 ## Compiling cuda
 
 To compile for broose's ghetto laptop, the barely supported maxwell architecture, needed the following gencode added to the nvidia compiler:
@@ -106,3 +112,7 @@ $ make install
 $ ./local_app_trans_dec -i ~/Downloads/bbb_sunflower_1080p_60fps_normal.mp4 -tuninginfo ultralowlatency -fps 60  \
   -codec h264 -maxbitrate 2M -vbvbufsize 50K -rc cbr -profile baseline -multipass qres -preset p3
 ```
+
+## Dependencies
+
+Follow ./scripts/setup/install_boost.sh for how to install boost
