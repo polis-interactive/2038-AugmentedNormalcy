@@ -115,4 +115,8 @@ $ ./local_app_trans_dec -i ~/Downloads/bbb_sunflower_1080p_60fps_normal.mp4 -tun
 
 ## Dependencies
 
-Follow ./scripts/setup/install_boost.sh for how to install boost
+Follow ./scripts/setup/install_boost.{sh,bat} for how to install boost
+
+for sqllitecpp:
+git submodule init
+git submodule update

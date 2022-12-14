@@ -20,11 +20,23 @@ set(CMAKE_CXX_FLAGS_RELEASE_INIT "-Wall")
 set(root_dir ${CMAKE_CURRENT_LIST_DIR})
 
 # Boost asio
-set(BOOST_ROOT "/usr/local/lib/boost_1_80_0")
-set(Boost_INCLUDE_DIR  "/usr/local/lib/boost_1_80_0")
-set(Boost_LIBRARY_DIR "/usr/local/lib/boost_1_80_0/stage/lib")
+if (WIN32)
+    # I hate windows...
+    # set(Boost_DEBUG ON)
+    set(BOOST_ROOT "C:\\Program Files\\boost_1_80_0")
+    set(BOOST_INCLUDEDIR  "C:\\Program Files\\boost_1_80_0")
+    include_directories(${BOOST_INCLUDEDIR})
+    set(BOOST_LIBRARYDIR "C:\\Program Files\\boost_1_80_0\\stage\\lib")
+    # set(Boost_USE_STATIC_LIBS ON)
+    set(Boost_ARCHITECTURE "-x64")
+    set(Boost_NO_WARN_NEW_VERSIONS 1)
+else()
+    set(BOOST_ROOT "/usr/local/lib/boost_1_80_0")
+    set(Boost_INCLUDE_DIR  "/usr/local/lib/boost_1_80_0")
+    set(Boost_LIBRARY_DIR "/usr/local/lib/boost_1_80_0/stage/lib")
+endif()
 set(Boost_NO_WARN_NEW_VERSIONS 1)
-find_package(Boost 1.80.0 COMPONENTS system regex)
+find_package(Boost 1.80.0 REQUIRED COMPONENTS system regex)
 
 # Sqllite
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/third_party/SQLiteCpp)
@@ -43,6 +55,9 @@ file(GLOB_RECURSE public_headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/
 file(GLOB_RECURSE internal_headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/internal/*.hpp")
 file(GLOB_RECURSE internal_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/internal/*.cpp")
 add_library(${PROJECT_NAME} ${internal_sources} ${internal_headers})
+if (MINGW)
+    target_link_libraries(${PROJECT_NAME} ws2_32)
+endif()
 set(source_library ${PROJECT_NAME})
 set(source_path ${CMAKE_CURRENT_SOURCE_DIR}/internal)
 

@@ -5,6 +5,7 @@
 #ifndef AUGMENTEDNORMALCY_PROTOTYPE_CONTEXT_CPP
 #define AUGMENTEDNORMALCY_PROTOTYPE_CONTEXT_CPP
 
+#include <memory>
 #include <boost/asio.hpp>
 
 struct UdpContextConfig {

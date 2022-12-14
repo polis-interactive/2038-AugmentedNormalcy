@@ -8,7 +8,6 @@ include_directories(${root_dir}/third_party/doctest)
 file(GLOB_RECURSE tests CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 add_executable(${PROJECT_NAME} ${tests})
 target_link_libraries(${PROJECT_NAME} ${source_library})
-message(${source_path})
 target_include_directories(${PROJECT_NAME} PRIVATE ${source_path})
 
 target_include_directories(${PROJECT_NAME}

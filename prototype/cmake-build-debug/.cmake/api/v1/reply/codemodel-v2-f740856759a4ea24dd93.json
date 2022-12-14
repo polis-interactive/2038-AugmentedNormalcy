@@ -1,0 +1,223 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						3,
+						4
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"build" : "third_party/SQLiteCpp",
+					"childIndexes" : 
+					[
+						2
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.SQLiteCpp-Debug-06373c0ac42bae5cc954.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "third_party/SQLiteCpp",
+					"targetIndexes" : 
+					[
+						2,
+						3,
+						4
+					]
+				},
+				{
+					"build" : "third_party/SQLiteCpp/sqlite3",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.SQLiteCpp.sqlite3-Debug-29fe5e6bc7b545d4060e.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.1"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 1,
+					"source" : "third_party/SQLiteCpp/sqlite3",
+					"targetIndexes" : 
+					[
+						6
+					]
+				},
+				{
+					"build" : "cmd",
+					"jsonFile" : "directory-cmd-Debug-bf6d39647a2fc4542b52.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 2,
+					"source" : "cmd",
+					"targetIndexes" : 
+					[
+						5
+					]
+				},
+				{
+					"build" : "test",
+					"jsonFile" : "directory-test-Debug-f18be1977b403cfd1a50.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 3,
+					"source" : "test",
+					"targetIndexes" : 
+					[
+						1
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "AugmentedNormalcy_Prototype",
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1,
+						2
+					],
+					"name" : "SQLiteCpp",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						2,
+						3,
+						4,
+						6
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						3
+					],
+					"name" : "AugmentedNormalcy_Prototype_Commands",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						5
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						4
+					],
+					"name" : "AugmentedNormalcy_Prototype_Tests",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						1
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "AugmentedNormalcy_Prototype::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-AugmentedNormalcy_Prototype-Debug-5dfdc89ec406b1edd13a.json",
+					"name" : "AugmentedNormalcy_Prototype",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "AugmentedNormalcy_Prototype_Tests::@36f028580bb02cc8272a",
+					"jsonFile" : "target-AugmentedNormalcy_Prototype_Tests-Debug-491dcd22161e161a2dc2.json",
+					"name" : "AugmentedNormalcy_Prototype_Tests",
+					"projectIndex" : 3
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "SQLiteCpp::@21e90e63ae767fbde207",
+					"jsonFile" : "target-SQLiteCpp-Debug-9d1b3576f00cf3895c19.json",
+					"name" : "SQLiteCpp",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "SQLiteCpp_cppcheck::@21e90e63ae767fbde207",
+					"jsonFile" : "target-SQLiteCpp_cppcheck-Debug-67d1a262f14ea7297851.json",
+					"name" : "SQLiteCpp_cppcheck",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "SQLiteCpp_cpplint::@21e90e63ae767fbde207",
+					"jsonFile" : "target-SQLiteCpp_cpplint-Debug-9329fdb14890e255647b.json",
+					"name" : "SQLiteCpp_cpplint",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "asio::@7845b002ed1de3d31a31",
+					"jsonFile" : "target-asio-Debug-1a5451f2105ca85f43d8.json",
+					"name" : "asio",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "sqlite3::@caa0b79f6b649755c4ba",
+					"jsonFile" : "target-sqlite3-Debug-504e9647cd7d9b69f495.json",
+					"name" : "sqlite3",
+					"projectIndex" : 1
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/bruce/Documents/polis/2038-AugmentedNormalcy/prototype/cmake-build-debug",
+		"source" : "C:/Users/bruce/Documents/polis/2038-AugmentedNormalcy/prototype"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}
