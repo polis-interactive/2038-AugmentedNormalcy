@@ -7,6 +7,7 @@
 
 #include "utility/buffer_pool.hpp"
 
+
 TEST_CASE("Check that this is even usable...") {
     auto pool = utility::BufferPool<std::array<uint8_t, 12>>(2, [](){ return std::make_shared<std::array<uint8_t, 12>>(); });
 }

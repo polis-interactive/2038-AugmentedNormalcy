@@ -6,7 +6,6 @@
 #include <memory>
 #include <mutex>
 #include <exception>
-#include <iostream>
 #include <functional>
 
 
@@ -89,6 +88,7 @@ namespace utility {
         // case that they point to each other, I guess we "handle" you
         std::shared_ptr<BufferNode<BufferType>> available_buffer_head;
         std::shared_ptr<BufferNode<BufferType>> available_buffer_tail;
+        // this is only to get good memory instantiation on the buffers themselves
         std::vector<std::shared_ptr<BufferType>> buffer_store;
         size_t available_buffers;
         std::mutex buffer_mutex;
