@@ -31,14 +31,14 @@ namespace infrastructure {
 
     class UdpClientPool {
     public:
-        UdpClientPool(const UdpClientPoolConfig &config, std::shared_ptr<net::io_context> &&context) :
-            _context(std::move(context)),
+        UdpClientPool(const UdpClientPoolConfig &config, net::io_context &context) :
+            _context(context),
             _port(config.get_udp_server_port())
         {}
         [[nodiscard]] std::shared_ptr<UdpClient> GetOrCreateClient(const std::string& address, udp_buffer_pool &pool);
         void Stop();
     protected:
-        std::shared_ptr<net::io_context> _context;
+        net::io_context &_context;
         int _port;
         friend UdpClient;
     private:
@@ -49,11 +49,11 @@ namespace infrastructure {
     class UdpClient {
     public:
         UdpClient(
-            std::shared_ptr<net::io_context> &context, udp::endpoint remote, udp_buffer_pool &b_pool
+            net::io_context &context, udp::endpoint remote, udp_buffer_pool &b_pool
         ) :
-            _strand(*context),
+            _strand(context),
             _remote(std::move(remote)),
-            _socket(*context, udp::endpoint(udp::v4(), 0)),
+            _socket(context, udp::endpoint(udp::v4(), 0)),
             _b_pool(b_pool)
         {
             Receive();

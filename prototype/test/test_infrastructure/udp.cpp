@@ -7,6 +7,13 @@
 #include <chrono>
 using namespace std::literals;
 
+#include <cstdlib>
+#include <iostream>
+#include <boost/asio.hpp>
+
+using boost::asio::ip::udp;
+
+
 #include "infrastructure/udp/context.hpp"
 #include "infrastructure/udp/server.hpp"
 #include "infrastructure/udp/client.hpp"
@@ -122,9 +129,7 @@ TEST_CASE("simple send / receive") {
 
     // give it a few to do its thing
     std::this_thread::sleep_for(500ms);
-    c_pool.Stop();
-    srv.Stop();
-    ctx.Stop();
+
 
     // check the results
     REQUIRE_EQ(samples.size(), output.size());
@@ -134,4 +139,8 @@ TEST_CASE("simple send / receive") {
 
     // for kicks, lets ensure buffers are getting cleared
     REQUIRE_EQ(b_pool.AvailableBuffers(), 12);
+
+    c_pool.Stop();
+    srv.Stop();
+    ctx.Stop();
 }
