@@ -45,7 +45,7 @@ TEST_CASE("We can do some work!") {
 
     // add one, read it out
     wt->PostWork(std::make_shared<test_message>("yolo"));
-    std::this_thread::sleep_for(0.1ms);
+    std::this_thread::sleep_for(1ms);
     REQUIRE_EQ(output.size(), 1);
     auto tm_1 = output.front();
     output.pop();
@@ -54,7 +54,7 @@ TEST_CASE("We can do some work!") {
     wt->PostWork(std::make_shared<test_message>("message 1"));
     wt->PostWork(std::make_shared<test_message>("message 2"));
     wt->PostWork(std::make_shared<test_message>("message 3"));
-    std::this_thread::sleep_for(0.1ms);
+    std::this_thread::sleep_for(1ms);
     tm_1 = output.front();
     output.pop();
     REQUIRE_EQ(tm_1->_msg, "message 1");
@@ -68,7 +68,7 @@ TEST_CASE("We can do some work!") {
     for (int i = 0; i < 1000; i++) {
         wt->PostWork(std::make_shared<test_message>(std::to_string(i)));
     }
-    std::this_thread::sleep_for(0.1ms);
+    std::this_thread::sleep_for(1ms);
     REQUIRE_EQ(output.size(), 1000);
     REQUIRE_EQ(output.front()->_msg, "0");
     REQUIRE_EQ(output.back()->_msg, "999");

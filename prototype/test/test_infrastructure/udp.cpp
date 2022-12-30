@@ -101,6 +101,7 @@ TEST_CASE("simple send / receive") {
     );
 
     std::vector<std::string> samples { "hello", "world", "bar", "baz", "foo", "bax" };
+    sort(samples.begin(), samples.end());
     std::vector<std::string> output {};
     auto on_receive = [&output](std::shared_ptr<infrastructure::UdpServerSession> &&session) {
         const auto s = std::string(
@@ -120,7 +121,7 @@ TEST_CASE("simple send / receive") {
 
     for (auto &sample : samples) {
         auto buffer = b_pool.New();
-        std::copy(sample.begin(), sample.end(), buffer.data());
+        std::copy(sample.begin(), sample.end(), buffer->data());
         client->Send(buffer, sample.size());
     }
 
@@ -131,5 +132,11 @@ TEST_CASE("simple send / receive") {
     ctx.Stop();
 
     // check the results
+    REQUIRE_EQ(samples.size(), output.size());
+    // could be out of order with threads / async and what not
+    sort(output.begin(), output.end());
+    REQUIRE(std::equal(samples.begin(), samples.end(), output.begin()));
 
+    // for kicks, lets ensure buffers are getting cleared
+    REQUIRE_EQ(b_pool.AvailableBuffers(), 12);
 }
