@@ -5,7 +5,13 @@ project(AugmentedNormalcy_Prototype_Tests LANGUAGES CXX)
 
 include_directories(${root_dir}/third_party/doctest)
 
-file(GLOB_RECURSE tests CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+set(
+    tests
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_utility/buffer_pool.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_utility/worker_thread.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/udp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+)
 add_executable(${PROJECT_NAME} ${tests})
 target_link_libraries(${PROJECT_NAME} ${source_library})
 target_include_directories(${PROJECT_NAME} PRIVATE ${source_path})

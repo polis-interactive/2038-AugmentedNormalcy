@@ -48,16 +48,20 @@ link_libraries(
 # nlohmann/json
 include_directories(${CMAKE_CURRENT_LIST_DIR}/third_party/nlohmann)
 
+set(source_library ${PROJECT_NAME})
+set(source_path ${CMAKE_CURRENT_SOURCE_DIR}/internal)
+set(udp_path ${source_path}/infrastructure/udp)
+set(
+    internal_sources
+    ${udp_path}/client.cpp
+)
 
-file(GLOB_RECURSE public_headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
-file(GLOB_RECURSE internal_headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/internal/*.hpp")
-file(GLOB_RECURSE internal_sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/internal/*.cpp")
-add_library(${PROJECT_NAME} ${internal_sources} ${internal_headers})
+add_library(${source_library} ${internal_sources})
+target_include_directories(${PROJECT_NAME} PRIVATE ${source_path})
 if (MINGW)
     target_link_libraries(${PROJECT_NAME} ws2_32)
 endif()
-set(source_library ${PROJECT_NAME})
-set(source_path ${CMAKE_CURRENT_SOURCE_DIR}/internal)
+
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cmd ${CMAKE_BINARY_DIR}/cmd)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test ${CMAKE_BINARY_DIR}/test)
