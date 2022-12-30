@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <unistd.h>
 
 __global__ void cuda_hello(){
     printf("Hello World from GPU!\n");

@@ -11,11 +11,14 @@
 
 :: https://gist.github.com/zrsmithson/0b72e0cb58d0cb946fc48b5c88511da8
 
+:: Open a "x86 native tools command prompt for vs 2022" or 2.3
+:: 14.3 might be different number
+
 cd C:\Program Files\boost_1_80_0\tools\build
-.\bootstrap.bat gcc
-.\b2 --prefix="C:\Program Files\boost_1_80_0" install
+.\bootstrap.bat msvc
+.\b2 --prefix="C:\Program Files\boost_1_80_0" toolset=msvc-14.3 address-model=64 install
 set PATH="%PATH%;C:\Program Files\boost_1_80_0"
 cd ..\..
-.\b2 toolset=gcc --with-system --with-thread --with-date_time --with-regex --with-serialization stage
+.\b2 toolset=msvc-14.3 address-model=64 --with-system --with-thread --with-date_time --with-regex --with-serialization stage
 
 :: I have no idea why, but this kept opening up tabs on sublime...

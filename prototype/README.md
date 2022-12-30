@@ -120,3 +120,7 @@ Follow ./scripts/setup/install_boost.{sh,bat} for how to install boost
 for sqllitecpp:
 git submodule init
 git submodule update
+
+install cuda toolkit if that's your thing from here
+
+https://developer.nvidia.com/cuda-downloads?target_os=Windows&target_arch=x86_64&target_version=10&target_type=exe_local

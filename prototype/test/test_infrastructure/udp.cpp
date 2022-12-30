@@ -40,7 +40,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 TEST_CASE("Graceful context startup and teardown with some timing") {
     TestConfig conf(3, 3, 6969);
-    std::chrono::time_point< std::chrono::system_clock> t1, t2, t3, t4;
+    std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4;
     {
         t1 = Clock::now();
         infrastructure::UdpContext ctx(conf);
@@ -58,15 +58,10 @@ TEST_CASE("Graceful context startup and teardown with some timing") {
 
 TEST_CASE("Udp server startup and teardown; expect errors at creation") {
     TestConfig conf(3, 3, 6969);
-    infrastructure::UdpContext ctx(conf);
     auto on_receive = [](std::shared_ptr<infrastructure::UdpServerSession> &&session) {};
-    infrastructure::UdpServer srv(conf, ctx.GetContext(), on_receive);
-    REQUIRE_THROWS(
-        [&ctx, &conf, &on_receive]() {
-            infrastructure::UdpServer srv(conf, ctx.GetContext(), on_receive);
-        }()
-    );
+    infrastructure::UdpContext ctx(conf);
     ctx.Start();
+    infrastructure::UdpServer srv(conf, ctx.GetContext(), on_receive);
     srv.Start();
     // let it live for a sec
     std::this_thread::sleep_for(500ms);

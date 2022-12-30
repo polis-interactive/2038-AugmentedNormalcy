@@ -14,6 +14,7 @@
 namespace net = boost::asio;
 using boost::asio::ip::udp;
 using boost::system::error_code;
+namespace err = boost::system::errc;
 
 
 namespace infrastructure {
@@ -45,16 +46,16 @@ namespace infrastructure {
     class UdpServer {
     public:
         UdpServer(
-            const UdpServerConfig &config, net::io_context &context,
+            const UdpServerConfig &config, std::shared_ptr<net::io_context> &&context,
             std::function<void(std::shared_ptr<UdpServerSession>)> &&receive_callback
         ) :
-            _context(context),
+            _context(std::move(context)),
             _socket(std::make_shared<udp::socket>(
-                _context, udp::endpoint(udp::v4(), config.get_udp_server_port()))
+                *_context, udp::endpoint(udp::v4(), config.get_udp_server_port()))
             ),
-            _read_strand(context),
-            _process_strand(context),
-            _write_strand(context),
+            _read_strand(*context),
+            _process_strand(*context),
+            _write_strand(*context),
             _pool(config.get_udp_server_buffer_count(), [](){
                 return std::make_shared<std::array<uint8_t, MAX_PACKET_LENGTH>>();
             }),
@@ -64,7 +65,13 @@ namespace infrastructure {
             Receive();
         }
         void Stop() {
+            std::cout << "Stopping UDP Server" << std::endl;
+            boost::system::error_code ret;
+            _socket->cancel(ret);
+            _socket->shutdown(net::socket_base::shutdown_both, ret);
             _socket->close();
+            _socket->release();
+
         }
 
     private:
@@ -80,7 +87,11 @@ namespace infrastructure {
                             callback(session);
                         });
                     }
-                    Receive();
+                    if (ec != net::error::operation_aborted) {
+                        Receive();
+                    } else {
+                        std::cout << "Stopping UDP Server async ops" << std::endl;
+                    }
                 })
             );
         }
@@ -88,7 +99,7 @@ namespace infrastructure {
         net::io_context::strand _process_strand;
         net::io_context::strand _write_strand;
         udp_buffer_pool _pool;
-        net::io_context &_context;
+        std::shared_ptr<net::io_context> _context;
         std::shared_ptr<udp::socket> _socket;
         std::function<void(std::shared_ptr<UdpServerSession>)> _receive_callback;
     };

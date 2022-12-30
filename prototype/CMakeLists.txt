@@ -18,9 +18,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS_RELEASE_INIT "-Wall")
 
 set(root_dir ${CMAKE_CURRENT_LIST_DIR})
+set(third_party_dir ${CMAKE_CURRENT_LIST_DIR}/third_party)
 
-# Boost asio
 if (WIN32)
+
     # I hate windows...
     # set(Boost_DEBUG ON)
     set(BOOST_ROOT "C:\\Program Files\\boost_1_80_0")
@@ -28,25 +29,51 @@ if (WIN32)
     include_directories(${BOOST_INCLUDEDIR})
     set(BOOST_LIBRARYDIR "C:\\Program Files\\boost_1_80_0\\stage\\lib")
     set(Boost_ARCHITECTURE "-x64")
+    set(Boost_COMPILER "-vc143")
+    set(Boost_LIB_PREFIX "lib")
+
+    set(CUDA_TOOLKIT_ROOT_DIR "C:/Program\ Files/NVIDIA\ GPU\ Computing\ Toolkit/")
+    set(CMAKE_CUDA_COMPILER "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.0\\bin\\nvcc")
+
+    # bad practice; just hardcoding cuda versions on bruce's laptops. use `$ nvidia-smi` to find your
+    # card number, look up the cards architecture, then compare on this site for sm / compute versions
+    # https://arnon.dk/tag/gencode/
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_75,code=\"sm_75,compute_75\")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_WIN32_WINNT=0x0A00")
 else()
+
+    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_50,code=\"sm_50,compute_50\")
+
     set(BOOST_ROOT "/usr/local/lib/boost_1_80_0")
     set(Boost_INCLUDE_DIR  "/usr/local/lib/boost_1_80_0")
     set(Boost_LIBRARY_DIR "/usr/local/lib/boost_1_80_0/stage/lib")
+
 endif()
+
+
+# Boost asio
 set(Boost_NO_WARN_NEW_VERSIONS 1)
 find_package(Boost 1.80.0 REQUIRED COMPONENTS system regex)
 
 # Sqllite
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/third_party/SQLiteCpp)
+add_subdirectory(${third_party_dir}/SQLiteCpp)
 link_libraries(
     SQLiteCpp
     sqlite3
-    pthread
-    dl
 )
+if (!WIN32)
+    link_libraries(SQLiteCpp pthread dl)
+endif()
 
 # nlohmann/json
-include_directories(${CMAKE_CURRENT_LIST_DIR}/third_party/nlohmann)
+include_directories(${third_party_dir}/nlohmann)
+
+find_package(CUDA)
+if (CUDA_FOUND)
+    add_subdirectory(${third_party_dir}/NvidiaCodec)
+endif()
+
 
 set(source_library ${PROJECT_NAME})
 set(source_path ${CMAKE_CURRENT_SOURCE_DIR}/internal)
@@ -56,12 +83,15 @@ set(
     ${udp_path}/client.cpp
 )
 
-add_library(${source_library} ${internal_sources})
+add_library(${source_library} STATIC ${internal_sources})
 target_include_directories(${PROJECT_NAME} PRIVATE ${source_path})
 if (MINGW)
     target_link_libraries(${PROJECT_NAME} ws2_32)
 endif()
-
+if (CUDA_FOUND)
+    target_link_libraries(${PROJECT_NAME} ${NvidiaCodecLib})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${third_party_dir}/NvidiaCodec)
+endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cmd ${CMAKE_BINARY_DIR}/cmd)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test ${CMAKE_BINARY_DIR}/test)

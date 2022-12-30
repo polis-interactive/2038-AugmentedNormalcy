@@ -7,7 +7,7 @@
 #include <mutex>
 #include <exception>
 #include <functional>
-
+#include <algorithm>
 
 namespace utility {
 

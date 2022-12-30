@@ -19,39 +19,43 @@ namespace infrastructure {
     class UdpContext {
     public:
         explicit UdpContext(const UdpContextConfig &config) :
-                _context(net::io_context(config.get_udp_pool_size())),
-                _pool(std::make_unique<std::vector<std::jthread>>(config.get_udp_pool_size())){}
+                _context(std::make_shared<net::io_context>(config.get_udp_pool_size())),
+                _pool(std::vector<std::jthread>(config.get_udp_pool_size())){}
 
         void Start() noexcept {
+            _context->restart();
             std::generate(
-                    _pool->begin(),
-                    _pool->end(),
-                    [&context = this->_context]()-> std::jthread {
-                        return std::jthread([&context] { context.run(); });
+                    _pool.begin(),
+                    _pool.end(),
+                    [context = this->_context]()-> std::jthread {
+                        return std::jthread([context](std::stop_token st) {
+                            while (!st.stop_requested()) {
+                                context->run_one_for(500ms);
+                            }
+                        });
                     }
             );
         }
 
         void Stop() {
-            if (!_context.stopped()) {
-                _context.stop();
-                if (_pool) {
-                    for (auto &thread : *_pool) {
+            if (!_context->stopped()) {
+                _context->stop();
+                if (!_pool.empty()) {
+                    for (auto &thread : _pool) {
                         thread.request_stop();
                         thread.join();
                     }
-                    _pool.reset();
+                    _pool.clear();
                 }
-                _context.reset();
             }
         }
         // should be marked friend and make this protected, or just use the member directly
-        net::io_context &GetContext() {
+        std::shared_ptr<net::io_context> GetContext() {
             return _context;
         }
     private:
-        net::io_context _context;
-        std::unique_ptr<std::vector<std::jthread>> _pool = {nullptr};
+        std::shared_ptr<net::io_context> _context;
+        std::vector<std::jthread> _pool;
     };
 }
 
