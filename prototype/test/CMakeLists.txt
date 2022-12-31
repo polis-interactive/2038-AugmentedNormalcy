@@ -9,7 +9,9 @@ set(
     tests
     ${CMAKE_CURRENT_SOURCE_DIR}/test_utility/buffer_pool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_utility/worker_thread.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/common.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/udp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/codec.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )
 add_executable(${PROJECT_NAME} ${tests})

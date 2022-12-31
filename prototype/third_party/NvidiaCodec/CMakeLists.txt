@@ -21,8 +21,18 @@ set(NV_ENC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/NvEncoder)
 set(NV_DEC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/NvDecoder)
 
 
-find_library(CUVID_LIB nvcuvid)
-find_library(NVENCODEAPI_LIB nvidia-encode)
+if(WIN32)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        Set(CUVID_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../Lib/x64/nvcuvid.lib)
+        set(NVENCODEAPI_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../Lib/x64/nvencodeapi.lib)
+    else()
+        Set(CUVID_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../Lib/Win32/nvcuvid.lib)
+        set(NVENCODEAPI_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../Lib/Win32/nvencodeapi.lib)
+    endif()
+else()
+    find_library(CUVID_LIB nvcuvid)
+    find_library(NVENCODEAPI_LIB nvidia-encode)
+endif()
 
 
 set(NV_CODEC_SOURCES
@@ -42,6 +52,7 @@ set(NV_CODEC_HDRS
     ${NV_ENC_DIR}/NvEncoderCuda.h
     ${NVCODEC_PUBLIC_INTERFACE_DIR}/nvEncodeAPI.h
     ${NVCODEC_UTILS_DIR}/NvCodecUtils.h
+    ${NVCODEC_UTILS_DIR}/Logger.h
     ${NVCODEC_UTILS_DIR}/NvEncoderCLIOptions.h
     ${NVCODEC_PUBLIC_INTERFACE_DIR}/cuviddec.h
     ${NVCODEC_PUBLIC_INTERFACE_DIR}/nvcuvid.h
@@ -62,6 +73,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 find_library(CUDART_LIB cudart HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64)
-target_link_libraries(${PROJECT_NAME} ${CUDART_LIB} ${CMAKE_DL_LIBS} ${NVENCODEAPI_LIB} ${CUVID_LIB})
+target_link_libraries(${PROJECT_NAME} ${CUDA_CUDA_LIBRARY} ${CUDART_LIB} ${CMAKE_DL_LIBS} ${NVENCODEAPI_LIB} ${CUVID_LIB})
 
 set(NvidiaCodecLib ${PROJECT_NAME})

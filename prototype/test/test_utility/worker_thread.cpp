@@ -20,7 +20,8 @@ struct test_timestamp {
 TEST_CASE("We start up and stop and delete without the compiler throwing a hissy fit") {
     {
         auto callback = [](std::shared_ptr<test_timestamp> &&ts) {
-            std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - ts->inst).count() << std::endl;
+            std::cout << "test_utility/worker_thread/elapsed micros: " <<
+                std::chrono::duration_cast<std::chrono::microseconds>(Clock::now() - ts->inst).count() << std::endl;
         };
         auto wt = utility::WorkerThread<test_timestamp>::CreateWorkerThread(callback);
         wt->Start();
@@ -91,7 +92,7 @@ TEST_CASE("baby stress test") {
     std::this_thread::sleep_for(500ms);
     REQUIRE_EQ(output.size(), 100000);
 
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(
+    std::cout << "test_utility/worker_thread/baby stress test: " << std::chrono::duration_cast<std::chrono::milliseconds>(
             output.back()->out_stamp - output.front()->inst
     ).count() << std::endl;
 

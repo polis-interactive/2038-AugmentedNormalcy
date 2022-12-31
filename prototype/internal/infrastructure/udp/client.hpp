@@ -10,14 +10,10 @@
 #include <chrono>
 #include "boost/asio.hpp"
 
-#include "infrastructure/udp/constants.hpp"
+#include "infrastructure/udp/common.hpp"
 
 #include <iostream>
 #include <utility>
-
-namespace net = boost::asio;
-using boost::asio::ip::udp;
-using boost::system::error_code;
 
 
 namespace infrastructure {
@@ -35,7 +31,7 @@ namespace infrastructure {
             _context(context),
             _port(config.get_udp_server_port())
         {}
-        [[nodiscard]] std::shared_ptr<UdpClient> GetOrCreateClient(const std::string& address, udp_buffer_pool &pool);
+        [[nodiscard]] std::shared_ptr<UdpClient> GetOrCreateClient(const std::string& address, payload_buffer_pool &pool);
         void Stop();
     protected:
         net::io_context &_context;
@@ -49,7 +45,7 @@ namespace infrastructure {
     class UdpClient {
     public:
         UdpClient(
-            net::io_context &context, udp::endpoint remote, udp_buffer_pool &b_pool
+            net::io_context &context, udp::endpoint remote, payload_buffer_pool &b_pool
         ) :
             _strand(context),
             _remote(std::move(remote)),
@@ -58,7 +54,7 @@ namespace infrastructure {
         {
             Receive();
         }
-        void Send(std::shared_ptr<udp_buffer> buffer, std::size_t buffer_size) {
+        void Send(std::shared_ptr<payload_buffer> buffer, std::size_t buffer_size) {
             _socket.async_send_to(
                 net::buffer(*buffer, buffer_size), _remote,
                 net::bind_executor(_strand, [buffer, &pool = this->_b_pool] (error_code ec, std::size_t bytes_send) mutable {
@@ -91,11 +87,11 @@ namespace infrastructure {
                 })
             );
         }
-        udp::socket _socket;
+        udp_socket _socket;
         net::io_context::strand _strand;
         udp::endpoint _remote;
-        udp_reply_buffer _receive_buffer{};
-        udp_buffer_pool &_b_pool;
+        reply_buffer _receive_buffer{};
+        payload_buffer_pool &_b_pool;
     };
 
 }

@@ -37,56 +37,62 @@ namespace utility {
             return std::shared_ptr<WorkerThread<DataType>>(new WorkerThread<DataType>(callback));
         }
         void Start() noexcept {
-            if (!m_thread) {
-                m_thread = std::make_unique<std::jthread>(std::bind_front(&WorkerThread<DataType>::Run, this));
+            {
+                std::unique_lock<std::mutex> lock(_mutex);
+                _queue = {};
+            }
+            if (!_thread) {
+                _thread = std::make_unique<std::jthread>(std::bind_front(&WorkerThread<DataType>::Run, this));
             }
         }
         void PostWork(std::shared_ptr<DataType> &&data) {
-            std::scoped_lock<std::mutex> lk(m_mutex);
-            m_queue.push(std::move(data));
-            m_cv.notify_one();
+            std::unique_lock<std::mutex> lock(_mutex);
+            _queue.push(std::move(data));
+            _cv.notify_one();
         }
         void Stop() {
-            if (m_thread) {
-                if (m_thread->joinable()) {
-                    m_thread->request_stop();
-                    m_thread->join();
+            if (_thread) {
+                if (_thread->joinable()) {
+                    _thread->request_stop();
+                    _thread->join();
                 }
-                m_thread.reset();
+                _thread.reset();
             }
+            std::unique_lock<std::mutex> lock(_mutex);
+            _queue = {};
         }
     private:
-        explicit WorkerThread(WorkerThreadCallback<DataType> callback) : m_callback(callback) {}
+        explicit WorkerThread(WorkerThreadCallback<DataType> callback) : _callback(callback) {}
 
         void Run(std::stop_token st) noexcept {
             std::stop_callback cb(st, [this]() {
-                m_cv.notify_all(); //Wake thread on stop request
+                _cv.notify_all(); //Wake thread on stop request
             });
             while (true) {
                 std::shared_ptr<DataType> msg;
                 {
-                    std::unique_lock<std::mutex> lock(m_mutex);
-                    m_cv.wait(lock, [st, this]() {
+                    std::unique_lock<std::mutex> lock(_mutex);
+                    _cv.wait(lock, [st, this]() {
                         return st.stop_requested() ||
-                            !m_queue.empty();
+                            !_queue.empty();
                     });
                     if (st.stop_requested()) {
                         break;
-                    } else if (m_queue.empty()) {
+                    } else if (_queue.empty()) {
                         continue;
                     }
-                    msg = m_queue.front();
-                    m_queue.pop();
+                    msg = _queue.front();
+                    _queue.pop();
                 }
-                m_callback(std::move(msg));
+                _callback(std::move(msg));
             }
         }
 
-        WorkerThreadCallback<DataType> m_callback;
-        std::unique_ptr<std::jthread> m_thread;
-        std::queue<std::shared_ptr<DataType>> m_queue;
-        std::mutex m_mutex;
-        std::condition_variable m_cv;
+        WorkerThreadCallback<DataType> _callback;
+        std::unique_ptr<std::jthread> _thread;
+        std::queue<std::shared_ptr<DataType>> _queue;
+        std::mutex _mutex;
+        std::condition_variable _cv;
     };
 
 }

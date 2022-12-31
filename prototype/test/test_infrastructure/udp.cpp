@@ -60,7 +60,8 @@ TEST_CASE("Graceful context startup and teardown with some timing") {
     auto d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
     auto d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2);
     auto d3 = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3);
-    std::cout << d1.count() << ", " << d2.count() << ", " << d3.count() << std::endl;
+    std::cout << "test_infrastructure/udp/context startup and teardown: " <<
+        d1.count() << ", " << d2.count() << ", " << d3.count() << std::endl;
 }
 
 TEST_CASE("Udp server startup and teardown; expect errors at creation") {
@@ -78,8 +79,8 @@ TEST_CASE("Udp server startup and teardown; expect errors at creation") {
 
 TEST_CASE("udp client startup and teardown") {
     TestConfig conf(3, 3, 6969);
-    auto b_pool = udp_buffer_pool(
-        18, [](){ return std::make_shared<udp_buffer>(); }
+    auto b_pool = payload_buffer_pool(
+        18, [](){ return std::make_shared<payload_buffer>(); }
     );
 
     infrastructure::UdpContext ctx(conf);
@@ -98,8 +99,8 @@ TEST_CASE("udp client startup and teardown") {
 
 TEST_CASE("simple send / receive") {
     TestConfig conf(3, 12, 6969);
-    auto b_pool = udp_buffer_pool(
-        12, [](){ return std::make_shared<udp_buffer>(); }
+    auto b_pool = payload_buffer_pool(
+        12, [](){ return std::make_shared<payload_buffer>(); }
     );
 
     std::vector<std::string> samples { "hello", "world", "bar", "baz", "foo", "bax" };

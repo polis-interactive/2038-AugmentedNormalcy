@@ -6,7 +6,7 @@
 
 
 namespace infrastructure {
-    std::shared_ptr<UdpClient> UdpClientPool::GetOrCreateClient(const std::string& address, udp_buffer_pool &pool) {
+    std::shared_ptr<UdpClient> UdpClientPool::GetOrCreateClient(const std::string& address, payload_buffer_pool &pool) {
         udp::endpoint remote(net::ip::address::from_string(address), _port);
         std::scoped_lock<std::mutex> lk(_mutex);
         if (auto search = _clients.find(remote); search != _clients.end()) {
