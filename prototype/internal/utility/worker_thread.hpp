@@ -11,6 +11,7 @@
 #include <queue>
 #include <stop_token>
 #include <functional>
+#include <mutex>
 
 #include <iostream>
 
@@ -41,7 +42,7 @@ namespace utility {
             }
         }
         void PostWork(std::shared_ptr<DataType> &&data) {
-            std::unique_lock<std::mutex> lk(m_mutex);
+            std::scoped_lock<std::mutex> lk(m_mutex);
             m_queue.push(std::move(data));
             m_cv.notify_one();
         }
