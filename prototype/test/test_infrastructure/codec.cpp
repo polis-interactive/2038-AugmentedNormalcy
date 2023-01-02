@@ -4,15 +4,27 @@
 
 #include <doctest.h>
 
+#include "infrastructure/codec/codec.hpp"
 #include "infrastructure/codec/decoder.hpp"
-#include "Utils/Logger.h"
+
+struct TestConfig:
+infrastructure::CodecConfig {
+    [[nodiscard]] std::tuple<int, int> get_codec_width_height() const override {
+        return std::tuple{1920, 1080};
+    }
+    [[nodiscard]] virtual cudaVideoCodec get_codec_type() const override {
+        return cudaVideoCodec_H264;
+    }
+};
 
 
-simplelogger::Logger *logger = simplelogger::LoggerFactory::CreateConsoleLogger();
 
 TEST_CASE("Just messing with cuda") {
-    infrastructure::DecoderConfig conf;
-    infrastructure::Decoder dec(conf);
-    dec.Start();
-    dec.Stop();
+    auto conf = TestConfig();
+    auto ctx = infrastructure::CodecContext();
+    {
+        auto dec = infrastructure::Decoder(conf, ctx);
+        dec.Start();
+        dec.Stop();
+    }
 }

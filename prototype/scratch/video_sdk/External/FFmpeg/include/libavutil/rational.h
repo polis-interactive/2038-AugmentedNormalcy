@@ -42,7 +42,7 @@
  * conversion process is a lossy one, so are floating-point operations. On the
  * other hand, the nature of FFmpeg demands highly accurate calculation of
  * timestamps. This set of rational number utilities serves as a generic
- * Interface for manipulating rational numbers as pairs of numerators and
+ * NvInterface for manipulating rational numbers as pairs of numerators and
  * denominators.
  *
  * Many of the functions that operate on AVRational's have the suffix `_q`, in

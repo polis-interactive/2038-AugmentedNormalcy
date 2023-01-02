@@ -12,10 +12,10 @@
 #pragma once
 
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
 #include <mutex>
 #include <cuda.h>
-#include "NvEncoder.h"
+#include "NvEncoder/NvEncoder.h"
 
 #define CUDA_DRVAPI_CALL( call )                                                                                                 \
     do                                                                                                                           \

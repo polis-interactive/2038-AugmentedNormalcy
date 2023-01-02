@@ -23,15 +23,25 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
-#include "Utils/Logger.h"
 #include <ios>
 #include <sstream>
 #include <thread>
 #include <list>
 #include <vector>
 #include <condition_variable>
+#include <cuda.h>
 
-extern simplelogger::Logger *logger;
+enum LogLevel {
+    TRACE,
+    INFO,
+    WARNING,
+    ERROR,
+    FATAL
+};
+
+#define LOG(level) std::cout << "Level: " << level << "; "
+
+
 
 #ifdef __cuda_cuda_h__
 inline bool check(CUresult e, int iLine, const char *szFile) {
@@ -128,6 +138,13 @@ inline bool check(int e, int iLine, const char *szFile) {
                 ( (uint32_t)(uint8_t)(ch0) | ( (uint32_t)(uint8_t)(ch1) << 8 ) |    \
                 ( (uint32_t)(uint8_t)(ch2) << 16 ) | ( (uint32_t)(uint8_t)(ch3) << 24 ) )
 
+
+inline void cu_check(CUresult e, std::string message) {
+    if (e != CUresult::CUDA_SUCCESS) {
+        throw std::runtime_error(message + ": " + std::to_string(e));
+    }
+}
+
 /**
 * @brief Wrapper class around std::thread
 */
@@ -175,69 +192,6 @@ private:
 #define _stat64 stat64
 #endif
 
-/**
-* @brief Utility class to allocate buffer memory. Helps avoid I/O during the encode/decode loop in case of performance tests.
-*/
-class BufferedFileReader {
-public:
-    /**
-    * @brief Constructor function to allocate appropriate memory and copy file contents into it
-    */
-    BufferedFileReader(const char *szFileName, bool bPartial = false) {
-        struct _stat64 st;
-
-        if (_stat64(szFileName, &st) != 0) {
-            return;
-        }
-        
-        nSize = st.st_size;
-        while (nSize) {
-            try {
-                pBuf = new uint8_t[(size_t)nSize];
-                if (nSize != st.st_size) {
-                    LOG(WARNING) << "File is too large - only " << std::setprecision(4) << 100.0 * nSize / st.st_size << "% is loaded"; 
-                }
-                break;
-            } catch(std::bad_alloc) {
-                if (!bPartial) {
-                    LOG(ERROR) << "Failed to allocate memory in BufferedReader";
-                    return;
-                }
-                nSize = (uint32_t)(nSize * 0.9);
-            }
-        }
-
-        std::ifstream fpIn(szFileName, std::ifstream::in | std::ifstream::binary);
-        if (!fpIn)
-        {
-            LOG(ERROR) << "Unable to open input file: " << szFileName;
-            return;
-        }
-
-        std::streamsize nRead = fpIn.read(reinterpret_cast<char*>(pBuf), nSize).gcount();
-        fpIn.close();
-
-        assert(nRead == nSize);
-    }
-    ~BufferedFileReader() {
-        if (pBuf) {
-            delete[] pBuf;
-        }
-    }
-    bool GetBuffer(uint8_t **ppBuf, uint64_t *pnSize) {
-        if (!pBuf) {
-            return false;
-        }
-
-        *ppBuf = pBuf;
-        *pnSize = nSize;
-        return true;
-    }
-
-private:
-    uint8_t *pBuf = NULL;
-    uint64_t nSize = 0;
-};
 
 /**
 * @brief Template class to facilitate color space conversion
@@ -472,14 +426,6 @@ private:
     size_t maxSize;
 };
 
-inline void CheckInputFile(const char *szInFilePath) {
-    std::ifstream fpIn(szInFilePath, std::ios::in | std::ios::binary);
-    if (fpIn.fail()) {
-        std::ostringstream err;
-        err << "Unable to open input file: " << szInFilePath << std::endl;
-        throw std::invalid_argument(err.str());
-    }
-}
 
 inline void ValidateResolution(int nWidth, int nHeight) {
     

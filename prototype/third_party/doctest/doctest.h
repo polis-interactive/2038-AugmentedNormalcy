@@ -5769,7 +5769,7 @@ namespace {
                     .writeAttribute("tests", p.numAsserts);
             if(opt.no_time_in_output == false) {
                 xml.writeAttribute("time", testCaseData.totalSeconds);
-                xml.writeAttribute("timestamp", JUnitTestCaseData::getCurrentTimestamp());
+                xml.writeAttribute("_timestamp", JUnitTestCaseData::getCurrentTimestamp());
             }
             if(opt.no_version == false)
                 xml.writeAttribute("doctest_version", DOCTEST_VERSION_STR);

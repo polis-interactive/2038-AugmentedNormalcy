@@ -14,7 +14,6 @@
 #include <chrono>
 #include <cmath>
 
-#include "../../Interface/nvcuvid.h"
 #include "NvDecoder/NvDecoder.h"
 
 #define START_TIMER auto start = std::chrono::high_resolution_clock::now();
@@ -838,7 +837,7 @@ void NvDecoder::UnlockFrame(uint8_t **pFrame)
     std::lock_guard<std::mutex> lock(m_mtxVPFrame);
     m_vpFrame.insert(m_vpFrame.end(), &pFrame[0], &pFrame[1]);
     
-    // add a dummy entry for timestamp
+    // add a dummy entry for _timestamp
     uint64_t timestamp[2] = {0};
     m_vTimestamp.insert(m_vTimestamp.end(), &timestamp[0], &timestamp[1]);
 }

@@ -402,7 +402,7 @@ int av_codec_is_decoder(const AVCodec *codec);
 
 enum {
     /**
-     * The codec supports this format via the hw_device_ctx Interface.
+     * The codec supports this format via the hw_device_ctx NvInterface.
      *
      * When selecting this format, AVCodecContext.hw_device_ctx should
      * have been set to a device of the specified type before calling
@@ -410,7 +410,7 @@ enum {
      */
     AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX = 0x01,
     /**
-     * The codec supports this format via the hw_frames_ctx Interface.
+     * The codec supports this format via the hw_frames_ctx NvInterface.
      *
      * When selecting this format for a decoder,
      * AVCodecContext.hw_frames_ctx should be set to a suitable frames

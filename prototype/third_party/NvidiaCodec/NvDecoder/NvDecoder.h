@@ -11,16 +11,16 @@
 
 #pragma once
 
-#include <assert.h>
-#include <stdint.h>
+#include <cassert>
+#include <cstdint>
 #include <mutex>
 #include <vector>
 #include <string>
 #include <iostream>
 #include <sstream>
-#include <string.h>
-#include "../../Interface/nvcuvid.h"
-#include "../Utils/NvCodecUtils.h"
+#include <cstring>
+#include "NvInterface/nvcuvid.h"
+#include "NvUtils/NvCodecUtils.h"
 #include <map>
 
 #define MAX_FRM_CNT 32
@@ -87,7 +87,7 @@ struct Dim {
 };
 
 /**
-* @brief Base class for decoder Interface.
+* @brief Base class for decoder NvInterface.
 */
 class NvDecoder {
 
@@ -191,12 +191,12 @@ public:
     *   @param  pData - pointer to the data buffer that is to be decoded
     *   @param  nSize - size of the data buffer in bytes
     *   @param  nFlags - CUvideopacketflags for setting decode options
-    *   @param  nTimestamp - presentation timestamp
+    *   @param  nTimestamp - presentation _timestamp
     */
     int Decode(const uint8_t *pData, int nSize, int nFlags = 0, int64_t nTimestamp = 0);
 
     /**
-    *   @brief  This function returns a decoded frame and timestamp. This function should be called in a loop for
+    *   @brief  This function returns a decoded frame and _timestamp. This function should be called in a loop for
     *   fetching all the frames that are available for display.
     */
     uint8_t* GetFrame(int64_t* pTimestamp = nullptr);

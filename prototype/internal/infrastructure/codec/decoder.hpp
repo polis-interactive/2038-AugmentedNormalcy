@@ -5,27 +5,25 @@
 #ifndef INFRASTRUCTURE_CODEC_DECODER_HPP
 #define INFRASTRUCTURE_CODEC_DECODER_HPP
 
-#include "infrastructure/common.hpp"
+#include "NvDecoder/NvDecoder.h"
 
 #include "utility/worker_thread.hpp"
 
-#include "infrastructure/codec/packet.hpp"
+#include "infrastructure/common.hpp"
+#include "infrastructure/codec/bsp_packet.hpp"
+#include "infrastructure/codec/codec.hpp"
 
 
 namespace infrastructure {
 
-    struct DecoderConfig {
-
-    };
-
     class Decoder {
     public:
-        explicit Decoder(const DecoderConfig &config) :
+        explicit Decoder(const CodecConfig &config, CodecContext &context) :
             _wt(utility::WorkerThread<QueuedPayload>::CreateWorkerThread(
                 std::bind_front(&Decoder::TryDecode, this)
             ))
         {
-            CreateDecoder();
+            CreateDecoder(config, context);
         }
         void Start() {
             StartDecoder();
@@ -36,39 +34,55 @@ namespace infrastructure {
             StopDecoder();
         }
     private:
-        void CreateDecoder();
+        // private impl based on platform
+        void CreateDecoder(const CodecConfig &config, CodecContext &context);
         void StartDecoder();
+        void ResetDecoder();
+        void CopyToDecoder(std::unique_ptr<BspPacket> &&frame);
+        void DecodeFrame();
+        void TryFreeMemory();
         void StopDecoder();
+
+        void TryDecodeAndFreeMemory(std::shared_ptr<QueuedPayload> &&qp) {
+            TryDecode(std::move(qp));
+            TryFreeMemory();
+        }
+
         void TryDecode(std::shared_ptr<QueuedPayload> &&qp) {
             auto [payload, size] = qp->GetPayload();
-            auto header = PacketHeader::TryParseFrame(payload, size);
+            auto packet = BspPacket::TryParseFrame(payload, size);
             // header wasn't parsable ||
             // session number is less than our current one ||
             // sequence number is less than or equal to our current one
             if (
-                !header ||
-                rolling_less_than(header->session_number, session_number) ||
-                header->sequence_number == sequence_number ||
-                rolling_less_than(header->sequence_number, sequence_number)
+            !packet ||
+            rolling_less_than(packet->session_number, _session_number) ||
+            packet->sequence_number == _sequence_number ||
+            rolling_less_than(packet->sequence_number, _sequence_number)
             ) {
                 // should send a failure message back;
                 return;
             }
             // we know the sequence number was incremented from previous check; new stream
-            if (header->session_number != session_number) {
-                // decoder reset
-                session_number = header->session_number;
+            if (packet->session_number != _session_number) {
+                ResetDecoder();
+                _session_number = packet->session_number;
             }
-            sequence_number = header->sequence_number;
-            // copy to decoder
-            // now we release the shared buffer / header
+            _sequence_number = packet->sequence_number;
+            // on debug here, we can trace how long it's been since the last _timestamp; make sure the encode / transfer
+            // is reliable / track jitter
+            _timestamp = packet->timestamp;
+            // move implicitly resets the packet
+            CopyToDecoder(std::move(packet));
             qp.reset();
-            header.reset();
-            // now we do the blocking decode
+            DecodeFrame();
         }
-        uint16_t session_number = 0;
-        uint16_t sequence_number = 0;
+
+        uint16_t _session_number = 0;
+        uint16_t _sequence_number = 0;
+        uint16_t _timestamp = 0;
         std::shared_ptr<utility::WorkerThread<QueuedPayload>> _wt;
+        std::unique_ptr<NvDecoder> _decoder = {nullptr};
     };
 
 }

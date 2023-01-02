@@ -17,11 +17,10 @@ extern "C" {
 #include <libavutil/opt.h>
 #include <libswresample/swresample.h>
 };
-#include "Logger.h"
+
 
 using namespace std;
 
-extern simplelogger::Logger *logger;
 
 static string AvErrorToString(int av_error_code) {
     const auto buf_size = 1024U;

@@ -11,6 +11,7 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/test_utility/worker_thread.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/common.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/udp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/bsp_packet.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/codec.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )

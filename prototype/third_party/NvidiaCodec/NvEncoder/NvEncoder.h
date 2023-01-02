@@ -12,14 +12,14 @@
 #pragma once
 
 #include <vector>
-#include "nvEncodeAPI.h"
+#include "NvInterface/nvEncodeAPI.h"
 #include <stdint.h>
 #include <mutex>
 #include <string>
 #include <iostream>
 #include <sstream>
 #include <string.h>
-#include "NvCodecUtils.h"
+#include "NvUtils/NvCodecUtils.h"
 
 /**
 * @brief Exception class for error reporting from NvEncodeAPI calls.

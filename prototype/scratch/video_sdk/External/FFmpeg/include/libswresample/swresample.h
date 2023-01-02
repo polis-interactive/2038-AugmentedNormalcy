@@ -128,7 +128,7 @@
 
 /**
  * @name Option constants
- * These constants are used for the @ref avoptions Interface for lswr.
+ * These constants are used for the @ref avoptions NvInterface for lswr.
  * @{
  *
  */

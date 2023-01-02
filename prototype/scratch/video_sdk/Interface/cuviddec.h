@@ -27,7 +27,7 @@
 
 /*****************************************************************************************************/
 //! \file cuviddec.h
-//! NVDECODE API provides video decoding Interface to NVIDIA GPU devices.
+//! NVDECODE API provides video decoding NvInterface to NVIDIA GPU devices.
 //! This file contains constants, structure definitions and function prototypes used for decoding.
 /*****************************************************************************************************/
 

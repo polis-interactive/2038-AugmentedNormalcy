@@ -87,7 +87,7 @@ struct Dim {
 };
 
 /**
-* @brief Base class for decoder Interface.
+* @brief Base class for decoder NvInterface.
 */
 class NvDecoder {
 

@@ -9,26 +9,17 @@
 # 3.7 is required for FindVulkan module support in CMake.
 cmake_minimum_required(VERSION 3.7)
 
-project(NvidiaCodec LANGUAGES CXX)
+project(NvidiaCodec LANGUAGES CXX CUDA)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(NVCODEC_PUBLIC_INTERFACE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Interface)
-set(NVCODEC_UTILS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Utils)
-set(NV_ENC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/NvEncoder)
-set(NV_DEC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/NvDecoder)
-
 
 if(WIN32)
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        Set(CUVID_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../Lib/x64/nvcuvid.lib)
-        set(NVENCODEAPI_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../Lib/x64/nvencodeapi.lib)
-    else()
-        Set(CUVID_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../Lib/Win32/nvcuvid.lib)
-        set(NVENCODEAPI_LIB ${CMAKE_CURRENT_SOURCE_DIR}/../Lib/Win32/nvencodeapi.lib)
-    endif()
+    Set(CUVID_LIB NvLib/nvcuvid.lib)
+    set(NVENCODEAPI_LIB NvLib/nvencodeapi.lib)
 else()
     find_library(CUVID_LIB nvcuvid)
     find_library(NVENCODEAPI_LIB nvidia-encode)
@@ -36,39 +27,39 @@ endif()
 
 
 set(NV_CODEC_SOURCES
-    ${NV_ENC_DIR}/NvEncoder.cpp
-    ${NV_DEC_DIR}/NvDecoder.cpp
-    ${NV_ENC_DIR}/NvEncoderCuda.cpp
+    NvEncoder/NvEncoder.cpp
+    NvDecoder/NvDecoder.cpp
+    NvEncoder/NvEncoderCuda.cpp
 )
 
 set(NV_CODEC_CUDA_UTILS
-    ${NVCODEC_UTILS_DIR}/ColorSpace.cu
-    ${NVCODEC_UTILS_DIR}/BitDepth.cu
+    NvUtils/ColorSpace.cu
+    NvUtils/BitDepth.cu
 )
 
 set(NV_CODEC_HDRS
-    ${NV_ENC_DIR}/NvEncoder.h
-    ${NV_DEC_DIR}/NvDecoder.h
-    ${NV_ENC_DIR}/NvEncoderCuda.h
-    ${NVCODEC_PUBLIC_INTERFACE_DIR}/nvEncodeAPI.h
-    ${NVCODEC_UTILS_DIR}/NvCodecUtils.h
-    ${NVCODEC_UTILS_DIR}/Logger.h
-    ${NVCODEC_UTILS_DIR}/NvEncoderCLIOptions.h
-    ${NVCODEC_PUBLIC_INTERFACE_DIR}/cuviddec.h
-    ${NVCODEC_PUBLIC_INTERFACE_DIR}/nvcuvid.h
-    ${NVCODEC_UTILS_DIR}/ColorSpace.h
+    NvEncoder/NvEncoder.h
+    NvDecoder/NvDecoder.h
+    NvEncoder/NvEncoderCuda.h
+    NvInterface/nvEncodeAPI.h
+    NvUtils/NvCodecUtils.h
+    NvInterface/cuviddec.h
+    NvInterface/nvcuvid.h
+    NvUtils/ColorSpace.h
 )
 
-source_group( "headers" FILES ${NV_ENC_HDRS} )
-source_group( "sources" FILES ${APP_SOURCES} ${NV_ENC_SOURCES} ${NV_ENC_CUDA_UTILS})
+source_group( "headers" FILES ${NV_CODEC_HDRS})
+source_group( "sources" FILES ${NV_CODEC_SOURCES} ${NV_CODEC_CUDA_UTILS})
 
 set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
 
-if(NOT "${CUDA_NVCC_FLAGS}" MATCHES "-std=c\\+\\+20" )
-    list(APPEND CUDA_NVCC_FLAGS -std=c++20)
+if(NOT "${CUDA_NVCC_FLAGS}" MATCHES "-std=c\\+\\+17" )
+    list(APPEND CUDA_NVCC_FLAGS -std=c++17)
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${NV_CODEC_SOURCES} ${NV_CODEC_CUDA_UTILS} ${NV_CODEC_HDRS})
+include_directories(${CUDA_INCLUDE_DIR})
+add_library(${PROJECT_NAME} ${NV_CODEC_SOURCES} ${NV_CODEC_CUDA_UTILS} ${NV_CODEC_HDRS})
+set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES ${CUDA_ARCHITECTURE_SETTING})
 set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
