@@ -18,8 +18,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 if(WIN32)
-    Set(CUVID_LIB NvLib/nvcuvid.lib)
-    set(NVENCODEAPI_LIB NvLib/nvencodeapi.lib)
+    Set(CUVID_LIB ${CMAKE_CURRENT_SOURCE_DIR}/NvLib/nvcuvid.lib)
+    set(NVENCODEAPI_LIB ${CMAKE_CURRENT_SOURCE_DIR}/NvLib/nvencodeapi.lib)
 else()
     find_library(CUVID_LIB nvcuvid)
     find_library(NVENCODEAPI_LIB nvidia-encode)

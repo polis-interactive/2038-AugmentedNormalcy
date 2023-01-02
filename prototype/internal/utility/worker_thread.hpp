@@ -34,7 +34,7 @@ namespace utility {
 
         [[nodiscard]] static std::shared_ptr<WorkerThread<DataType>>
         CreateWorkerThread(WorkerThreadCallback<DataType> callback) {
-            return std::shared_ptr<WorkerThread<DataType>>(new WorkerThread<DataType>(callback));
+            return std::shared_ptr<WorkerThread<DataType>>(new WorkerThread<DataType>(std::move(callback)));
         }
         void Start() noexcept {
             {
@@ -62,7 +62,7 @@ namespace utility {
             _queue = {};
         }
     private:
-        explicit WorkerThread(WorkerThreadCallback<DataType> callback) : _callback(callback) {}
+        explicit WorkerThread(WorkerThreadCallback<DataType> &&callback) : _callback(std::move(callback)) {}
 
         void Run(std::stop_token st) noexcept {
             std::stop_callback cb(st, [this]() {

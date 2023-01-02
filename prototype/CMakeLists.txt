@@ -66,13 +66,7 @@ find_package(Boost 1.80.0 REQUIRED COMPONENTS system regex)
 
 # Sqllite
 add_subdirectory(${third_party_dir}/SQLiteCpp)
-link_libraries(
-    SQLiteCpp
-    sqlite3
-)
-if (!WIN32)
-    link_libraries(pthread dl)
-endif()
+
 
 # nlohmann/json
 include_directories(${third_party_dir}/nlohmann)
@@ -84,8 +78,8 @@ if (CUDA_FOUND)
     else()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_CUDA_CODEC_")
     endif()
-    add_subdirectory(${third_party_dir}/NvidiaCodec)
     include_directories(${CUDA_INCLUDE_DIR})
+    add_subdirectory(${third_party_dir}/NvidiaCodec)
     include_directories(${third_party_dir}/NvidiaCodec)
 endif()
 
@@ -98,21 +92,24 @@ set(
     internal_sources
     ${udp_path}/client.cpp
     ${codec_path}/decoder.cpp
+    ${codec_path}/encoder.cpp
 )
 set(
     internal_headers
     ${codec_path}/bsp_packet.hpp
     ${codec_path}/codec.hpp
     ${codec_path}/decoder.hpp
+    ${codec_path}/encoder.hpp
 )
 
 add_library(${source_library} STATIC ${internal_sources} ${internal_headers})
 target_include_directories(${PROJECT_NAME} PUBLIC ${source_path})
-if (MINGW)
-    target_link_libraries(${PROJECT_NAME} PUBLIC ws2_32)
+target_link_libraries(${source_library} PUBLIC SQLiteCpp sqlite3)
+if (!WIN32)
+    target_link_libraries(${source_library} PUBLIC pthread dl)
 endif()
 if (CUDA_FOUND)
-    target_link_libraries(${PROJECT_NAME} PUBLIC ${NvidiaCodecLib} ${CUDA_CUDA_LIBRARY})
+    target_link_libraries(${PROJECT_NAME} PUBLIC NvidiaCodec ${CUDA_CUDA_LIBRARY})
 endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/cmd ${CMAKE_BINARY_DIR}/cmd)

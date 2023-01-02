@@ -64,6 +64,9 @@ $ time ./AppTrans -i ~/Downloads/bbb_sunflower_1080p_60fps_normal.mp4 -tuninginf
 $ time ./AppTrans -i ~/Downloads/bbb_sunflower_1080p_60fps_normal.mp4 -tuninginfo ultralowlatency -fps 60 \
 -codec h264 -maxbitrate 3M -vbvbufsize 6M -rc cbr -profile baseline -multipass qres -preset p3
 ```
+ 
+-fps 60 \
+-codec h264 -maxbitrate 3M -vbvbufsize 6M
 
 I think I need to turn vbv / bitrate down? nvidia is saying bitrate / framerate; at 3M that's 50K; I don't see
 any real speed up though; file size is some bit smaller, but a couple times the quality is pretty bad; I don't

@@ -11,15 +11,17 @@
 #include <stdexcept>
 #include <string>
 #include <iostream>
+
 #include "NvInterface/cuviddec.h"
 #include "NvUtils/NvCodecUtils.h"
 
-
+using GpuBuffer = uint8_t *;
 
 namespace infrastructure {
     struct CodecConfig {
         [[nodiscard]] virtual std::tuple<int, int> get_codec_width_height() const = 0;
-        [[nodiscard]] virtual cudaVideoCodec get_codec_type() const = 0;
+        // as opposed to 30
+        [[nodiscard]] virtual bool get_is_60_fps() const = 0;
     };
 
     class CodecContext {
@@ -44,6 +46,7 @@ namespace infrastructure {
         }
         std::shared_ptr<CUcontext> _context = nullptr;
     };
+
 }
 
 
