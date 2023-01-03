@@ -29,12 +29,13 @@ namespace infrastructure {
     class Encoder {
     public:
         Encoder(
-            const CodecConfig &config, CodecContext &context
+            const CodecConfig &config, CodecContext &context, std::shared_ptr<PayloadSend> &&payload_sender
         ):
             _wt(utility::WorkerThread<GpuBuffer>::CreateWorkerThread(
                 std::bind_front(&Encoder::TryEncode, this)
             )),
-            _encoder(nullptr, EncodeDeleteFunc)
+            _encoder(nullptr, EncodeDeleteFunc),
+            _payload_sender(std::move(payload_sender))
         {
             CreateEncoder(config, context);
         }
@@ -50,18 +51,33 @@ namespace infrastructure {
 
         void ResetEncoder();
         void PrepareEncode(std::shared_ptr<GpuBuffer> &&gb);
+        std::size_t EncodeFrame(uint8_t *packet_ptr, const std::size_t header_size);
         void StopEncoder();
 
 
         void TryEncode(std::shared_ptr<GpuBuffer> &&gb) {
             // this will release the gpu buffer
             PrepareEncode(std::move(gb));
+            auto buffer = _payload_sender->GetBuffer();
+            auto frame_size = EncodeFrame(buffer->data(), BspPacket::HeaderSize());
+            if (frame_size == 0) {
+                // failed to encode packet
+                return;
+            }
+            _sequence_number += 1;
+            BspPacket packet{};
+            packet.session_number = _session_number;
+            packet.sequence_number = _sequence_number;
+            // for now, fk the timestamp;
+            packet.Pack(buffer, frame_size);
+            _payload_sender->Send(std::move(buffer), packet.PacketSize());
         }
-        uint16_t _session_number = 0;
+        uint16_t _session_number = 1;
         uint16_t _sequence_number = 0;
         uint16_t _timestamp = 0;
         std::shared_ptr<utility::WorkerThread<GpuBuffer>> _wt;
         NvEncCudaPtr _encoder;
+        std::shared_ptr<PayloadSend> _payload_sender;
     };
 
     /* encoder tuning info, nvidia */

@@ -126,6 +126,12 @@ public:
     */
     virtual void EncodeFrame(std::vector<std::vector<uint8_t>> &vPacket, NV_ENC_PIC_PARAMS *pPicParams = nullptr);
 
+    /*
+     * Custom addition to encode a buffered frame; pass in a uint8_t frame, max buffer size; returns encoded length,
+     * added by lord broose
+     */
+    std::size_t EncodeFixedFrame(uint8_t *packet, std::size_t max_size, NV_ENC_PIC_PARAMS *pPicParams = nullptr);
+
     /**
     *  @brief  This function to flush the encoder queue.
     *  The encoder might be queuing frames for B picture encoding or lookahead;
@@ -360,6 +366,17 @@ private:
     *  this may return without any output data.
     */
     void GetEncodedPacket(std::vector<NV_ENC_OUTPUT_PTR> &vOutputBuffer, std::vector<std::vector<uint8_t>> &vPacket, bool bOutputDelay);
+
+    /*
+     * Added by broose: since we know we only have 1 frame per call, go ahead and inject the output
+     * packet we are readying for transmission; also, we don't want buffering, we want frames now, so no bOutputDelay!
+     */
+
+    void GetEncodedFixedPacket(
+        std::vector<NV_ENC_OUTPUT_PTR> &vOutputBuffer, uint8_t *packet, const std::size_t &max_size,
+        std::size_t &bytes_written
+    );
+
 
     /**
     *  @brief This is a private function which is used to initialize the bitstream buffers.

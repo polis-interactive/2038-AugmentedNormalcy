@@ -449,6 +449,30 @@ void NvEncoder::EncodeFrame(std::vector<std::vector<uint8_t>> &vPacket, NV_ENC_P
     }
 }
 
+std::size_t NvEncoder::EncodeFixedFrame(uint8_t *packet, std::size_t max_size, NV_ENC_PIC_PARAMS *pPicParams) {
+    if (!IsHWEncoderInitialized())
+    {
+        NVENC_THROW_ERROR("Encoder device not found", NV_ENC_ERR_NO_ENCODE_DEVICE);
+    }
+    int bfrIdx = m_iToSend % m_nEncoderBuffer;
+
+    MapResources(bfrIdx);
+
+    NVENCSTATUS nvStatus = DoEncode(m_vMappedInputBuffers[bfrIdx], m_vBitstreamOutputBuffer[bfrIdx], pPicParams);
+
+    if (nvStatus == NV_ENC_SUCCESS || nvStatus == NV_ENC_ERR_NEED_MORE_INPUT)
+    {
+        m_iToSend++;
+        std::size_t bytes_written = 0;
+        GetEncodedFixedPacket(m_vBitstreamOutputBuffer, packet, max_size, bytes_written);
+        return bytes_written;
+    }
+    else
+    {
+        NVENC_THROW_ERROR("nvEncEncodePicture API failed", nvStatus);
+    }
+}
+
 void NvEncoder::RunMotionEstimation(std::vector<uint8_t> &mvData)
 {
     if (!m_hEncoder)
@@ -585,6 +609,41 @@ void NvEncoder::GetEncodedPacket(std::vector<NV_ENC_OUTPUT_PTR> &vOutputBuffer, 
         }
     }
 }
+
+/*
+ * given we are the only consumers, and we aren't running asyncly, I think this can be simplifed; for instance
+ * we can avoid locking / unlocking the bitstream; of course, this may just lock until it becomes available after
+ * encoding so meh
+ */
+
+void NvEncoder::GetEncodedFixedPacket(
+    std::vector<NV_ENC_OUTPUT_PTR> &vOutputBuffer, uint8_t *packet, const std::size_t &max_size,
+    std::size_t &bytes_written
+) {
+    bool bOutputDelay = false;
+    unsigned i = 0;
+    int iEnd = m_iToSend;
+    for (; m_iGot < iEnd; m_iGot++)
+    {
+        WaitForCompletionEvent(m_iGot % m_nEncoderBuffer);
+        NV_ENC_LOCK_BITSTREAM lockBitstreamData = { NV_ENC_LOCK_BITSTREAM_VER };
+        lockBitstreamData.outputBitstream = vOutputBuffer[m_iGot % m_nEncoderBuffer];
+        lockBitstreamData.doNotWait = false;
+        NVENC_API_CALL(m_nvenc.nvEncLockBitstream(m_hEncoder, &lockBitstreamData));
+
+        memcpy(packet, lockBitstreamData.bitstreamBufferPtr, lockBitstreamData.bitstreamSizeInBytes);
+        bytes_written = lockBitstreamData.bitstreamSizeInBytes;
+
+        NVENC_API_CALL(m_nvenc.nvEncUnlockBitstream(m_hEncoder, lockBitstreamData.outputBitstream));
+
+        if (m_vMappedInputBuffers[m_iGot % m_nEncoderBuffer])
+        {
+            NVENC_API_CALL(m_nvenc.nvEncUnmapInputResource(m_hEncoder, m_vMappedInputBuffers[m_iGot % m_nEncoderBuffer]));
+            m_vMappedInputBuffers[m_iGot % m_nEncoderBuffer] = nullptr;
+        }
+    }
+}
+
 
 bool NvEncoder::Reconfigure(const NV_ENC_RECONFIGURE_PARAMS *pReconfigureParams)
 {

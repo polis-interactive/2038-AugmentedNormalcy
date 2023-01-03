@@ -16,8 +16,13 @@ using payload_buffer = std::array<uint8_t, MAX_FRAME_LENGTH>;
 using payload_buffer_pool = utility::BufferPool<payload_buffer>;
 
 using payload_tuple = std::tuple<std::shared_ptr<payload_buffer>&, std::size_t&>;
-struct QueuedPayload {
+struct QueuedPayloadReceive {
     [[nodiscard]]  virtual payload_tuple GetPayload() = 0;
+};
+struct PayloadSend {
+    [[nodiscard]] virtual std::shared_ptr<payload_buffer> GetBuffer() = 0;
+    virtual void Send(std::shared_ptr<payload_buffer> &&buffer, std::size_t buffer_size) = 0;
+    // right now, we don't care about responding...
 };
 
 using reply_buffer = std::array<uint8_t, MAX_REPLY_LENGTH>;

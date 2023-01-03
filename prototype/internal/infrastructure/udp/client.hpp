@@ -42,7 +42,7 @@ namespace infrastructure {
         std::mutex _mutex;
     };
 
-    class UdpClient {
+    class UdpClient: PayloadSend {
     public:
         UdpClient(
             net::io_context &context, udp::endpoint remote, payload_buffer_pool &b_pool
@@ -54,7 +54,10 @@ namespace infrastructure {
         {
             Receive();
         }
-        void Send(std::shared_ptr<payload_buffer> buffer, std::size_t buffer_size) {
+        std::shared_ptr<payload_buffer> GetBuffer() override {
+            return std::move(_b_pool.New());
+        }
+        void Send(std::shared_ptr<payload_buffer> &&buffer, std::size_t buffer_size) override {
             _socket.async_send_to(
                 net::buffer(*buffer, buffer_size), _remote,
                 net::bind_executor(_strand, [buffer, &pool = this->_b_pool] (error_code ec, std::size_t bytes_send) mutable {

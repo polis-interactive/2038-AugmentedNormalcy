@@ -52,6 +52,8 @@ namespace infrastructure {
             context, current_params.encodeWidth, current_params.encodeHeight, NV_ENC_BUFFER_FORMAT_NV12
         ));
         _encoder->CreateEncoder(&current_params);
+        _session_number += 1;
+        _sequence_number = 0;
     }
 
     void Encoder::PrepareEncode(std::shared_ptr<GpuBuffer> &&gb) {
@@ -61,7 +63,10 @@ namespace infrastructure {
             encoderInputFrame->pitch, _encoder->GetEncodeWidth(), _encoder->GetEncodeHeight(), CU_MEMORYTYPE_DEVICE,
             encoderInputFrame->bufferFormat, encoderInputFrame->chromaOffsets, encoderInputFrame->numChromaPlanes
         );
+    }
 
+    std::size_t Encoder::EncodeFrame(uint8_t *packet_ptr, const std::size_t header_size) {
+        return _encoder->EncodeFixedFrame(packet_ptr + header_size, MAX_FRAME_LENGTH - header_size);
     }
 
 }

@@ -21,7 +21,7 @@ namespace infrastructure {
     };
 
     // move semantics here a little scuffed...
-    struct UdpServerSession: QueuedPayload {
+    struct UdpServerSession: QueuedPayloadReceive {
         UdpServerSession(payload_buffer_pool &pool, net::io_context::strand &write_strand) :
             _buffer(pool.New()),
             _write_strand(write_strand),

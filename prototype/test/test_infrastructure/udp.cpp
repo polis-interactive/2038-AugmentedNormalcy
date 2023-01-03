@@ -123,9 +123,9 @@ TEST_CASE("simple send / receive") {
     auto client = c_pool.GetOrCreateClient("127.0.0.1", b_pool);
 
     for (auto &sample : samples) {
-        auto buffer = b_pool.New();
+        auto buffer = client->GetBuffer();
         std::copy(sample.begin(), sample.end(), buffer->data());
-        client->Send(buffer, sample.size());
+        client->Send(std::move(buffer), sample.size());
     }
 
     // give it a few to do its thing

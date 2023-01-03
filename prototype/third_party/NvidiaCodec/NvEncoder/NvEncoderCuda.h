@@ -26,7 +26,7 @@
             const char *szErrName = NULL;                                                                                        \
             cuGetErrorName(err__, &szErrName);                                                                                   \
             std::ostringstream errorLog;                                                                                         \
-            errorLog << "CUDA driver API error " << szErrName ;                                                                  \
+            errorLog << "CUDA driver API error " << szErrName ;                                                         \
             throw NVENCException::makeNVENCException(errorLog.str(), NV_ENC_ERR_GENERIC, __FUNCTION__, __FILE__, __LINE__);      \
         }                                                                                                                        \
     }                                                                                                                            \

@@ -14,35 +14,44 @@
 
 namespace infrastructure {
     PACK(struct BspPacket {
-         [[nodiscard]] std::size_t PackFrame(const std::vector<uint8_t> &payload, std::shared_ptr<payload_buffer> &buffer) {
-             data_length = payload.size();
-             memcpy(buffer->data(), this, sizeof(BspPacket) - 8);
-             memcpy(buffer->data() + sizeof(BspPacket) - 8, payload.data(), payload.size());
-             return sizeof(BspPacket) - 8 + payload.size();
-         }
-         [[nodiscard]] static std::unique_ptr<BspPacket> TryParseFrame(
+        [[nodiscard]] std::size_t PackFrame(const std::vector<uint8_t> &payload, std::shared_ptr<payload_buffer> &buffer) {
+            data_length = payload.size();
+            memcpy(buffer->data(), this, HeaderSize());
+            memcpy(buffer->data() + HeaderSize(), payload.data(), payload.size());
+            return sizeof(BspPacket) - 8 + payload.size();
+        }
+        [[nodiscard]] static std::size_t HeaderSize() {
+            // -8 for the ptr to data
+            return sizeof(BspPacket) - 8;
+        }
+        [[nodiscard]] static std::unique_ptr<BspPacket> TryParseFrame(
             const std::shared_ptr<payload_buffer> &buffer, const std::size_t &frame_size
-         ) {
-             // invalid packet
+        ) {
              if (frame_size <= sizeof(BspPacket)) {
                  return nullptr;
              }
-             // parse the header (-8 for the ptr)
              auto header = std::make_unique<BspPacket>();
-             memcpy(header.get(), buffer->data(), sizeof(BspPacket) - 8);
+             memcpy(header.get(), buffer->data(), HeaderSize());
              // make sure data length is valid; should be header minus the start ptr
-             if (header->data_length != frame_size - (sizeof(BspPacket) - 8)) {
+             if (header->data_length != frame_size - (HeaderSize())) {
                  return nullptr;
              }
-             header->data_start = buffer->data() + (sizeof(BspPacket) - 8);
+             header->data_start = buffer->data() + (HeaderSize());
              return header;
-         }
-         uint8_t id;
-         uint16_t sequence_number;
-         uint16_t session_number;
-         uint16_t timestamp;
-         uint16_t data_length;
-         uint8_t *data_start;
+        }
+        void Pack(std::shared_ptr<payload_buffer> &buffer, const std::size_t &body_size) {
+            data_length = body_size;
+            memcpy(buffer->data(), this, HeaderSize());
+        }
+        [[nodiscard]] std::size_t PacketSize() {
+            return data_length + HeaderSize();
+        }
+        uint8_t id;
+        uint16_t sequence_number;
+        uint16_t session_number;
+        uint16_t timestamp;
+        uint16_t data_length;
+        uint8_t *data_start;
     });
 }
 

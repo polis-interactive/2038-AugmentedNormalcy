@@ -26,7 +26,7 @@ namespace infrastructure {
             const CodecConfig &config, CodecContext &context,
             std::function<void(std::shared_ptr<GpuBuffer>)> send_callback
         ) :
-            _wt(utility::WorkerThread<QueuedPayload>::CreateWorkerThread(
+            _wt(utility::WorkerThread<QueuedPayloadReceive>::CreateWorkerThread(
                 std::bind_front(&Decoder::TryDecode, this)
             )),
             _send_callback(std::move(send_callback))
@@ -36,7 +36,7 @@ namespace infrastructure {
         void Start() {
             _wt->Start();
         }
-        void QueueDecode(std::shared_ptr<QueuedPayload> &&qp) {
+        void QueueDecode(std::shared_ptr<QueuedPayloadReceive> &&qp) {
             _wt->PostWork(std::move(qp));
         }
         void Stop() {
@@ -53,7 +53,7 @@ namespace infrastructure {
         void WaitFreeMemory();
         void StopDecoder();
 
-        void TryDecode(std::shared_ptr<QueuedPayload> &&qp) {
+        void TryDecode(std::shared_ptr<QueuedPayloadReceive> &&qp) {
             auto [payload, size] = qp->GetPayload();
             auto packet = BspPacket::TryParseFrame(payload, size);
             // header wasn't parsable ||
@@ -88,7 +88,7 @@ namespace infrastructure {
         uint16_t _session_number = 0;
         uint16_t _sequence_number = 0;
         uint16_t _timestamp = 0;
-        std::shared_ptr<utility::WorkerThread<QueuedPayload>> _wt;
+        std::shared_ptr<utility::WorkerThread<QueuedPayloadReceive>> _wt;
         std::unique_ptr<NvDecoder> _decoder = {nullptr};
         std::deque<std::shared_ptr<GpuBuffer>> _gpu_buffers;
         std::function<void(std::shared_ptr<GpuBuffer>)> _send_callback;
