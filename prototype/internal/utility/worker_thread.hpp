@@ -33,8 +33,8 @@ namespace utility {
     public:
 
         [[nodiscard]] static std::shared_ptr<WorkerThread<DataType>>
-        CreateWorkerThread(WorkerThreadCallback<DataType> callback) {
-            return std::shared_ptr<WorkerThread<DataType>>(new WorkerThread<DataType>(std::move(callback)));
+        CreateWorkerThread(WorkerThreadCallback<DataType> callback, std::function<void()> startup = nullptr) {
+            return std::shared_ptr<WorkerThread<DataType>>(new WorkerThread<DataType>(std::move(callback), std::move(startup)));
         }
         void Start() noexcept {
             {
@@ -62,12 +62,18 @@ namespace utility {
             _queue = {};
         }
     private:
-        explicit WorkerThread(WorkerThreadCallback<DataType> &&callback) : _callback(std::move(callback)) {}
+        explicit WorkerThread(WorkerThreadCallback<DataType> &&callback, std::function<void()> &&startup) :
+            _callback(std::move(callback)),
+            _startup(std::move(startup))
+        {}
 
         void Run(std::stop_token st) noexcept {
             std::stop_callback cb(st, [this]() {
                 _cv.notify_all(); //Wake thread on stop request
             });
+            if (_startup) {
+                _startup();
+            }
             while (true) {
                 std::shared_ptr<DataType> msg;
                 {
@@ -89,6 +95,7 @@ namespace utility {
         }
 
         WorkerThreadCallback<DataType> _callback;
+        std::function<void()> _startup;
         std::unique_ptr<std::jthread> _thread;
         std::queue<std::shared_ptr<DataType>> _queue;
         std::mutex _mutex;

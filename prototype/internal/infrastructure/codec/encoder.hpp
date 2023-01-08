@@ -42,10 +42,14 @@ namespace infrastructure {
         void Start() {
             _wt->Start();
         }
+        void QueueEncode(std::shared_ptr<GpuBuffer> &&gb) {
+            _wt->PostWork(std::move(gb));
+        }
         void Stop() {
             _wt->Stop();
             StopEncoder();
         }
+
     private:
         void CreateEncoder(const CodecConfig &config, CodecContext &context);
 
@@ -72,6 +76,7 @@ namespace infrastructure {
             packet.Pack(buffer, frame_size);
             _payload_sender->Send(std::move(buffer), packet.PacketSize());
         }
+
         uint16_t _session_number = 1;
         uint16_t _sequence_number = 0;
         uint16_t _timestamp = 0;

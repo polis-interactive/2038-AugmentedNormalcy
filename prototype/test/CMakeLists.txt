@@ -15,6 +15,7 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/codec.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )
+add_definitions( -DTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}" )
 add_executable(${PROJECT_NAME} ${tests})
 target_link_libraries(${PROJECT_NAME} ${source_library})
 target_include_directories(${PROJECT_NAME} PRIVATE ${source_path})

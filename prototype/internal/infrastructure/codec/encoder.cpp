@@ -36,7 +36,6 @@ namespace infrastructure {
         encode_config.rcParams.maxBitRate = 2000000; // was encode_config.rcParams.averageBitRate, which was 1.125M instead of 2M
         encode_config.rcParams.vbvInitialDelay = encode_config.rcParams.vbvBufferSize;
         _encoder->CreateEncoder(&initialize_params);
-        const NvEncInputFrame* encoderInputFrame = _encoder->GetNextInputFrame();
     }
     void Encoder::StopEncoder() {
         std::cout << "Stopping Encoder" << std::endl;
@@ -59,7 +58,7 @@ namespace infrastructure {
     void Encoder::PrepareEncode(std::shared_ptr<GpuBuffer> &&gb) {
         const NvEncInputFrame* encoderInputFrame = _encoder->GetNextInputFrame();
         NvEncoderCuda::CopyToDeviceFrame(
-            (CUcontext)_encoder->GetDevice(), gb.get(), (int)encoderInputFrame->pitch, (CUdeviceptr)encoderInputFrame->inputPtr,
+            (CUcontext)_encoder->GetDevice(), gb.get(), 0, (CUdeviceptr)encoderInputFrame->inputPtr,
             encoderInputFrame->pitch, _encoder->GetEncodeWidth(), _encoder->GetEncodeHeight(), CU_MEMORYTYPE_DEVICE,
             encoderInputFrame->bufferFormat, encoderInputFrame->chromaOffsets, encoderInputFrame->numChromaPlanes
         );

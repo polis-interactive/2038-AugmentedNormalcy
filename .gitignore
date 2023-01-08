@@ -8,3 +8,5 @@ cuda
 
 !hello.cu
 !print.cu
+
+out.nv12

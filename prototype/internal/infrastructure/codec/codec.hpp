@@ -15,7 +15,7 @@
 #include "NvInterface/cuviddec.h"
 #include "NvUtils/NvCodecUtils.h"
 
-using GpuBuffer = uint8_t *;
+using GpuBuffer = uint8_t [];
 
 namespace infrastructure {
     struct CodecConfig {

@@ -14,26 +14,22 @@ namespace infrastructure {
         std::cout << "Creating decoder" << std::endl;
         const auto &[width, height] = config.get_codec_width_height();
         _decoder = std::unique_ptr<NvDecoder>(new NvDecoder(
-            *context._context, true, cudaVideoCodec_H264, true, true, NULL, NULL,
+            *context._context, true, cudaVideoCodec_H264, true, false, NULL, NULL,
             false, width, height, 1000, true
         ));
     }
+    void Decoder::ThreadStartup() {
+        cuCtxSetCurrent(_decoder->GetContext());
+    }
     void Decoder::DecodeFrame(std::unique_ptr<BspPacket> &&frame) {
-        _decoder->Decode(frame->data_start, frame->data_length);
+        int returned_frames = 0;
+        while (returned_frames == 0) {
+            returned_frames = _decoder->Decode(frame->data_start, frame->data_length);
+        }
     }
     void Decoder::SendDecodedFrame() {
-        GpuBuffer processed_frame = nullptr;
-        bool has_tried = false;
-        do {
-            if (has_tried) {
-                // wait for decoder to finish
-                std::this_thread::sleep_for(1ms);
-            }
-            processed_frame = _decoder->GetLockedFrame();
-            has_tried = true;
-        }
-        while (processed_frame == nullptr);
-        auto buffer = std::shared_ptr<GpuBuffer>(&processed_frame);
+        uint8_t *decoded_frame = _decoder->GetLockedFrame();
+        auto buffer = std::shared_ptr<GpuBuffer>(decoded_frame, [](GpuBuffer){});
         _send_callback(buffer);
         _gpu_buffers.push_back(buffer);
     }
@@ -47,10 +43,10 @@ namespace infrastructure {
             if (gpu_buffer_iter->use_count() > 1) {
                 return;
             }
-            auto &&gpu_buffer = std::move(_gpu_buffers.front());
-            _decoder->UnlockFrame(gpu_buffer.get());
-            _gpu_buffers.pop_front();
-            gpu_buffer_iter++;
+            auto gpu_buffer = std::move(_gpu_buffers.front());
+            gpu_buffer_iter = _gpu_buffers.erase(gpu_buffer_iter);
+            uint8_t *buffer = gpu_buffer.get();
+            _decoder->UnlockFrame(&buffer);
         }
     }
     void Decoder::WaitFreeMemory() {

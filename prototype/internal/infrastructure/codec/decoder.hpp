@@ -27,7 +27,8 @@ namespace infrastructure {
             std::function<void(std::shared_ptr<GpuBuffer>)> send_callback
         ) :
             _wt(utility::WorkerThread<QueuedPayloadReceive>::CreateWorkerThread(
-                std::bind_front(&Decoder::TryDecode, this)
+                std::bind_front(&Decoder::TryDecode, this),
+                std::bind_front(&Decoder::ThreadStartup, this)
             )),
             _send_callback(std::move(send_callback))
         {
@@ -46,6 +47,8 @@ namespace infrastructure {
     private:
         // private impl based on platform
         void CreateDecoder(const CodecConfig &config, CodecContext &context);
+
+        void ThreadStartup();
 
         void DecodeFrame(std::unique_ptr<BspPacket> &&frame);
         void SendDecodedFrame();

@@ -22,7 +22,7 @@ namespace infrastructure {
         }
         [[nodiscard]] static std::size_t HeaderSize() {
             // -8 for the ptr to data
-            return sizeof(BspPacket) - 8;
+            return sizeof(BspPacket) - sizeof(uint8_t *);
         }
         [[nodiscard]] static std::unique_ptr<BspPacket> TryParseFrame(
             const std::shared_ptr<payload_buffer> &buffer, const std::size_t &frame_size
@@ -36,7 +36,7 @@ namespace infrastructure {
              if (header->data_length != frame_size - (HeaderSize())) {
                  return nullptr;
              }
-             header->data_start = buffer->data() + (HeaderSize());
+             header->data_start = buffer->data() + HeaderSize();
              return header;
         }
         void Pack(std::shared_ptr<payload_buffer> &buffer, const std::size_t &body_size) {
