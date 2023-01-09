@@ -38,3 +38,10 @@ $ gst-launch-1.0 -e -vvvv v4l2src device=/dev/video0 ! 'video/x-raw,width=640,he
 # H264 Client
 $ gst-launch-1.0 -e -vvvv udpsrc port=5000 ! application/x-rtp, payload=96 ! rtph264depay ! nvdec ! glimagesink sync=false
 ```
+
+This works! albeit, terribly ineffeciently
+
+```
+$ gst-launch-1.0 -e -vvv libcamerasrc ! 'video/x-raw,width=1920,height=1080,framerate=30/1' ! queue ! videoflip method=clockwise ! x264enc tune=zerolatency speed-preset=superfast ! rtph264pay config-interval=5 pt=96 ! udpsink host=192.168.1.64 port=5000
+$ gst-launch-1.0 udpsrc port=5000 ! application/x-rtp,payload=96 ! rtph264depay ! 'video/x-h264,level=(string)3' ! v4l2h264dec ! kmssink sync=false
+```
