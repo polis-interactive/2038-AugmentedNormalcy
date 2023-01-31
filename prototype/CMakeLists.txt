@@ -52,6 +52,8 @@ else()
 
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_50,code=\"sm_50,compute_50\")
     set(CUDA_ARCHITECTURE_SETTING "50;50;50")
+    set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc")
+    set(CMAKE_CUDA_ARCHITECTURES "50")
 
     set(BOOST_ROOT "/usr/local/lib/boost_1_80_0")
     set(Boost_INCLUDE_DIR  "/usr/local/lib/boost_1_80_0")
@@ -86,13 +88,17 @@ endif()
 
 set(source_library ${PROJECT_NAME})
 set(source_path ${CMAKE_CURRENT_SOURCE_DIR}/internal)
+set(domain_path ${source_path}/domain)
 set(udp_path ${source_path}/infrastructure/udp)
 set(codec_path ${source_path}/infrastructure/codec)
+set(repository_path ${source_path}/infrastructure/repository)
 set(
     internal_sources
     ${udp_path}/client.cpp
     ${codec_path}/decoder.cpp
     ${codec_path}/encoder.cpp
+    ${domain_path}/camera/entity.cpp
+    ${source_path}/dummy.cpp
 )
 set(
     internal_headers
@@ -100,10 +106,30 @@ set(
     ${codec_path}/codec.hpp
     ${codec_path}/decoder.hpp
     ${codec_path}/encoder.hpp
+    ${domain_path}/camera/entity.hpp
+    ${domain_path}/camera/serializer.hpp
+    ${domain_path}/camera/repository.hpp
+    ${repository_path}/base.hpp
+    ${repository_path}/memory.hpp
 )
+
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBCAMERA QUIET libcamera)
+
+
+if (LIBCAMERA_FOUND)
+    message(STATUS "libcamera library found:")
+    message(STATUS "    version: ${LIBCAMERA_VERSION}")
+    message(STATUS "    libraries: ${LIBCAMERA_LINK_LIBRARIES}")
+    message(STATUS "    include path: ${LIBCAMERA_INCLUDE_DIRS}")
+    include_directories(${CMAKE_SOURCE_DIR} ${LIBCAMERA_INCLUDE_DIRS})
+else()
+    message("Lib camera not found; defaulting to fake camera")
+endif()
 
 add_library(${source_library} STATIC ${internal_sources} ${internal_headers})
 target_include_directories(${PROJECT_NAME} PUBLIC ${source_path})
+
 target_link_libraries(${source_library} PUBLIC SQLiteCpp sqlite3)
 if (!WIN32)
     target_link_libraries(${source_library} PUBLIC pthread dl)
