@@ -1,0 +1,15 @@
+ninja: Entering directory `build'
+[0/1] Installing files.
+Installing libseat.so.1 to /usr/local/lib/aarch64-linux-gnu
+Installing seatd to /usr/local/bin
+Installing seatd-launch to /usr/local/bin
+Installing /home/pi/build/seatd/include/libseat.h to /usr/local/include
+Installing /home/pi/build/seatd/build/meson-private/libseat.pc to /usr/local/lib/aarch64-linux-gnu/pkgconfig
+Installing symlink pointing to libseat.so.1 to /usr/local/lib/aarch64-linux-gnu/libseat.so
+
+sudo chmod 666 /dev/tty0
+sudo chmod 666 /dev/tty1
+sudo chmod 666 /dev/tty2
+sudo chmod 666 /dev/dri/card1
+export WLR_RENDERER_ALLOW_SOFTWARE=1
+export LD_LIBRARY_PATH="/usr/local/lib/aarch64-linux-gnu:$LD_LIBRARY_PATH"

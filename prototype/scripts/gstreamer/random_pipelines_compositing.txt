@@ -1,0 +1,132 @@
+gst-launch-1.0 uridecodebin uri=file:///home/meh/Pictures/questions.jpg ! videoscale ! video/x-raw, width=320, height=240 ! imagefreeze ! videomixer name=m sink_1::xpos=320 ! autovideosink uridecodebin uri=file:///home/meh/Pictures/testsrc.png ! videoscale ! video/x-raw, width=320, height=240 ! imagefreeze ! m.
+
+
+gst-launch-1.0 udpsrc port=5000 ! application/x-rtp,payload=96 ! rtph264depay ! 'video/x-h264,level=(string)3' ! v4l2h264dec ! kmssink sync=false
+
+gst-launch-1.0 -e -vvv \
+udpsrc port=5000 ! application/x-rtp,payload=96 ! \
+rtph264depay ! 'video/x-h264,level=(string)3' ! \
+v4l2h264dec ! 'video/x-raw,format=I420,width=1080,height=960' \
+    ! tee name=t \
+videomixer name=mix \
+      sink_1::xpos=0 sink_1::ypos=0    sink_1::zorder=1\
+      sink_2::xpos=0 sink_2::ypos=960    sink_2::zorder=2\
+ ! kmssink sync=false \
+t. ! queue ! mix.sink_1 \
+t. ! queue ! mix.sink_2
+
+gst-launch-1.0 -e -vvv libcamerasrc ! 'video/x-raw,width=1920,height=1080,framerate=30/1' ! queue ! videoflip method=clockwise ! x264enc tune=zerolatency speed-preset=superfast ! rtph264pay config-interval=5 pt=96 ! udpsink host=192.168.1.64 port=5000
+
+gst-launch-1.0 -e -vvv libcamerasrc ! 'video/x-raw,width=960,height=1080,framerate=30/1' \
+! queue ! videoflip method=clockwise \
+! tee name=t videomixer name=mix \
+	sink_0::xpos=0 sink_0::ypos=0 sink_0::zorder=0 \
+	sink_1::xpos=0 sink_1::ypos=960 sink_0::zorder=1 \
+! x264enc tune=zerolatency speed-preset=superfast ! rtph264pay config-interval=5 pt=96 \
+! udpsink host=192.168.1.64 port=5000 \
+t. ! queue ! mix.sink_0 \
+t. ! queue ! mix.sink_1 
+
+gst-launch-1.0 -e -vvv \
+udpsrc port=5000 ! application/x-rtp,payload=96 ! \
+rtph264depay ! 'video/x-h264,level=(string)3' ! \
+v4l2h264dec ! 'video/x-raw,format=I420,width=1080,height=960' \
+    ! tee name=t \
+videomixer name=mix \
+      sink_1::xpos=0 sink_1::ypos=0    sink_1::zorder=1\
+      sink_2::xpos=0 sink_2::ypos=960    sink_2::zorder=2\
+ ! kmssink sync=false \
+t. ! queue ! mix.sink_1 \
+t. ! queue ! mix.sink_2
+
+ sudo gst-launch-1.0 -e -vvv libcamerasrc ! 'video/x-raw,width=1280,height=720,framerate=30/1' \
+ ! tee name=t \
+ videomixer name=mix \
+      sink_0::xpos=0 sink_0::ypos=0    sink_0::zorder=0\
+      sink_1::xpos=960 sink_1::ypos=0    sink_1::zorder=1\
+! fbdevsink sync=false \
+t. ! queue ! mix.sink_0 \
+t. ! queue ! mix.sink_1 
+
+sudo gst-launch-1.0 -e -vvv libcamerasrc ! 'video/x-raw,width=640,height=480,framerate=30/1' ! tee name=t videomixer name=mix sink_0::xpos=0 sink_0::ypos=0 sink_0::zorder=0 sink_1::xpos=960 sink_1::ypos=0 sink_1::zorder=1 ! kmssink sync=false t. ! queue ! mix.sink_0 t. ! queue ! mix.sink_1
+
+
+gst-launch-1.0 \
+   videotestsrc pattern=1 ! \
+   video/x-raw,format=AYUV,framerate=\(fraction\)10/1,width=100,height=100 ! \
+   videobox border-alpha=0 top=-70 bottom=-70 right=-220 ! \
+   compositor name=comp sink_0::alpha=0.7 sink_1::alpha=0.5 ! \
+   videoconvert ! fbdevsink \
+   videotestsrc ! \
+   video/x-raw,format=AYUV,framerate=\(fraction\)5/1,width=320,height=240 ! comp.
+
+gst-launch-1.0 \
+videomixer name=m sink_1::xpos=320 sink_2::ypos=240 sink_3::xpos=320 sink_3::ypos=240 ! autovideosink \
+uridecodebin uri=http://old.koniclab.info/fileadmin/images/koniclab_logo_negro.png ! videoscale ! video/x-raw, width=320, height=240 ! imagefreeze ! m. \
+uridecodebin uri=http://old.koniclab.info/fileadmin/images/koniclab_logo_negro.png ! videoscale ! video/x-raw, width=320, height=240 ! imagefreeze ! m. \
+uridecodebin uri=http://old.koniclab.info/fileadmin/images/koniclab_logo_negro.png ! videoscale ! video/x-raw, width=320, height=240 ! imagefreeze ! m. \
+uridecodebin uri=http://old.koniclab.info/fileadmin/images/koniclab_logo_negro.png ! videoscale ! video/x-raw, width=320, height=240 ! imagefreeze ! m.
+
+gst-launch-1.0 -e \
+videomixer name=mix \
+    sink_0::xpos=0   sink_0::ypos=0  sink_0::alpha=0\
+    sink_1::xpos=640   sink_1::ypos=0 \
+rtspsrc location=rtsp://192.168.9.20:554/axis-media/media.amp user-id=username user-pw=password latency=150 \
+! decodebin max-size-time=30000000000 \
+! videoconvert ! videoscale \
+! video/x-raw,width=640,height=480 \
+! mix.sink_1 \
+rtspsrc location=rtsp://192.168.9.24:554/axis-media/media.amp user-id=username user-pw=password latency=150 \
+! decodebin max-size-time=30000000000 \
+! videoconvert ! videoscale \
+! video/x-raw,width=640,height=480 \
+! mix.sink_2 \
+mix. ! queue ! videoconvert ! autovideosink
+
+gst-launch-1.0 -e \
+videomixer name=mix \
+    sink_0::xpos=0   sink_0::ypos=0  sink_0::alpha=0.5 \
+    sink_1::xpos=960   sink_1::ypos=0 sink_1::alpha=0.5 \
+    ! fbdevsink sync=false \
+videotestsrc pattern=1 ! video/x-raw,format=AYUV,framerate=\(fraction\)10/1,width=100,height=100 !  mix.sink_0 \
+videotestsrc pattern=2 ! video/x-raw,format=AYUV,framerate=\(fraction\)10/1,width=100,height=100 !  mix.sink_1 \
+
+gst-launch-1.0 -e -vvv libcamerasrc ! 'video/x-raw,width=640,height=480,framerate=30/1' ! videomixer name=mix  ! fbdevsink sync=false filesrc location=holidays.mp4 ! decodebin ! queue ! ffmpegcolorspace ! videobox border-alpha=0 left=-640 ! mix.
+
+ sudo gst-launch-1.0 -e -vvv libcamerasrc ! 'video/x-raw,width=640,height=480,framerate=30/1,format=NV12' \
+ ! tee name=t \
+ videomixer name=mix \
+      sink_0::xpos=0 sink_0::ypos=0    sink_0::zorder=0\
+      sink_1::xpos=960 sink_1::ypos=0    sink_1::zorder=1\
+! fakesink sync=false \
+t. ! queue ! mix.sink_0 \
+t. ! queue ! mix.sink_1 
+
+sudo gst-launch-1.0 -e -vvv videotestsrc pattern=1 ! video/x-raw,format=RGB16,framerate=\(fraction\)10/1,width=100,height=100 \
+ ! tee name=t \
+ videomixer name=mix \
+      sink_0::xpos=0 sink_0::ypos=0    sink_0::zorder=0\
+      sink_1::xpos=960 sink_1::ypos=0    sink_1::zorder=1\
+! fbdevsink sync=false \
+t. ! queue ! mix.sink_0 \
+t. ! queue ! mix.sink_1 
+
+sudo gst-launch-1.0 -e -vvv videotestsrc pattern=1 ! video/x-raw,format=RGB16,framerate=\(fraction\)10/1,width=100,height=100 ! fbdevsink sync=false
+
+
+sudo gst-launch-1.0 -e -vvv libcamerasrc ! 'video/x-raw,width=640,height=480,framerate=30/1,format=NV21' ! queue ! tee name=t \
+ videomixer name=mix \
+      sink_0::xpos=0 sink_0::ypos=0    sink_0::zorder=0\
+      sink_1::xpos=960 sink_1::ypos=0    sink_1::zorder=1\
+! videoconvert ! 'format=RGB16' ! fbdevsink sync=false \
+t. ! queue ! mix.sink_0 \
+t. ! queue ! mix.sink_1 
+
+ sudo gst-launch-1.0 -e -vvv libcamerasrc ! 'video/x-raw,width=640,height=480,framerate=30/1,format=NV12' \
+ ! tee name=t \
+ videomixer name=mix \
+      sink_0::xpos=0 sink_0::ypos=0    sink_0::zorder=0\
+      sink_1::xpos=960 sink_1::ypos=0    sink_1::zorder=1\
+! fakesink sync=false \
+t. ! queue ! mix.sink_0 \
+t. ! queue ! mix.sink_1 
