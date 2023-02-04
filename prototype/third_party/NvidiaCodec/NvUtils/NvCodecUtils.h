@@ -45,7 +45,7 @@ inline bool check(int e, int iLine, const char *szFile) {
                 ( (uint32_t)(uint8_t)(ch2) << 16 ) | ( (uint32_t)(uint8_t)(ch3) << 24 ) )
 
 
-inline void cu_check(CUresult e, std::string message) {
+inline void cu_check(CUresult e, const std::string& message) {
     if (e != CUresult::CUDA_SUCCESS) {
         throw std::runtime_error(message + ": " + std::to_string(e));
     }
