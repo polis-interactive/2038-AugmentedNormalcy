@@ -1,7 +1,7 @@
 Starting glfw thread
 Acquired camera: /base/soc/i2c0mux/i2c@1/ov5647@36
 Viewfinder size chosen is 1296x728
-Camera streams configured
+infrastructure streams configured
 Buffers allocated and mapped
 Viewfinder setup complete
 Requests created

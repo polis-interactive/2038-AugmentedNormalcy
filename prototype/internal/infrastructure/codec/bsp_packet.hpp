@@ -7,17 +7,18 @@
 
 #include <cstdint>
 #include <algorithm>
+#include <cstring>
 
 #include "infrastructure/common.hpp"
 
 // Broose Streaming Protocol Packet :D
 
-namespace infrastructure {
+namespace Codec {
     PACK(struct BspPacket {
-        [[nodiscard]] std::size_t PackFrame(const std::vector<uint8_t> &payload, std::shared_ptr<payload_buffer> &buffer) {
+        [[nodiscard]] std::size_t PackFrame(const std::vector<uint8_t> &payload, std::shared_ptr<void> &buffer) {
             data_length = payload.size();
-            memcpy(buffer->data(), this, HeaderSize());
-            memcpy(buffer->data() + HeaderSize(), payload.data(), payload.size());
+            memcpy((uint8_t *) buffer.get(), this, HeaderSize());
+            memcpy((uint8_t *) buffer.get() + HeaderSize(), payload.data(), payload.size());
             return sizeof(BspPacket) - 8 + payload.size();
         }
         [[nodiscard]] static std::size_t HeaderSize() {
@@ -25,25 +26,25 @@ namespace infrastructure {
             return sizeof(BspPacket) - sizeof(uint8_t *);
         }
         [[nodiscard]] static std::unique_ptr<BspPacket> TryParseFrame(
-            const std::shared_ptr<payload_buffer> &buffer, const std::size_t &frame_size
+            const void *buffer, const std::size_t &frame_size
         ) {
              if (frame_size <= sizeof(BspPacket)) {
                  return nullptr;
              }
              auto header = std::make_unique<BspPacket>();
-             memcpy(header.get(), buffer->data(), HeaderSize());
+             memcpy(header.get(), buffer, HeaderSize());
              // make sure data length is valid; should be header minus the start ptr
              if (header->data_length != frame_size - (HeaderSize())) {
                  return nullptr;
              }
-             header->data_start = buffer->data() + HeaderSize();
+             header->data_start = (uint8_t *)buffer + HeaderSize();
              return header;
         }
-        void Pack(std::shared_ptr<payload_buffer> &buffer, const std::size_t &body_size) {
+        void Pack(void *buffer, const std::size_t &body_size) {
             data_length = body_size;
-            memcpy(buffer->data(), this, HeaderSize());
+            memcpy((uint8_t *)buffer, this, HeaderSize());
         }
-        [[nodiscard]] std::size_t PacketSize() {
+        [[nodiscard]] std::size_t PacketSize() const {
             return data_length + HeaderSize();
         }
         uint8_t id;

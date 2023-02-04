@@ -78,11 +78,37 @@ namespace utility {
             available_buffer_tail->_previous_node = node;
             available_buffers++;
         }
+        void FreeRaw(BufferType *buffer_ptr) {
+            auto shared_buffer_itr = std::find_if(
+                buffer_store.begin(), buffer_store.end(),
+                [&buffer_ptr](const std::shared_ptr<BufferType> &store_buffer) {
+                    return store_buffer.get() == buffer_ptr;
+                }
+            );
+            if (shared_buffer_itr == std::end(buffer_store)) {
+                throw std::runtime_error("Trying to free untracked buffer");
+            }
+            std::scoped_lock lock(buffer_mutex);
+            auto node = BufferNode<BufferType>::New();
+            // don't move here or we lose the reference
+            node->_buffer = *shared_buffer_itr;
+            node->_previous_node = available_buffer_tail->_previous_node;
+            available_buffer_tail->_previous_node->_next_node = node;
+            node->_next_node = available_buffer_tail;
+            available_buffer_tail->_previous_node = node;
+            available_buffers++;
+        }
 
-        [[nodiscard]] size_t AvailableBuffers() {
+        [[nodiscard]] std::size_t AvailableBuffers() {
             std::scoped_lock lock(buffer_mutex);
             return available_buffers;
         }
+
+        [[nodiscard]] std::size_t OutboundBuffers() {
+            std::scoped_lock lock(buffer_mutex);
+            return buffer_store.size() - available_buffers;
+        }
+
     private:
         // technically these should be unique ptrs, but in the error
         // case that they point to each other, I guess we "handle" you
@@ -90,7 +116,7 @@ namespace utility {
         std::shared_ptr<BufferNode<BufferType>> available_buffer_tail;
         // this is only to get good memory instantiation on the buffers themselves
         std::vector<std::shared_ptr<BufferType>> buffer_store;
-        size_t available_buffers;
+        std::size_t available_buffers;
         std::mutex buffer_mutex;
     };
 }

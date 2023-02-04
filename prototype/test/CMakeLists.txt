@@ -1,25 +1,30 @@
 
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.18)
 
 project(AugmentedNormalcy_Prototype_Tests LANGUAGES CXX)
 
 include_directories(${root_dir}/third_party/doctest)
 
+# ${CMAKE_CURRENT_SOURCE_DIR}/test_utility/buffer_pool.cpp
+# ${CMAKE_CURRENT_SOURCE_DIR}/test_utility/worker_thread.cpp
+# ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/common.cpp
+# ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/udp.cpp
+# ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/bsp_packet.cpp
+
 set(
     tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_utility/buffer_pool.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_utility/worker_thread.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/common.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/udp.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/bsp_packet.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_infrastructure/codec.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    test_infrastructure/test_camera/camera.cpp
+    test_infrastructure/test_codec/codec.cpp
+    test_system/test_pipeline/camera_encoder.cpp
+    main.cpp
 )
-add_definitions( -DTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}" )
-add_executable(${PROJECT_NAME} ${tests})
-target_link_libraries(${PROJECT_NAME} ${source_library})
-target_include_directories(${PROJECT_NAME} PRIVATE ${source_path})
+add_definitions(-DTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+add_executable(tests ${tests})
 
-target_include_directories(${PROJECT_NAME}
-        PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/include
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>)
+if (AN_PLATFORM STREQUAL RPI)
+    target_link_libraries(tests pthread)
+endif()
+target_link_libraries(tests camera)
+target_link_libraries(tests codec)
+
+target_include_directories(tests PRIVATE ${internal_dir})

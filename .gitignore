@@ -1,12 +1,12 @@
 .idea
 
 build
-cmake-build-debug
-cmake-build-release
-
-cuda
+cmake-*
 
 !hello.cu
 !print.cu
 
 out.nv12
+out.h264
+out.yuv
+out.jpeg
