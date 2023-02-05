@@ -26,18 +26,18 @@ namespace Codec {
             return sizeof(BspPacket) - sizeof(uint8_t *);
         }
         [[nodiscard]] static std::unique_ptr<BspPacket> TryParseFrame(
-            const std::shared_ptr<void> &buffer, const std::size_t &frame_size
+            const void *buffer, const std::size_t &frame_size
         ) {
              if (frame_size <= sizeof(BspPacket)) {
                  return nullptr;
              }
              auto header = std::make_unique<BspPacket>();
-             memcpy(header.get(), buffer.get(), HeaderSize());
+             memcpy(header.get(), buffer, HeaderSize());
              // make sure data length is valid; should be header minus the start ptr
              if (header->data_length != frame_size - (HeaderSize())) {
                  return nullptr;
              }
-             header->data_start = (uint8_t *)buffer.get() + HeaderSize();
+             header->data_start = (uint8_t *)buffer + HeaderSize();
              return header;
         }
         void Pack(std::shared_ptr<void> &buffer, const std::size_t &body_size) {

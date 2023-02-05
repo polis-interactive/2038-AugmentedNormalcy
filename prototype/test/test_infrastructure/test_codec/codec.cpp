@@ -67,7 +67,7 @@ struct RiggedReceiver : Codec::QueuedPayloadReceive {
 
 struct CudaTestConfig : BaseTestConfig {
     [[nodiscard]] Codec::Type get_codec_type() const final {
-        return Codec::Type::Cuda;
+        return Codec::Type::CUDA;
     }
 };
 

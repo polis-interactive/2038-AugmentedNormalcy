@@ -22,8 +22,10 @@ set(root_dir ${CMAKE_CURRENT_LIST_DIR})
 set(internal_dir ${root_dir}/internal)
 set(third_party_dir ${root_dir}/third_party)
 
+include(cmake/platform.cmake)
 include(cmake/codec.cmake)
 
+include_directories(${root_dir}/include)
 include_directories(${internal_dir})
 add_subdirectory(${internal_dir}/infrastructure/codec)
 

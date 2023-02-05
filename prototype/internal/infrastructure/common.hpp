@@ -13,6 +13,19 @@
 #define MAX_FRAME_LENGTH 64000
 #define MAX_REPLY_LENGTH 1024
 
+struct SizedBuffer {
+    virtual void *GetMemory() = 0;
+    virtual std::size_t GetSize() = 0;
+};
+
+struct PayloadSend {
+    virtual void Send(std::shared_ptr<SizedBuffer> &&buffer) = 0;
+};
+
+struct PayloadReceive {
+    [[nodiscard]]  virtual std::shared_ptr<SizedBuffer> GetPayload() = 0;
+};
+
 using payload_buffer = std::array<uint8_t, MAX_FRAME_LENGTH>;
 using payload_buffer_pool = utility::BufferPool<payload_buffer>;
 

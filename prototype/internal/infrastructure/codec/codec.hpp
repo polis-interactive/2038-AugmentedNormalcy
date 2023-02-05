@@ -16,7 +16,8 @@
 namespace Codec {
 
     enum class Type {
-        Cuda,
+        CUDA,
+        V4L2,
     };
 
     struct Config {
@@ -31,11 +32,6 @@ namespace Codec {
         [[nodiscard]] static std::shared_ptr<Context> Create(const Config &config);
     };
 
-    struct PayloadSend {
-        [[nodiscard]] virtual std::shared_ptr<void> GetBuffer() = 0;
-        virtual void Send(std::shared_ptr<void> &&buffer, std::size_t buffer_size) = 0;
-    };
-
     class Encoder {
     public:
         [[nodiscard]] static std::shared_ptr<Encoder> Create(
@@ -47,7 +43,7 @@ namespace Codec {
         void Start() {
             _wt->Start();
         }
-        void QueueEncode(std::shared_ptr<void> &&buffer) {
+        void QueueEncode(std::shared_ptr<PayloadReceive> &&buffer) {
             _wt->PostWork(std::move(buffer));
         }
         void Stop() {
@@ -75,13 +71,8 @@ namespace Codec {
 
         void TryEncode(std::shared_ptr<void> &&buffer);
 
-        std::shared_ptr<utility::WorkerThread<void>> _wt;
+        std::shared_ptr<utility::WorkerThread<PayloadReceive>> _wt;
         std::shared_ptr<PayloadSend> _payload_sender;
-    };
-
-    using payload_tuple = std::pair<std::shared_ptr<void>, std::size_t>;
-    struct QueuedPayloadReceive {
-        [[nodiscard]]  virtual payload_tuple GetPayload() = 0;
     };
 
     class Decoder {
@@ -98,7 +89,7 @@ namespace Codec {
         void Start() {
             _wt->Start();
         }
-        void QueueDecode(std::shared_ptr<QueuedPayloadReceive> &&qp) {
+        void QueueDecode(std::shared_ptr<PayloadReceive> &&qp) {
             _wt->PostWork(std::move(qp));
         }
         void Stop() {
@@ -118,8 +109,8 @@ namespace Codec {
         virtual void TryFreeMemory() = 0;
         virtual void StopDecoder() = 0;
 
-        void TryDecode(std::shared_ptr<QueuedPayloadReceive> &&qp);
-        std::shared_ptr<utility::WorkerThread<QueuedPayloadReceive>> _wt;
+        void TryDecode(std::shared_ptr<PayloadReceive> &&qp);
+        std::shared_ptr<utility::WorkerThread<PayloadReceive>> _wt;
 
     };
 }
