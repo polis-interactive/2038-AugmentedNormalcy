@@ -245,6 +245,17 @@ private:
         const int height = 864;
         const int stride = 1536;
 
+        v4l2_capability cap = {};
+        if(xioctl(VIDIOC_QUERYCAP, &cap) < 0){
+            std::cout << "couldn't query caps" << std::endl;
+            throw std::runtime_error("couldn't SET FORMAT");
+        }
+
+        if(!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)){
+            std::cout << "The device does not handle single-planar video capture" << std::endl;
+            throw std::runtime_error("bad caps");
+        }
+
         v4l2_format format {};
         int ret;
         format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
@@ -254,9 +265,9 @@ private:
         // like info.pixel_format.toV4L2Fourcc();
         format.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_YUV420;
         format.fmt.pix_mp.plane_fmt[0].bytesperline = stride;
-        format.fmt.pix_mp.field = V4L2_FIELD_ANY;
+        format.fmt.pix_mp.field = V4L2_FIELD_NONE;
         // this may need to be rec601...
-        format.fmt.pix_mp.colorspace = V4L2_COLORSPACE_SMPTE170M;
+        format.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
         format.fmt.pix_mp.num_planes = 1;
         ret = xioctl(VIDIOC_S_FMT, &format);
         if (ret < 0) {
