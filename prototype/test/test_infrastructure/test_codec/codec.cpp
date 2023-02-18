@@ -258,7 +258,7 @@ private:
 
         v4l2_format format = {};
         format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        format.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR10P;
+        format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
         format.fmt.pix.width = 1536;
         format.fmt.pix.height = 864;
         format.fmt.pix.bytesperline = 1536;
