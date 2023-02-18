@@ -271,7 +271,7 @@ private:
 
         v4l2_requestbuffers rb = {};
         rb.count = 1;
-        rb.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        rb.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         rb.memory = V4L2_MEMORY_MMAP;
         ret = xioctl(VIDIOC_REQBUFS, &rb);
         if (ret < 0) {
