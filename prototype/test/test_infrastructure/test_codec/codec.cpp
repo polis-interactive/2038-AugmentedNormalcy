@@ -247,7 +247,7 @@ private:
 
         v4l2_format format {};
         int ret;
-        format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        format.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         format.fmt.pix_mp.width = width;
         format.fmt.pix_mp.height = height;
         // We assume YUV420 here, but it would be nice if we could do something
