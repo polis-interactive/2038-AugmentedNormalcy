@@ -308,11 +308,13 @@ private:
         }
 
         auto mem = mmap(
-            nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd,
-            buffer.m.planes[0].m.mem_offset
+            nullptr, buffer.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd,
+            buffer.m.offset
         );
         auto size = buffer.m.planes[0].length;
         _buffer = std::shared_ptr<CameraBuffer>(new CameraBuffer(mem, expbuf.fd, size), [](CameraBuffer *c) {});
+
+        std::cout << "Created buffer" << std::endl;
     }
     void destroyBuffer() {
         if (munmap(_buffer->GetMemory(), _buffer->GetSize()) < 0) {
