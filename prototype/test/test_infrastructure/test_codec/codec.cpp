@@ -286,7 +286,7 @@ private:
         }
 
         v4l2_buffer buffer = {};
-        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         buffer.memory = V4L2_MEMORY_MMAP;
         buffer.index = 1;
 
@@ -297,7 +297,7 @@ private:
         }
 
         struct v4l2_exportbuffer expbuf = {};
-        expbuf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+        expbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         expbuf.index = 1;
         expbuf.flags = O_RDWR;
 
