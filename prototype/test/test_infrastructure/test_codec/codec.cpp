@@ -392,8 +392,6 @@ TEST_CASE("Let's just get an encoder running") {
         buffer->_bytes_used = 1990656;
         enc->QueueEncode(std::move(buffer));
         std::this_thread::sleep_for(50ms);
-        enc->QueueEncode(std::move(buffer));
-        std::this_thread::sleep_for(50ms);
         REQUIRE(std::filesystem::exists(out_frame));
     }
     enc->Stop();

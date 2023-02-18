@@ -311,6 +311,7 @@ namespace Codec {
         buf.m.planes = planes;
         ret = xioctl(_encoder_fd, VIDIOC_DQBUF, &buf);
         if (ret == 0) {
+            std::cout << buf.m.planes[0].bytesused << std::endl;
             auto &downstream_buffer = _downstream_buffers.at(buf.index);
             downstream_buffer->bytes_used = buf.m.planes[0].bytesused;
             return downstream_buffer;
