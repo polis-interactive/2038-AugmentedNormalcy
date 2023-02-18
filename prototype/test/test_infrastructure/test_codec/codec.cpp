@@ -241,18 +241,34 @@ private:
     }
     void createBuffer() {
 
-        v4l2_requestbuffers rb = {};
+        v4l2_format format {};
         int ret;
+        format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
+        format.fmt.pix.width = 1536;
+        format.fmt.pix.height = 864;
+        format.fmt.pix.bytesperline = 1536;
+        format.fmt.pix.field = V4L2_FIELD_NONE;
+        ret = xioctl(VIDIOC_S_FMT, &format);
+        if (ret < 0) {
+            std::cout << "couldn't SET FORMAT" << std::endl;
+            throw std::runtime_error("couldn't SET FORMAT");
+        }
+
+        v4l2_requestbuffers rb = {};
         rb.count = 1;
         rb.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
         rb.memory = V4L2_MEMORY_MMAP;
         ret = xioctl(VIDIOC_REQBUFS, &rb);
         if (ret < 0) {
+            std::cout << "couldn't request buffer" << std::endl;
             throw std::runtime_error("couldn't request buffer");
         } else if (rb.count != 1) {
+            std::cout << "couldn't request buffer for 1" << std::endl;
             throw std::runtime_error("couldn't request buffer for 1");
 
         }
+
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
@@ -264,6 +280,7 @@ private:
 
         ret = xioctl(VIDIOC_QUERYBUF, &buffer);
         if (ret < 0) {
+            std::cout << "couldn't create buffer" << std::endl;
             throw std::runtime_error("couldn't create buffer");
         }
 
@@ -275,6 +292,7 @@ private:
 
         ret = xioctl(VIDIOC_QUERYBUF, &expbuf);
         if (ret < 0) {
+            std::cout << "couldn't export buffer" << std::endl;
             throw std::runtime_error("couldn't export buffer");
         }
 
@@ -287,6 +305,7 @@ private:
     }
     void destroyBuffer() {
         if (munmap(_buffer->GetMemory(), _buffer->GetSize()) < 0) {
+            std::cout << "Couldn't free mmap buffers" << std::endl;
             throw std::runtime_error("Couldn't free mmap buffers");
         }
 
@@ -297,6 +316,7 @@ private:
         rb.memory = V4L2_MEMORY_MMAP;
         ret = xioctl(VIDIOC_REQBUFS, &rb);
         if (ret < 0) {
+            std::cout << "couldn't delete buffer" << std::endl;
             throw std::runtime_error("couldn't delete buffer");
         }
 
