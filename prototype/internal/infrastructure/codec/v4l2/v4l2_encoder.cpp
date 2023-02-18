@@ -158,7 +158,7 @@ namespace Codec {
         // buffers from downstream
         reqbufs = {};
         reqbufs.count = downstream_buffers_count;
-        reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         reqbufs.memory = V4L2_MEMORY_MMAP;
         if (xioctl(_encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
             throw std::runtime_error("request for capture buffers failed");

@@ -307,7 +307,7 @@ private:
             throw std::runtime_error("couldn't export buffer");
         }
         std::cout << "Making for buffer length: " << buffer.length << std::endl;
-        std::cout << "Making for buffer offset: " << buffer.length << std::endl;
+        std::cout << "Making for buffer offset: " << buffer.m.offset << std::endl;
         auto mem = mmap(
             nullptr, buffer.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd,
             buffer.m.offset
