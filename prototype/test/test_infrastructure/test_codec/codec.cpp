@@ -278,7 +278,6 @@ private:
             std::cout << "couldn't request buffer" << ret << std::endl;
             throw std::runtime_error("couldn't request buffer");
         }
-        std::cout << "Got buffers: " << rb.count << std::endl;
         if (rb.count < 1) {
             std::cout << "couldn't request 1 buffer? " << ret << std::endl;
             throw std::runtime_error("couldn't request buffer for 1");
@@ -306,14 +305,10 @@ private:
             std::cout << "couldn't export buffer" << ret << std::endl;
             throw std::runtime_error("couldn't export buffer");
         }
-        std::cout << "Making for buffer length: " << buffer.length << std::endl;
-        std::cout << "Making for buffer offset: " << buffer.m.offset << std::endl;
         auto mem = mmap(
             nullptr, buffer.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd,
             buffer.m.offset
         );
-        std::cout << "Main fd:" << _fd << std::endl;
-        std::cout << "Export fd:" << expbuf.fd << std::endl;
         auto size = buffer.length;
         _buffer = std::shared_ptr<CameraBuffer>(new CameraBuffer(mem, expbuf.fd, size), [](CameraBuffer *c) {});
 
@@ -364,7 +359,6 @@ TEST_CASE("Let's just get an encoder running") {
 
     std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
     auto callback = [&out_frame, &out_time](std::shared_ptr<void> out_buffer){
-        std::cout << "Made it to the output step" << std::endl;
         auto payload_buffer = std::static_pointer_cast<SizedPayloadBuffer>(out_buffer);
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
@@ -399,12 +393,10 @@ TEST_CASE("Let's just get an encoder running") {
         std::this_thread::sleep_for(50ms);
         REQUIRE(std::filesystem::exists(out_frame));
     }
-    std::cout << "do I get here?" << std::endl;
     enc->Stop();
-    std::cout << "do I get here x2?" << std::endl;
 
     delete []data;
-    auto d1 = std::chrono::duration_cast<std::chrono::microseconds>(out_time - in_time);
+    auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
     std::cout << "Time to encode: " << d1.count() << std::endl;
 
 }
