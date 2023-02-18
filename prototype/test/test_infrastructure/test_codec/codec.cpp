@@ -362,6 +362,7 @@ TEST_CASE("Let's just get an encoder running") {
         auto payload_buffer = std::static_pointer_cast<SizedPayloadBuffer>(out_buffer);
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+        std::cout << payload_buffer->GetSize() << std::endl;
         test_file_out.write(reinterpret_cast<char*>(payload_buffer->GetMemory()), payload_buffer->GetSize());
         test_file_out.flush();
         test_file_out.close();
