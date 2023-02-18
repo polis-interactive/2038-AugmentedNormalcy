@@ -31,6 +31,7 @@ struct CameraBuffer: public SizedBuffer {
     }
     void *_buffer;
     int _fd;
+    std::size_t _bytes_used;
     std::size_t _size;
 
 };
