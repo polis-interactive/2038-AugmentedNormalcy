@@ -50,7 +50,7 @@ namespace Codec {
         // this is probably different on the jetson... hell it just fails on my linux laptop
         const char device_name[] = "/dev/video11";
 #endif
-        _encoder_fd = open(device_name, O_RDWR, 0);
+        _encoder_fd = open(device_name, O_RDWR | O_NONBLOCK, 0);
         if (_encoder_fd < 0) {
             std::cerr << "failed to open V4L2 H264 encoder" << std::endl;
             throw std::runtime_error("failed to open V4L2 H264 encoder");
