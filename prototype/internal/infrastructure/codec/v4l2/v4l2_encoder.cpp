@@ -242,7 +242,6 @@ namespace Codec {
             if (st.stop_requested()) {
                 break;
             } else if (!encoder_ready) {
-                std::cout << "not ready!" << std::endl;
                 continue;
             }
             std::cout << "got to outputing!" << std::endl;
@@ -262,7 +261,7 @@ namespace Codec {
         int attempts = 3;
         while (attempts > 0) {
             pollfd p = { _encoder_fd, POLLIN, 0 };
-            int ret = poll(&p, 1, 10);
+            int ret = poll(&p, 1, 100);
             if (ret == -1) {
                 if (errno == EINTR)
                     continue;

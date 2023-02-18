@@ -395,7 +395,7 @@ TEST_CASE("Let's just get an encoder running") {
         in_time = Clock::now();
         buffer->_size = 1990656;
         enc->QueueEncode(std::move(buffer));
-        std::this_thread::sleep_for(200ms);
+        std::this_thread::sleep_for(2s);
         REQUIRE(std::filesystem::exists(out_frame));
     }
     std::cout << "do I get here?" << std::endl;
