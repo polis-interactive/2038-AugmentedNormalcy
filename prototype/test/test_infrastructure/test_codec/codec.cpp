@@ -306,12 +306,13 @@ private:
             std::cout << "couldn't export buffer" << ret << std::endl;
             throw std::runtime_error("couldn't export buffer");
         }
-
+        std::cout << "Making for buffer length: " << buffer.length << std::endl;
+        std::cout << "Making for buffer offset: " << buffer.length << std::endl;
         auto mem = mmap(
             nullptr, buffer.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd,
             buffer.m.offset
         );
-        auto size = buffer.m.planes[0].length;
+        auto size = buffer.length;
         _buffer = std::shared_ptr<CameraBuffer>(new CameraBuffer(mem, expbuf.fd, size), [](CameraBuffer *c) {});
 
         std::cout << "Created buffer" << std::endl;
