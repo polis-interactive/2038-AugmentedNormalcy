@@ -208,6 +208,7 @@ TEST_CASE("Let's do an encode, decode cycle") {
 #include <fcntl.h>
 #include <linux/videodev2.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 struct V4l2TestConfig : BaseTestConfig {
     [[nodiscard]] Codec::Type get_codec_type() const final {

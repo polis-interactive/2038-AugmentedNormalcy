@@ -7,6 +7,7 @@
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <poll.h>
+#include <unistd.h>
 
 #include <linux/videodev2.h>
 #include "preprocessor.hpp"
