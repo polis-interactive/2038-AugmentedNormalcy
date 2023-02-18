@@ -312,6 +312,8 @@ private:
             nullptr, buffer.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd,
             buffer.m.offset
         );
+        std::cout << "Main fd:" << _fd << std::endl;
+        std::cout << "Export fd:" << expbuf.fd << std::endl;
         auto size = buffer.length;
         _buffer = std::shared_ptr<CameraBuffer>(new CameraBuffer(mem, expbuf.fd, size), [](CameraBuffer *c) {});
 
