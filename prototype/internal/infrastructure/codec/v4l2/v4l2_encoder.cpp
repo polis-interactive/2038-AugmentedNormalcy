@@ -24,7 +24,7 @@ namespace Codec {
         type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
         if (xioctl(_encoder_fd, VIDIOC_STREAMON, &type) < 0)
             throw std::runtime_error("failed to start capture streaming");
-        std::cout << "H264 encoder started"
+        std::cout << "H264 encoder started" << std::endl;
         if (!_downstream_thread) {
             _downstream_thread = std::make_unique<std::jthread>(std::bind_front(&V4l2Encoder::HandleDownstream, this));
         }
