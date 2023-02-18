@@ -26,10 +26,10 @@ namespace Codec {
     private:
         struct BufferDescription
         {
-            void *mem;
-            std::size_t size;
-            std::size_t index;
-            std::size_t bytes_used;
+            void *mem = nullptr;
+            std::size_t size = 0;
+            std::size_t index = -1;
+            std::size_t bytes_used = 0;
         };
 
         void CreateEncoder(const Config &config, std::shared_ptr<Context> &context) final;

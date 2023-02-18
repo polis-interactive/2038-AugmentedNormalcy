@@ -55,7 +55,7 @@ namespace Codec {
             std::cerr << "failed to open V4L2 H264 encoder" << std::endl;
             throw std::runtime_error("failed to open V4L2 H264 encoder");
         }
-        std::cout << "Opened H264Encoder on " << device_name << " as fd " << _encoder_fd;
+        std::cout << "Opened H264Encoder on " << device_name << " as fd " << _encoder_fd << std::endl;
 
         SetupEncoder(config);
         SetupBuffers(config.get_camera_buffer_count(), config.get_encoder_buffer_count());
@@ -180,7 +180,7 @@ namespace Codec {
             buffer.m.planes = planes;
             if (xioctl(_encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
                 throw std::runtime_error("failed to capture query buffer " + std::to_string(i));
-            auto &b = _downstream_buffers.at(i);
+            auto b = std::make_shared<BufferDescription>();
             std::cout << "Buffer length: " << buffer.m.planes[0].length << std::endl;
             std::cout << "Buffer offset: " << buffer.m.planes[0].m.mem_offset << std::endl;
             b->size = buffer.m.planes[0].length;
@@ -192,6 +192,8 @@ namespace Codec {
             );
             if (b->mem == MAP_FAILED)
                 throw std::runtime_error("failed to mmap capture buffer " + std::to_string(i));
+
+            _downstream_buffers[i] = b;
             // Whilst we're going through all the capture buffers, we may as well queue
             // them ready for the encoder to write into.
             if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
