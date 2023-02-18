@@ -285,14 +285,10 @@ private:
 
         }
 
-
-        v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
-        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         buffer.memory = V4L2_MEMORY_MMAP;
         buffer.index = 1;
-        buffer.length = 1;
-        buffer.m.planes = planes;
 
         ret = xioctl(VIDIOC_QUERYBUF, &buffer);
         if (ret < 0) {
@@ -301,9 +297,8 @@ private:
         }
 
         struct v4l2_exportbuffer expbuf = {};
-        expbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        expbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         expbuf.index = 1;
-        expbuf.plane = 0;
         expbuf.flags = O_RDWR;
 
         ret = xioctl(VIDIOC_QUERYBUF, &expbuf);
