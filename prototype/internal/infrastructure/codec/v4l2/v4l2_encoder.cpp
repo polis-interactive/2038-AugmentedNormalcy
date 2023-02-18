@@ -227,7 +227,7 @@ namespace Codec {
         buf.length = 1;
         buf.m.planes = planes;
         buf.m.planes[0].m.fd = input_buffer->GetFd();
-        buf.m.planes[0].bytesused = input_buffer->_bytes_used;
+        buf.m.planes[0].bytesused = input_buffer->GetSize();
         buf.m.planes[0].length = input_buffer->GetSize();
         auto ret = xioctl(_encoder_fd, VIDIOC_QBUF, &buf);
         if (ret < 0) {

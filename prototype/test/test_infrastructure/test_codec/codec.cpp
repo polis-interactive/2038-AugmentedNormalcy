@@ -389,7 +389,7 @@ TEST_CASE("Let's just get an encoder running") {
         auto buffer = dev.GetBuffer();
         memcpy(buffer->GetMemory(), data, 1990656);
         in_time = Clock::now();
-        buffer->_bytes_used = 1990656;
+        buffer->_size = 1990656;
         enc->QueueEncode(std::move(buffer));
         std::this_thread::sleep_for(50ms);
         REQUIRE(std::filesystem::exists(out_frame));
