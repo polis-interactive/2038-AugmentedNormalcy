@@ -6,11 +6,15 @@
 
 #include <memory>
 
+#ifdef _CUDA_CODEC_
 #include "cuda/cuda_codec.hpp"
 #include "cuda/cuda_decoder.hpp"
 #include "cuda/cuda_encoder.hpp"
+#endif
 
+#ifdef _V4L2_CODEC_
 #include "v4l2/v4l2_encoder.hpp"
+#endif
 
 namespace Codec {
 
