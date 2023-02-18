@@ -77,8 +77,6 @@ namespace Codec {
         const int height = 864;
         const int stride = 1536;
 
-        /*
-
         v4l2_control ctrl = {};
 
         // set profile
@@ -111,7 +109,6 @@ namespace Codec {
         ctrl.value = 2147483647;
         if (xioctl(_encoder_fd, VIDIOC_S_CTRL, &ctrl) < 0)
             throw std::runtime_error("failed to set bitrate");
-        */
 
         v4l2_format fmt = {};
         fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -143,8 +140,8 @@ namespace Codec {
 
         struct v4l2_streamparm parm = {};
         parm.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        parm.parm.output.timeperframe.numerator = 1000 / config.get_fps();
-        parm.parm.output.timeperframe.denominator = 1000;
+        parm.parm.output.timeperframe.numerator = 90000 / config.get_fps();
+        parm.parm.output.timeperframe.denominator = 90000;
         if (xioctl(_encoder_fd, VIDIOC_S_PARM, &parm) < 0)
             throw std::runtime_error("failed to set streamparm");
     }
