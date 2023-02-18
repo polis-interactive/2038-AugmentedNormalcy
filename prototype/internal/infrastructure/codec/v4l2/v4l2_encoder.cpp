@@ -181,14 +181,17 @@ namespace Codec {
             if (xioctl(_encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
                 throw std::runtime_error("failed to capture query buffer " + std::to_string(i));
             auto &b = _downstream_buffers.at(i);
+            std::cout << "Buffer length: " << buffer.m.planes[0].length << std::endl;
+            std::cout << "Buffer offset: " << buffer.m.planes[0].m.mem_offset << std::endl;
+            b->size = buffer.m.planes[0].length;
+            b->index = i;
+            std::cout << "Is mmap the troubler?" << std::endl;
             b->mem = mmap(
                 nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, _encoder_fd,
                 buffer.m.planes[0].m.mem_offset
             );
             if (b->mem == MAP_FAILED)
                 throw std::runtime_error("failed to mmap capture buffer " + std::to_string(i));
-            b->size = buffer.m.planes[0].length;
-            b->index = i;
             // Whilst we're going through all the capture buffers, we may as well queue
             // them ready for the encoder to write into.
             if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
