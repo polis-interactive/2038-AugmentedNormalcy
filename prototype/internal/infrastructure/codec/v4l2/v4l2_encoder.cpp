@@ -232,7 +232,7 @@ namespace Codec {
             std::lock_guard<std::mutex> lock(_input_buffers_processing_mutex);
             _input_buffers_processing.push(std::move(buffer));
         }
-
+        std::cout << "queued" << std::endl;
     }
 
 
@@ -242,8 +242,10 @@ namespace Codec {
             if (st.stop_requested()) {
                 break;
             } else if (!encoder_ready) {
+                std::cout << "not ready!" << std::endl;
                 continue;
             }
+            std::cout << "got to outputing!" << std::endl;
             auto downstream_buffer = GetDownstreamBuffer();
             if (!downstream_buffer) {
                 // pretty sure we are actually fkd here, need a way to recover...
