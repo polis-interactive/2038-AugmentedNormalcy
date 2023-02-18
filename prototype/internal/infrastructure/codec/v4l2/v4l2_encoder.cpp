@@ -251,7 +251,6 @@ namespace Codec {
             } else if (!encoder_ready) {
                 continue;
             }
-            std::cout << "got to outputing!" << std::endl;
             auto downstream_buffer = GetDownstreamBuffer();
             if (!downstream_buffer) {
                 // pretty sure we are actually fkd here, need a way to recover...

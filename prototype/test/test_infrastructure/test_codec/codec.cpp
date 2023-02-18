@@ -364,6 +364,7 @@ TEST_CASE("Let's just get an encoder running") {
 
     std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
     auto callback = [&out_frame, &out_time](std::shared_ptr<void> out_buffer){
+        std::cout << "Made it to the output step" << std::endl;
         auto payload_buffer = std::static_pointer_cast<SizedPayloadBuffer>(out_buffer);
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
@@ -395,7 +396,7 @@ TEST_CASE("Let's just get an encoder running") {
         in_time = Clock::now();
         buffer->_bytes_used = 1990656;
         enc->QueueEncode(std::move(buffer));
-        std::this_thread::sleep_for(2s);
+        std::this_thread::sleep_for(50ms);
         REQUIRE(std::filesystem::exists(out_frame));
     }
     std::cout << "do I get here?" << std::endl;
