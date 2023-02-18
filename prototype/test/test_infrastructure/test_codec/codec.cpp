@@ -256,20 +256,14 @@ private:
             throw std::runtime_error("bad caps");
         }
 
-        v4l2_format format {};
-        int ret;
-        format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        format.fmt.pix_mp.width = width;
-        format.fmt.pix_mp.height = height;
-        // We assume YUV420 here, but it would be nice if we could do something
-        // like info.pixel_format.toV4L2Fourcc();
-        format.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_YUV420;
-        format.fmt.pix_mp.plane_fmt[0].bytesperline = stride;
-        format.fmt.pix_mp.field = V4L2_FIELD_NONE;
-        // this may need to be rec601...
-        format.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
-        format.fmt.pix_mp.num_planes = 1;
-        ret = xioctl(VIDIOC_S_FMT, &format);
+        v4l2_format format = {};
+        format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        format.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR10P;
+        format.fmt.pix.width = 1640;
+        format.fmt.pix.height = 1232;
+        format.fmt.pix.bytesperline = 2080;
+        format.fmt.pix.field = V4L2_FIELD_NONE;
+        int ret = xioctl(VIDIOC_S_FMT, &format);
         if (ret < 0) {
             std::cout << "couldn't SET FORMAT: " << ret << std::endl;
             throw std::runtime_error("couldn't SET FORMAT");
