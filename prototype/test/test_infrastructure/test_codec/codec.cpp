@@ -260,7 +260,7 @@ private:
         format.fmt.pix_mp.num_planes = 1;
         ret = xioctl(VIDIOC_S_FMT, &format);
         if (ret < 0) {
-            std::cout << "couldn't SET FORMAT" << std::endl;
+            std::cout << "couldn't SET FORMAT: " << ret << std::endl;
             throw std::runtime_error("couldn't SET FORMAT");
         }
 
@@ -270,10 +270,10 @@ private:
         rb.memory = V4L2_MEMORY_MMAP;
         ret = xioctl(VIDIOC_REQBUFS, &rb);
         if (ret < 0) {
-            std::cout << "couldn't request buffer" << std::endl;
+            std::cout << "couldn't request buffer" << ret << std::endl;
             throw std::runtime_error("couldn't request buffer");
         } else if (rb.count != 1) {
-            std::cout << "couldn't request buffer for 1" << std::endl;
+            std::cout << "couldn't request buffer for 1" << ret << std::endl;
             throw std::runtime_error("couldn't request buffer for 1");
 
         }
@@ -289,7 +289,7 @@ private:
 
         ret = xioctl(VIDIOC_QUERYBUF, &buffer);
         if (ret < 0) {
-            std::cout << "couldn't create buffer" << std::endl;
+            std::cout << "couldn't create buffer" << ret << std::endl;
             throw std::runtime_error("couldn't create buffer");
         }
 
@@ -301,7 +301,7 @@ private:
 
         ret = xioctl(VIDIOC_QUERYBUF, &expbuf);
         if (ret < 0) {
-            std::cout << "couldn't export buffer" << std::endl;
+            std::cout << "couldn't export buffer" << ret << std::endl;
             throw std::runtime_error("couldn't export buffer");
         }
 
@@ -325,7 +325,7 @@ private:
         rb.memory = V4L2_MEMORY_MMAP;
         ret = xioctl(VIDIOC_REQBUFS, &rb);
         if (ret < 0) {
-            std::cout << "couldn't delete buffer" << std::endl;
+            std::cout << "couldn't delete buffer" << ret << std::endl;
             throw std::runtime_error("couldn't delete buffer");
         }
 
