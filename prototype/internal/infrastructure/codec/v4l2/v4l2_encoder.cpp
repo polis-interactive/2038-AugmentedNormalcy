@@ -144,7 +144,7 @@ namespace Codec {
         v4l2_requestbuffers reqbufs = {};
         reqbufs.count = camera_buffer_count;
         reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        reqbufs.memory = V4L2_MEMORY_MMAP;
+        reqbufs.memory = V4L2_MEMORY_DMABUF;
         if (xioctl(_encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
             throw std::runtime_error("request for output buffers failed");
         }
@@ -158,7 +158,7 @@ namespace Codec {
         // buffers from downstream
         reqbufs = {};
         reqbufs.count = downstream_buffers_count;
-        reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
         reqbufs.memory = V4L2_MEMORY_MMAP;
         if (xioctl(_encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
             throw std::runtime_error("request for capture buffers failed");
@@ -215,7 +215,7 @@ namespace Codec {
         buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         buf.index = index;
         buf.field = V4L2_FIELD_NONE;
-        buf.memory = V4L2_MEMORY_MMAP;
+        buf.memory = V4L2_MEMORY_DMABUF;
         buf.length = 1;
         buf.m.planes = planes;
         buf.m.planes[0].m.fd = input_buffer->GetFd();
