@@ -9,6 +9,7 @@ endif()
 
 if (V4L2_AVAILABLE)
     set(SOURCES ${SOURCES} v4l2/v4l2_encoder.cpp)
+    set(TARGET_LIBS pthread ${LIBCAMERA_LINK_LIBRARIES})
 endif()
 
 add_library(codec STATIC ${SOURCES})
