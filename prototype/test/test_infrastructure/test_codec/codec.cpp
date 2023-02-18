@@ -259,9 +259,9 @@ private:
         v4l2_format format = {};
         format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         format.fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR10P;
-        format.fmt.pix.width = 1640;
-        format.fmt.pix.height = 1232;
-        format.fmt.pix.bytesperline = 2080;
+        format.fmt.pix.width = 1536;
+        format.fmt.pix.height = 864;
+        format.fmt.pix.bytesperline = 1536;
         format.fmt.pix.field = V4L2_FIELD_NONE;
         int ret = xioctl(VIDIOC_S_FMT, &format);
         if (ret < 0) {
@@ -277,8 +277,10 @@ private:
         if (ret < 0) {
             std::cout << "couldn't request buffer" << ret << std::endl;
             throw std::runtime_error("couldn't request buffer");
-        } else if (rb.count != 1) {
-            std::cout << "couldn't request buffer for 1" << ret << std::endl;
+        }
+        std::cout << "Got buffers: " << rb.count << std::endl;
+        if (rb.count < 1) {
+            std::cout << "couldn't request 1 buffer? " << ret << std::endl;
             throw std::runtime_error("couldn't request buffer for 1");
 
         }
