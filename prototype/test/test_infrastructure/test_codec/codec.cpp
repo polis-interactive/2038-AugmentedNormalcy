@@ -361,7 +361,9 @@ TEST_CASE("Let's just get an encoder running") {
         std::this_thread::sleep_for(50ms);
         REQUIRE(std::filesystem::exists(out_frame));
     }
+    std::cout << "do I get here?" << std::endl;
     enc->Stop();
+    std::cout << "do I get here x2?" << std::endl;
 
     delete []data;
     auto d1 = std::chrono::duration_cast<std::chrono::microseconds>(out_time - in_time);

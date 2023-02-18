@@ -181,11 +181,8 @@ namespace Codec {
             if (xioctl(_encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
                 throw std::runtime_error("failed to capture query buffer " + std::to_string(i));
             auto b = std::make_shared<BufferDescription>();
-            std::cout << "Buffer length: " << buffer.m.planes[0].length << std::endl;
-            std::cout << "Buffer offset: " << buffer.m.planes[0].m.mem_offset << std::endl;
             b->size = buffer.m.planes[0].length;
             b->index = i;
-            std::cout << "Is mmap the troubler?" << std::endl;
             b->mem = mmap(
                 nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, _encoder_fd,
                 buffer.m.planes[0].m.mem_offset
@@ -199,6 +196,8 @@ namespace Codec {
             if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
                 throw std::runtime_error("failed to queue capture buffer " + std::to_string(i));
         }
+
+        std::cout << "V4l2 Encoder made buffers" << std::endl;
     }
 
     void V4l2Encoder::TryEncode(std::shared_ptr<void> &&buffer) {
