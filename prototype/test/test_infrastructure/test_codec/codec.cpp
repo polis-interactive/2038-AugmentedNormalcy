@@ -287,7 +287,7 @@ private:
 
         v4l2_buffer buffer = {};
         buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        buffer.memory = V4L2_MEMORY_DMABUF;
+        buffer.memory = V4L2_MEMORY_MMAP;
         buffer.index = 1;
 
         ret = xioctl(VIDIOC_QUERYBUF, &buffer);
