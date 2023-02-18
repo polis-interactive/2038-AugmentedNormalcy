@@ -272,7 +272,7 @@ private:
         v4l2_requestbuffers rb = {};
         rb.count = 1;
         rb.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        rb.memory = V4L2_MEMORY_MMAP;
+        rb.memory = V4L2_MEMORY_DMABUF;
         ret = xioctl(VIDIOC_REQBUFS, &rb);
         if (ret < 0) {
             std::cout << "couldn't request buffer" << ret << std::endl;
@@ -287,7 +287,7 @@ private:
 
         v4l2_buffer buffer = {};
         buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.memory = V4L2_MEMORY_DMABUF;
         buffer.index = 1;
 
         ret = xioctl(VIDIOC_QUERYBUF, &buffer);
