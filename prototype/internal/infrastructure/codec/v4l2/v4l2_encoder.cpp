@@ -261,7 +261,7 @@ namespace Codec {
         int attempts = 3;
         while (attempts > 0) {
             pollfd p = { _encoder_fd, POLLIN, 0 };
-            int ret = poll(&p, 1, 100);
+            int ret = poll(&p, 1, 200);
             if (ret == -1) {
                 if (errno == EINTR)
                     continue;

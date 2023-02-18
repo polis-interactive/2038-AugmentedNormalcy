@@ -271,7 +271,7 @@ private:
 
         v4l2_requestbuffers rb = {};
         rb.count = 1;
-        rb.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        rb.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
         rb.memory = V4L2_MEMORY_MMAP;
         ret = xioctl(VIDIOC_REQBUFS, &rb);
         if (ret < 0) {
@@ -286,7 +286,7 @@ private:
         }
 
         v4l2_buffer buffer = {};
-        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
         buffer.memory = V4L2_MEMORY_MMAP;
         buffer.index = 1;
 
@@ -297,7 +297,7 @@ private:
         }
 
         struct v4l2_exportbuffer expbuf = {};
-        expbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        expbuf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
         expbuf.index = 1;
         expbuf.flags = O_RDWR;
 
