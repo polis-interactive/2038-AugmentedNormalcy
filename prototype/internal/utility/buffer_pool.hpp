@@ -79,10 +79,16 @@ namespace utility {
             available_buffers++;
         }
 
-        [[nodiscard]] size_t AvailableBuffers() {
+        [[nodiscard]] std::size_t AvailableBuffers() {
             std::scoped_lock lock(buffer_mutex);
             return available_buffers;
         }
+
+        [[nodiscard]] std::size_t OutboundBuffers() {
+            std::scoped_lock lock(buffer_mutex);
+            return buffer_store.size() - available_buffers;
+        }
+
     private:
         // technically these should be unique ptrs, but in the error
         // case that they point to each other, I guess we "handle" you
@@ -90,7 +96,7 @@ namespace utility {
         std::shared_ptr<BufferNode<BufferType>> available_buffer_tail;
         // this is only to get good memory instantiation on the buffers themselves
         std::vector<std::shared_ptr<BufferType>> buffer_store;
-        size_t available_buffers;
+        std::size_t available_buffers;
         std::mutex buffer_mutex;
     };
 }

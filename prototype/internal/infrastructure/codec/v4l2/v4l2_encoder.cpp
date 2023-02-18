@@ -16,6 +16,22 @@
 
 namespace Codec {
 
+    void V4l2Encoder::StartEncoder() {
+        if (!_downstream_thread) {
+            _downstream_thread = std::make_unique<std::jthread>(std::bind_front(&V4l2Encoder::HandleDownstream, this));
+        }
+    }
+
+    void V4l2Encoder::DoStopEncoder() {
+        if (_downstream_thread) {
+            if (_downstream_thread->joinable()) {
+                _downstream_thread->request_stop();
+                _downstream_thread->join();
+            }
+            _downstream_thread.reset();
+        }
+    }
+
     int V4l2Encoder::xioctl(int fd, unsigned long ctl, void *arg) {
         int ret, num_tries = 10;
         do
@@ -41,7 +57,7 @@ namespace Codec {
         std::cout << "Opened H264Encoder on " << device_name << " as fd " << _encoder_fd;
 
         SetupEncoder(config);
-        SetupBuffers();
+        SetupBuffers(config.get_camera_buffer_count(), config.get_encoder_buffer_count());
     }
 
     // ctrls from here: https://www.kernel.org/doc/html/v5.15/userspace-api/media/v4l/ext-ctrls-codec.html?highlight=v4l2_cid_mpeg_video_h264_profile
@@ -49,9 +65,9 @@ namespace Codec {
     void V4l2Encoder::SetupEncoder(const Codec::Config &config) {
 
         // for now, we are hardcoding this. W.e.
-        const int width = 1296;
-        const int height = 728;
-        const int stride = 1344;
+        const int width = 1536;
+        const int height = 864;
+        const int stride = 1536;
 
         v4l2_control ctrl = {};
 
@@ -121,18 +137,36 @@ namespace Codec {
             throw std::runtime_error("failed to set streamparm");
     }
 
-    void V4l2Encoder::SetupBuffers() {
+    void V4l2Encoder::SetupBuffers(const int camera_buffer_count, const int downstream_buffers_count) {
+
+        // buffers passed from the camera
+        v4l2_requestbuffers reqbufs = {};
+        reqbufs.count = camera_buffer_count;
+        reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        reqbufs.memory = V4L2_MEMORY_DMABUF;
+        if (xioctl(_encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+            throw std::runtime_error("request for output buffers failed");
+        }
+        else if (reqbufs.count < camera_buffer_count) {
+            throw std::runtime_error("Couldn't allocate all camera buffers");
+        }
+        // available camera buffers to encode
+        for (uint32_t i = 0; i < reqbufs.count; i++)
+            _input_buffers_available.push(i);
 
         // buffers from downstream
-        v4l2_requestbuffers reqbufs = {};
-        reqbufs.count = NUM_CAPTURE_BUFFERS;
+        reqbufs = {};
+        reqbufs.count = downstream_buffers_count;
         reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
         reqbufs.memory = V4L2_MEMORY_MMAP;
-        if (xioctl(_encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0)
+        if (xioctl(_encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
             throw std::runtime_error("request for capture buffers failed");
-        std::cout << "Got " << reqbufs.count << " downstream buffers";
-        _upstream_buffers_count = reqbufs.count;
+        }
+        else if (reqbufs.count < downstream_buffers_count) {
+            throw std::runtime_error("Couldn't allocate all downstream buffers");
+        }
 
+        _downstream_buffers.resize(downstream_buffers_count);
 
         for (unsigned int i = 0; i < reqbufs.count; i++)
         {
@@ -145,14 +179,15 @@ namespace Codec {
             buffer.m.planes = planes;
             if (xioctl(_encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
                 throw std::runtime_error("failed to capture query buffer " + std::to_string(i));
-
-            _upstream_buffers[i].mem = mmap(
-                nullptr, buffer.m.planes[0].length + BspPacket::HeaderSize(), PROT_READ | PROT_WRITE, MAP_SHARED, _encoder_fd,
+            auto &b = _downstream_buffers.at(i);
+            b->mem = mmap(
+                nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, _encoder_fd,
                 buffer.m.planes[0].m.mem_offset
             );
-            if (_upstream_buffers[i].mem == MAP_FAILED)
+            if (b->mem == MAP_FAILED)
                 throw std::runtime_error("failed to mmap capture buffer " + std::to_string(i));
-            _upstream_buffers[i].size = buffer.m.planes[0].length + BspPacket::HeaderSize();
+            b->size = buffer.m.planes[0].length;
+            b->index = i;
             // Whilst we're going through all the capture buffers, we may as well queue
             // them ready for the encoder to write into.
             if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
@@ -160,28 +195,57 @@ namespace Codec {
         }
     }
 
-    std::size_t V4l2Encoder::EncodeFrame(void *packet_ptr, std::size_t header_size) {
-        if (!WaitForEncoder()) {
-            return 0;
+    void V4l2Encoder::TryEncode(std::shared_ptr<void> &&buffer) {
+        uint32_t index;
+        {
+            std::lock_guard<std::mutex> lock(_input_buffers_available_mutex);
+            if (_input_buffers_available.empty())
+                throw std::runtime_error("no buffers available to queue codec input");
+            index = _input_buffers_available.front();
+            _input_buffers_available.pop();
         }
+        auto input_buffer = std::static_pointer_cast<CameraBuffer>(buffer);
         v4l2_buffer buf = {};
         v4l2_plane planes[VIDEO_MAX_PLANES] = {};
         buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buf.index = index;
+        buf.field = V4L2_FIELD_NONE;
         buf.memory = V4L2_MEMORY_DMABUF;
         buf.length = 1;
         buf.m.planes = planes;
-        xioctl(_encoder_fd, VIDIOC_DQBUF, &buf);
-        // return frame to caller here somehow...?
-        buf = {};
-        memset(planes, 0, sizeof(planes));
-        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        buf.memory = V4L2_MEMORY_MMAP;
-        buf.length = 1;
-        buf.m.planes = planes;
-        buf.m.offset = header_size;
-        int ret = xioctl(_encoder_fd, VIDIOC_DQBUF, &buf);
-        if (ret == 0) {
+        buf.m.planes[0].m.fd = input_buffer->GetFd();
+        buf.m.planes[0].bytesused = input_buffer->GetSize();
+        buf.m.planes[0].length = input_buffer->GetSize();
+        if (xioctl(_encoder_fd, VIDIOC_QBUF, &buf) < 0) {
+            throw std::runtime_error("failed to queue input to codec");
+        }
+        {
+            // we could use a map, but let's just assume they happen in order;
+            // good enough for pi people, good enough for me!
+            std::lock_guard<std::mutex> lock(_input_buffers_processing_mutex);
+            _input_buffers_processing.push(std::move(buffer));
+        }
 
+    }
+
+
+    void V4l2Encoder::HandleDownstream(std::stop_token st) noexcept {
+        while (true) {
+            const auto encoder_ready = WaitForEncoder();
+            if (st.stop_requested()) {
+                break;
+            } else if (!encoder_ready) {
+                continue;
+            }
+            auto downstream_buffer = GetDownstreamBuffer();
+            if (!downstream_buffer) {
+                // pretty sure we are actually fkd here, need a way to recover...
+                continue;
+            }
+            if (downstream_buffer->size != 0) {
+                SendDownstreamBuffer(downstream_buffer);
+            }
+            QueueDownstreamBuffer(downstream_buffer);
         }
     }
 
@@ -202,6 +266,114 @@ namespace Codec {
             attempts--;
         }
         return false;
+    }
+
+    std::shared_ptr<V4l2Encoder::BufferDescription> &V4l2Encoder::GetDownstreamBuffer() {
+        v4l2_buffer buf = {};
+        v4l2_plane planes[VIDEO_MAX_PLANES] = {};
+        buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buf.memory = V4L2_MEMORY_DMABUF;
+        buf.length = 1;
+        buf.m.planes = planes;
+        int ret = xioctl(_encoder_fd, VIDIOC_DQBUF, &buf);
+        if (ret == 0) {
+            {
+                std::lock_guard<std::mutex> lock(_input_buffers_available_mutex);
+                _input_buffers_available.push(buf.index);
+            }
+            {
+                // me thinks this is good enough; pop should dereference the smart pointer can call its callback,
+                // which should return it to the camera pool
+                std::lock_guard<std::mutex> lock(_input_buffers_processing_mutex);
+                _input_buffers_processing.pop();
+            }
+        }
+
+        buf = {};
+        memset(planes, 0, sizeof(planes));
+        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        buf.memory = V4L2_MEMORY_MMAP;
+        buf.length = 1;
+        buf.m.planes = planes;
+        ret = xioctl(_encoder_fd, VIDIOC_DQBUF, &buf);
+        if (ret == 0) {
+            auto &downstream_buffer = _downstream_buffers.at(buf.index);
+            downstream_buffer->bytes_used = buf.m.planes[0].bytesused;
+            return downstream_buffer;
+        }
+        return _dummy_out;
+    }
+
+    void V4l2Encoder::SendDownstreamBuffer(std::shared_ptr<BufferDescription> &downstream_buffer) {
+        auto output_buffer = _b_pool.New();
+        std::memcpy(
+            (uint8_t *)output_buffer->GetMemory(),
+            (uint8_t *)downstream_buffer->mem,
+            downstream_buffer->bytes_used
+        );
+        _sequence_number += 1;
+        BspPacket packet{};
+        packet.session_number = _session_number;
+        packet.sequence_number = _sequence_number;
+        packet.Pack(output_buffer->_buffer.data(), downstream_buffer->bytes_used);
+        output_buffer->_size = downstream_buffer->bytes_used + BspPacket::HeaderSize();
+        auto out_buffer = std::shared_ptr<void>(output_buffer.get(), [this, &output_buffer](void *b_ptr) {
+            _b_pool.Free(std::move(output_buffer));
+        });
+        _send_callback(std::move(output_buffer));
+    }
+
+    void V4l2Encoder::QueueDownstreamBuffer(std::shared_ptr<BufferDescription> &downstream_buffer) {
+        v4l2_buffer buf = {};
+        v4l2_plane planes[VIDEO_MAX_PLANES] = {};
+        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        buf.memory = V4L2_MEMORY_MMAP;
+        buf.index = downstream_buffer->index;
+        buf.length = 1;
+        buf.m.planes = planes;
+        buf.m.planes[0].bytesused = 0;
+        buf.m.planes[0].length = downstream_buffer->size;
+        if (xioctl(_encoder_fd, VIDIOC_QBUF, &buf) < 0)
+            throw std::runtime_error("failed to re-queue encoded buffer");
+    }
+
+    V4l2Encoder::~V4l2Encoder() {
+        DoStopEncoder();
+
+        // stop streaming
+        v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        if (xioctl(_encoder_fd, VIDIOC_STREAMOFF, &type) < 0) {
+            std::cout << "Failed to stop output streaming" << std::endl;
+        }
+        type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        if (xioctl(_encoder_fd, VIDIOC_STREAMOFF, &type) < 0) {
+            std::cout << "Failed to stop capture streaming" << std::endl;
+        }
+
+        v4l2_requestbuffers reqbufs = {};
+        reqbufs.count = 0;
+        reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        reqbufs.memory = V4L2_MEMORY_DMABUF;
+        if (xioctl(_encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+            std::cout << "Failed to free output buffers" << std::endl;
+        }
+
+        for (auto &downstream_buffer : _downstream_buffers) {
+            if (munmap(downstream_buffer->mem, downstream_buffer->size) < 0) {
+                std::cout << "Failed to unmap buffer" << std::endl;
+            }
+        }
+
+        reqbufs = {};
+        reqbufs.count = 0;
+        reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        reqbufs.memory = V4L2_MEMORY_MMAP;
+        if (xioctl(_encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+            std::cout << "Failed to free capture buffers" << std::endl;
+        }
+
+        close(_encoder_fd);
+        std::cout << "V4l2 Encoder Closed" << std::endl;
     }
 
 }

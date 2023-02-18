@@ -18,16 +18,36 @@ struct SizedBuffer {
     virtual std::size_t GetSize() = 0;
 };
 
-struct PayloadSend {
-    virtual void Send(std::shared_ptr<SizedBuffer> &&buffer) = 0;
+struct CameraBuffer: public SizedBuffer {
+    CameraBuffer(void *buffer, int fd, std::size_t size): _buffer(buffer), _fd(fd), _size(size) {}
+    void *GetMemory()  {
+        return _buffer;
+    }
+    std::size_t GetSize() {
+        return _size;
+    };
+    int GetFd() {
+        return _fd;
+    }
+    void *_buffer;
+    int _fd;
+    std::size_t _size;
+
 };
 
-struct PayloadReceive {
-    [[nodiscard]]  virtual std::shared_ptr<SizedBuffer> GetPayload() = 0;
-};
 
-using payload_buffer = std::array<uint8_t, MAX_FRAME_LENGTH>;
-using payload_buffer_pool = utility::BufferPool<payload_buffer>;
+using PayloadBuffer = std::array<uint8_t, MAX_FRAME_LENGTH>;
+struct SizedPayloadBuffer : public SizedBuffer {
+    PayloadBuffer _buffer{};
+    std::size_t _size{};
+    void *GetMemory() final {
+        return _buffer.data();
+    }
+    std::size_t GetSize() final {
+        return _size;
+    }
+};
+using PayloadBufferPool = utility::BufferPool<SizedPayloadBuffer>;
 
 using reply_buffer = std::array<uint8_t, MAX_REPLY_LENGTH>;
 using reply_buffer_pool = utility::BufferPool<reply_buffer>;

@@ -10,3 +10,4 @@ cuda
 !print.cu
 
 out.nv12
+out.h264

@@ -40,9 +40,9 @@ namespace Codec {
              header->data_start = (uint8_t *)buffer + HeaderSize();
              return header;
         }
-        void Pack(std::shared_ptr<void> &buffer, const std::size_t &body_size) {
+        void Pack(void *buffer, const std::size_t &body_size) {
             data_length = body_size;
-            memcpy((uint8_t *)buffer.get(), this, HeaderSize());
+            memcpy((uint8_t *)buffer, this, HeaderSize());
         }
         [[nodiscard]] std::size_t PacketSize() const {
             return data_length + HeaderSize();

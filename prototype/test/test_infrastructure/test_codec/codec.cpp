@@ -9,6 +9,7 @@
 #include <fstream>
 #include <chrono>
 using namespace std::literals;
+typedef std::chrono::high_resolution_clock Clock;
 
 #include "infrastructure/codec/codec.hpp"
 
@@ -19,47 +20,15 @@ struct BaseTestConfig : Codec::Config {
     [[nodiscard]] int get_fps() const final {
         return 30;
     }
+    [[nodiscard]] int get_encoder_buffer_count() const final {
+        return 2;
+    }
+    [[nodiscard]] int get_camera_buffer_count() const final {
+        return 2;
+    }
 };
 
 using payload_send_function = std::function<void(std::shared_ptr<void> &&buffer, std::size_t buffer_size)>;
-
-struct RiggedSender: Codec::PayloadSend {
-    explicit RiggedSender(payload_buffer_pool &b_pool, payload_send_function sender) :
-            _b_pool(b_pool), _sender(std::move(sender))
-    {}
-    std::shared_ptr<void> GetBuffer() override {
-        auto buf = _b_pool.New();
-        auto buf_elision = std::static_pointer_cast<void>(buf);
-        return std::move(buf_elision);
-    }
-    void Send(std::shared_ptr<void> &&buffer, std::size_t buffer_size) override {
-        _sender(std::move(buffer), buffer_size);
-    };
-    payload_buffer_pool &_b_pool;
-    payload_send_function _sender;
-};
-
-struct RiggedReceiver : Codec::QueuedPayloadReceive {
-    RiggedReceiver(
-       payload_buffer_pool &b_pool, std::shared_ptr<payload_buffer> &&buffer,
-       std::size_t buffer_size
-    ):
-            _b_pool(b_pool),
-            _buffer(buffer),
-            _buffer_elided(std::static_pointer_cast<void>(_buffer)),
-            _bytes_received(buffer_size)
-    {}
-    [[nodiscard]] Codec::payload_tuple GetPayload() override {
-        return { std::static_pointer_cast<void>(_buffer), _bytes_received};
-    }
-    ~RiggedReceiver() {
-        _b_pool.Free(std::move(_buffer));
-    }
-    std::shared_ptr<payload_buffer> _buffer;
-    std::shared_ptr<void> _buffer_elided;
-    std::size_t _bytes_received;
-    payload_buffer_pool &_b_pool;
-};
 
 #ifdef _CUDA_CODEC_
 
@@ -103,28 +72,21 @@ CUresult CopyCudaToImage(CUdeviceptr src_ptr, uint8_t *dest_ptr, int nWidth, int
 TEST_CASE("Let's just get an encoder running") {
     auto conf = CudaTestConfig();
     auto ctx = Codec::Context::Create(conf);
-    auto b_pool = payload_buffer_pool(
-            1, [](){ return std::make_shared<payload_buffer>(); }
-    );
-
-    auto rigged_sender = std::make_shared<RiggedSender>(
-        b_pool,
-        [&b_pool](std::shared_ptr<void> &&buffer, std::size_t buffer_size) {
-            std::filesystem::path out_frame = TEST_DIR;
-            out_frame /= "test_infrastructure";
-            out_frame /= "test_codec";
-            out_frame /= "out.h264";
-            std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-            REQUIRE(test_file_out.is_open());
-            test_file_out.write(
-                reinterpret_cast<char*>((uint8_t *)buffer.get() + Codec::BspPacket::HeaderSize()),
-                buffer_size - Codec::BspPacket::HeaderSize()
-            );
-            test_file_out.flush();
-            test_file_out.close();
-        }
-    );
-    auto enc = Codec::Encoder::Create(conf, ctx, rigged_sender);
+    auto enc = Codec::Encoder::Create(conf, ctx, [](std::shared_ptr<void> &&buffer) {
+        auto in_buffer = std::static_pointer_cast<SizedPayloadBuffer>(buffer);
+        std::filesystem::path out_frame = TEST_DIR;
+        out_frame /= "test_infrastructure";
+        out_frame /= "test_codec";
+        out_frame /= "out.h264";
+        std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+        REQUIRE(test_file_out.is_open());
+        test_file_out.write(
+                reinterpret_cast<char*>((uint8_t *)in_buffer->GetMemory() + Codec::BspPacket::HeaderSize()),
+                in_buffer->GetSize() - Codec::BspPacket::HeaderSize()
+        );
+        test_file_out.flush();
+        test_file_out.close();
+    });
     enc->Start();
 
     // no we input a cuda mapped image from this file, and the pipeline should write out a modifed version of that file.
@@ -164,21 +126,24 @@ TEST_CASE("Let's just get an encoder running") {
 TEST_CASE("Let's do an encode, decode cycle") {
     auto conf = CudaTestConfig();
     auto ctx = Codec::Context::Create(conf);
-    auto b_pool = payload_buffer_pool(
-            6, [](){ return std::make_shared<payload_buffer>(); }
-    );
 
-    std::filesystem::path out_frame = TEST_DIR;
-    out_frame /= "test_infrastructure";
-    out_frame /= "test_codec";
+    std::filesystem::path test_dir = TEST_DIR;
+    test_dir /= "test_infrastructure";
+    test_dir /= "test_codec";
+
+    std::filesystem::path out_frame = test_dir;
     out_frame /= "out.nv12";
+
     if(std::filesystem::remove(out_frame)) {
         std::cout << "Removed output file" << std::endl;
     } else {
         std::cout << "No output file to remove" << std::endl;
     }
 
-    auto callback = [&out_frame](std::shared_ptr<void> ptr){
+    std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
+
+    auto callback = [&out_frame, &out_time](std::shared_ptr<void> ptr){
+        out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
         std::unique_ptr<uint8_t[]> data_out(new uint8_t[3110400]);
         auto res = CopyCudaToImage((CUdeviceptr)ptr.get(), reinterpret_cast<uint8_t*>(data_out.get()), 1920, 1620);
@@ -189,23 +154,17 @@ TEST_CASE("Let's do an encode, decode cycle") {
     };
     auto dec = Codec::Decoder::Create(conf, ctx, callback);
 
-    auto rigged_sender = std::make_shared<RiggedSender>(
-            b_pool,
-            [&b_pool, &dec](std::shared_ptr<void> &&buffer, std::size_t buffer_size) {
-                auto buffer_cast = std::static_pointer_cast<payload_buffer>(buffer);
-                auto rigged_receiver = std::make_shared<RiggedReceiver>(b_pool, std::move(buffer_cast), buffer_size);
-                dec->QueueDecode(std::move(rigged_receiver));
-            }
-    );
-    auto enc = Codec::Encoder::Create(conf, ctx, rigged_sender);
+    auto enc = Codec::Encoder::Create(conf, ctx, [&dec](std::shared_ptr<void> &&in_buffer) {
+        dec->QueueDecode(std::move(in_buffer));
+    });
+
     enc->Start();
     dec->Start();
 
+
     // no we input a cuda mapped image from this file, and the pipeline should write out a modifed version of that file.
     // to check "success", the output should look something like the input file
-    std::filesystem::path test_frame = TEST_DIR;
-    test_frame /= "test_infrastructure";
-    test_frame /= "test_codec";
+    std::filesystem::path test_frame = test_dir;
     test_frame /= "test.nv12";
     std::ifstream test_file_in(test_frame, std::ios::in | std::ios::binary | std::ios::ate);
     REQUIRE(test_file_in.is_open());
@@ -224,8 +183,7 @@ TEST_CASE("Let's do an encode, decode cycle") {
     REQUIRE_EQ(res, CUDA_SUCCESS);
 
     auto data_buffer = std::shared_ptr<void>(reinterpret_cast<void *>(gpu_ptr), [](void *){});
-
-    // run the pipeline, wait for completion
+    in_time = Clock::now();
     enc->QueueEncode(std::move(data_buffer));
     std::this_thread::sleep_for(50ms);
 
@@ -237,6 +195,177 @@ TEST_CASE("Let's do an encode, decode cycle") {
     res = cuMemFree(gpu_ptr);
     REQUIRE_EQ(res, CUDA_SUCCESS);
     delete []data;
+
+    auto d1 = std::chrono::duration_cast<std::chrono::microseconds>(out_time - in_time);
+    std::cout << "Time to transcode (backwards): " << d1.count() << std::endl;
+}
+
+#endif
+
+#ifdef _V4L2_CODEC_
+
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <linux/videodev2.h>
+#include <sys/mman.h>
+
+struct V4l2TestConfig : BaseTestConfig {
+    [[nodiscard]] Codec::Type get_codec_type() const final {
+        return Codec::Type::V4L2;
+    }
+};
+
+class V4l2Device {
+public:
+    V4l2Device(const char dev[]) : _fd(open(dev, O_RDWR, 0)){
+        if (_fd < 0) {
+            throw std::runtime_error("failed to open V4L2 camera");
+        }
+        createBuffer();
+    }
+    ~V4l2Device() {
+        destroyBuffer();
+    }
+    std::shared_ptr<CameraBuffer> GetBuffer() {
+        return _buffer;
+    }
+private:
+    int xioctl(unsigned long ctl, void *arg) {
+        int ret, num_tries = 10;
+        do
+        {
+            ret = ioctl(_fd, ctl, arg);
+        } while (ret == -1 && errno == EINTR && num_tries-- > 0);
+        return ret;
+    }
+    void createBuffer() {
+
+        v4l2_requestbuffers rb = {};
+        int ret;
+        rb.count = 1;
+        rb.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        rb.memory = V4L2_MEMORY_MMAP;
+        ret = xioctl(VIDIOC_REQBUFS, &rb);
+        if (ret < 0) {
+            throw std::runtime_error("couldn't request buffer");
+        } else if (rb.count != 1) {
+            throw std::runtime_error("couldn't request buffer for 1");
+
+        }
+
+        v4l2_plane planes[VIDEO_MAX_PLANES];
+        v4l2_buffer buffer = {};
+        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.index = 1;
+        buffer.length = 1;
+        buffer.m.planes = planes;
+
+        ret = xioctl(VIDIOC_QUERYBUF, &buffer);
+        if (ret < 0) {
+            throw std::runtime_error("couldn't create buffer");
+        }
+
+        struct v4l2_exportbuffer expbuf = {};
+        expbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        expbuf.index = 1;
+        expbuf.plane = 0;
+        expbuf.flags = O_RDWR;
+
+        ret = xioctl(VIDIOC_QUERYBUF, &expbuf);
+        if (ret < 0) {
+            throw std::runtime_error("couldn't export buffer");
+        }
+
+        auto mem = mmap(
+            nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd,
+            buffer.m.planes[0].m.mem_offset
+        );
+        auto size = buffer.m.planes[0].length;
+        _buffer = std::shared_ptr<CameraBuffer>(new CameraBuffer(mem, expbuf.fd, size), [](CameraBuffer *c) {});
+    }
+    void destroyBuffer() {
+        if (munmap(_buffer->GetMemory(), _buffer->GetSize()) < 0) {
+            throw std::runtime_error("Couldn't free mmap buffers");
+        }
+
+        v4l2_requestbuffers rb = {};
+        int ret;
+        rb.count = 0;
+        rb.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        rb.memory = V4L2_MEMORY_MMAP;
+        ret = xioctl(VIDIOC_REQBUFS, &rb);
+        if (ret < 0) {
+            throw std::runtime_error("couldn't delete buffer");
+        }
+
+        close(_fd);
+        std::cout << "V4l2 Camera Closed" << std::endl;
+
+    }
+    int _fd ;
+    std::shared_ptr<CameraBuffer> _buffer = nullptr;
+};
+
+TEST_CASE("Let's just get an encoder running") {
+    auto conf = V4l2TestConfig();
+    // dummy ctx, w.e
+    auto ctx = Codec::Context::Create(conf);
+
+    std::filesystem::path test_path = TEST_DIR;
+    test_path /= "test_infrastructure";
+    test_path /= "test_codec";
+
+    std::filesystem::path out_frame = test_path;
+    out_frame /= "out.h264";
+
+    if(std::filesystem::remove(out_frame)) {
+        std::cout << "Removed output file" << std::endl;
+    } else {
+        std::cout << "No output file to remove" << std::endl;
+    }
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
+    auto callback = [&out_frame, &out_time](std::shared_ptr<void> out_buffer){
+        auto payload_buffer = std::static_pointer_cast<SizedPayloadBuffer>(out_buffer);
+        out_time = Clock::now();
+        std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+        test_file_out.write(reinterpret_cast<char*>(payload_buffer->GetMemory()), payload_buffer->GetSize());
+        test_file_out.flush();
+        test_file_out.close();
+    };
+
+    auto enc = Codec::Encoder::Create(conf, ctx, callback);
+    enc->Start();
+
+    std::filesystem::path test_frame = test_path;
+    test_frame /= "test.yuv";
+    std::ifstream test_file_in(test_frame, std::ios::in | std::ios::binary | std::ios::ate);
+    REQUIRE(test_file_in.is_open());
+    test_file_in.seekg( 0, std::ios::end );
+    std::size_t size = test_file_in.tellg();
+    // might not be actual size
+    REQUIRE_EQ(size, 1990656);
+    auto data = new uint8_t [size];
+    test_file_in.seekg (0, std::ios::beg);
+    test_file_in.read (reinterpret_cast<char *>(data), size);
+    test_file_in.close();
+
+    {
+        auto dev = V4l2Device("/dev/video0");
+        auto buffer = dev.GetBuffer();
+        memcpy(buffer->GetMemory(), data, 1990656);
+        in_time = Clock::now();
+        enc->QueueEncode(std::move(buffer));
+        std::this_thread::sleep_for(50ms);
+        REQUIRE(std::filesystem::exists(out_frame));
+    }
+    enc->Stop();
+
+    delete []data;
+    auto d1 = std::chrono::duration_cast<std::chrono::microseconds>(out_time - in_time);
+    std::cout << "Time to encode: " << d1.count() << std::endl;
+
 }
 
 #endif
