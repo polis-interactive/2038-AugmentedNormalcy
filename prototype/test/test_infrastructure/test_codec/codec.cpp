@@ -257,7 +257,7 @@ private:
         }
 
         v4l2_format format = {};
-        format.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+        format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         format.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
         format.fmt.pix.width = 1536;
         format.fmt.pix.height = 864;
@@ -271,8 +271,8 @@ private:
 
         v4l2_requestbuffers rb = {};
         rb.count = 1;
-        rb.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-        rb.memory = V4L2_MEMORY_DMABUF;
+        rb.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        rb.memory = V4L2_MEMORY_MMAP;
         ret = xioctl(VIDIOC_REQBUFS, &rb);
         if (ret < 0) {
             std::cout << "couldn't request buffer" << ret << std::endl;
@@ -286,8 +286,8 @@ private:
         }
 
         v4l2_buffer buffer = {};
-        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
-        buffer.memory = V4L2_MEMORY_DMABUF;
+        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        buffer.memory = V4L2_MEMORY_MMAP;
         buffer.index = 1;
 
         ret = xioctl(VIDIOC_QUERYBUF, &buffer);
@@ -297,7 +297,7 @@ private:
         }
 
         struct v4l2_exportbuffer expbuf = {};
-        expbuf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+        expbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         expbuf.index = 1;
         expbuf.flags = O_RDWR;
 
