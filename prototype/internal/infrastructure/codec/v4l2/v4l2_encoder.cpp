@@ -225,6 +225,7 @@ namespace Codec {
         buf.field = V4L2_FIELD_NONE;
         buf.memory = V4L2_MEMORY_MMAP;
         buf.length = 1;
+        buf.m.planes[0].m.userptr = reinterpret_cast<unsigned long>(input_buffer->GetMemory());
         buf.m.planes = planes;
         buf.m.planes[0].m.fd = input_buffer->GetFd();
         buf.m.planes[0].bytesused = input_buffer->GetSize();

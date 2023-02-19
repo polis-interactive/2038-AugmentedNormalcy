@@ -312,7 +312,7 @@ private:
             buffer.m.offset
         );
         auto size = buffer.length;
-        _buffer = std::shared_ptr<CameraBuffer>(new CameraBuffer(mem, expbuf.fd, size), [](CameraBuffer *c) {});
+        _buffer = std::shared_ptr<CameraBuffer>(new CameraBuffer(mem, -1, size), [](CameraBuffer *c) {});
 
         std::cout << "Created buffer" << std::endl;
     }
