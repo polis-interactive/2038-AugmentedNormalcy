@@ -33,7 +33,6 @@ struct CameraBuffer: public SizedBuffer {
     int _fd;
     std::size_t _bytes_used;
     std::size_t _size;
-
 };
 
 
@@ -49,6 +48,8 @@ struct SizedPayloadBuffer : public SizedBuffer {
     }
 };
 using PayloadBufferPool = utility::BufferPool<SizedPayloadBuffer>;
+
+using SendCallback = std::function<void(std::shared_ptr<void>)>;
 
 using reply_buffer = std::array<uint8_t, MAX_REPLY_LENGTH>;
 using reply_buffer_pool = utility::BufferPool<reply_buffer>;

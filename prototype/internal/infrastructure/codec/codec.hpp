@@ -35,8 +35,6 @@ namespace Codec {
         [[nodiscard]] static std::shared_ptr<Context> Create(const Config &config);
     };
 
-    using SendCallback = std::function<void(std::shared_ptr<void>)>;
-
     class Encoder {
     public:
         [[nodiscard]] static std::shared_ptr<Encoder> Create(
@@ -55,9 +53,6 @@ namespace Codec {
         void Stop() {
             _wt->Stop();
             StopEncoder();
-        }
-        std::size_t GetInflightBuffers() {
-            return _b_pool.OutboundBuffers();
         }
     protected:
         void ResetEncoder() {

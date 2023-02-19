@@ -1,5 +1,5 @@
 
-if (NOT ${AN_PLATFORM} STREQUAL RPI)
+if (NOT AN_PLATFORM STREQUAL RPI)
 
     if (AN_PLATFORM STREQUAL BROOSE_WINDOWS_LAPTOP)
         set(CUDA_TOOLKIT_ROOT_DIR "C:/Program\ Files/NVIDIA\ GPU\ Computing\ Toolkit/CUDA/v12.0")
@@ -44,12 +44,4 @@ endif()
 if (NOT AN_PLATFORM STREQUAL BROOSE_WINDOWS_LAPTOP)
     set(V4L2_AVAILABLE 1)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_V4L2_CODEC_")
-
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(LIBCAMERA REQUIRED libcamera)
-    message(STATUS "libcamera library found:")
-    message(STATUS "    version: ${LIBCAMERA_VERSION}")
-    message(STATUS "    libraries: ${LIBCAMERA_LINK_LIBRARIES}")
-    message(STATUS "    include path: ${LIBCAMERA_INCLUDE_DIRS}")
-    include_directories(${CMAKE_SOURCE_DIR} ${LIBCAMERA_INCLUDE_DIRS})
 endif()

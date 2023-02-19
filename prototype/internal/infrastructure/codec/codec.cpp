@@ -34,7 +34,7 @@ namespace Codec {
     }
 
     std::shared_ptr<Encoder> Encoder::Create(
-        const Codec::Config &config, std::shared_ptr<Context> &context,
+        const Config &config, std::shared_ptr<Context> &context,
         SendCallback &&payload_sender
     ) {
         switch(config.get_codec_type()) {
@@ -52,7 +52,7 @@ namespace Codec {
     }
 
     Encoder::Encoder(
-       const Codec::Config &config, std::shared_ptr<Context> &context,
+       const Config &config, std::shared_ptr<Context> &context,
        std::function<void(std::shared_ptr<void>)> &&send_callback
     ) :
         _wt(utility::WorkerThread<void>::CreateWorkerThread(
@@ -77,7 +77,7 @@ namespace Codec {
     }
 
     Decoder::Decoder(
-        const Codec::Config &config, std::shared_ptr<Context> &context,
+        const Config &config, std::shared_ptr<Context> &context,
         SendCallback &&send_callback
     ):
         _wt(utility::WorkerThread<void>::CreateWorkerThread(
