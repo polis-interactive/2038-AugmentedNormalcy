@@ -287,7 +287,7 @@ namespace Codec {
         v4l2_buffer buf = {};
         v4l2_plane planes[VIDEO_MAX_PLANES] = {};
         buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buf.memory = V4L2_MEMORY_MMAP;
+        buf.memory = V4L2_MEMORY_DMABUF;
         buf.length = 1;
         buf.m.planes = planes;
         int ret = xioctl(_encoder_fd, VIDIOC_DQBUF, &buf);
