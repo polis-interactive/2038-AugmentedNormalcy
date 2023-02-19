@@ -295,7 +295,6 @@ private:
             throw std::runtime_error("couldn't create buffer");
         }
 
-        /*
         struct v4l2_exportbuffer expbuf = {};
         expbuf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         expbuf.index = 1;
@@ -306,13 +305,12 @@ private:
             std::cout << "couldn't export buffer" << ret << std::endl;
             throw std::runtime_error("couldn't export buffer");
         }
-         */
         auto mem = mmap(
             nullptr, buffer.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd,
             buffer.m.offset
         );
         auto size = buffer.length;
-        _buffer = std::shared_ptr<CameraBuffer>(new CameraBuffer(mem, -1, size), [](CameraBuffer *c) {});
+        _buffer = std::shared_ptr<CameraBuffer>(new CameraBuffer(mem, expbuf.fd, size), [](CameraBuffer *c) {});
 
         std::cout << "Created buffer" << std::endl;
     }

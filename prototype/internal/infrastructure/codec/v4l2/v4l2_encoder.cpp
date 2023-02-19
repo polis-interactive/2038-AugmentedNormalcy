@@ -152,7 +152,7 @@ namespace Codec {
         v4l2_requestbuffers reqbufs = {};
         reqbufs.count = camera_buffer_count;
         reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        reqbufs.memory = V4L2_MEMORY_MMAP;
+        reqbufs.memory = V4L2_MEMORY_DMABUF;
         if (xioctl(_encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
             throw std::runtime_error("request for output buffers failed");
         }
@@ -223,9 +223,8 @@ namespace Codec {
         buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         buf.index = index;
         buf.field = V4L2_FIELD_NONE;
-        buf.memory = V4L2_MEMORY_MMAP;
+        buf.memory = V4L2_MEMORY_DMABUF;
         buf.length = 1;
-        buf.m.planes[0].m.userptr = reinterpret_cast<unsigned long>(input_buffer->GetMemory());
         buf.m.planes = planes;
         buf.m.planes[0].m.fd = input_buffer->GetFd();
         buf.m.planes[0].bytesused = input_buffer->GetSize();
@@ -288,7 +287,7 @@ namespace Codec {
         v4l2_buffer buf = {};
         v4l2_plane planes[VIDEO_MAX_PLANES] = {};
         buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buf.memory = V4L2_MEMORY_MMAP;
+        buf.memory = V4L2_MEMORY_DMABUF;
         buf.length = 1;
         buf.m.planes = planes;
         int ret = xioctl(_encoder_fd, VIDIOC_DQBUF, &buf);
