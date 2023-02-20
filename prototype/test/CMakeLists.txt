@@ -23,7 +23,7 @@ add_executable(tests ${tests})
 if (AN_PLATFORM STREQUAL RPI)
     target_link_libraries(tests pthread)
 endif()
-#target_link_libraries(tests camera)
+target_link_libraries(tests camera)
 target_link_libraries(tests codec)
 
 target_include_directories(tests PRIVATE ${internal_dir})
