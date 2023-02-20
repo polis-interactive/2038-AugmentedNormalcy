@@ -76,7 +76,6 @@ namespace Codec {
         const int height = 864;
         const int stride = 1536;
 
-        /*
         v4l2_control ctrl = {};
 
         // set profile
@@ -87,7 +86,7 @@ namespace Codec {
 
         // set level: no idea what this does; I think its the same as preset
         ctrl.id = V4L2_CID_MPEG_VIDEO_H264_LEVEL;
-        ctrl.value = V4L2_MPEG_VIDEO_H264_LEVEL_4_0;
+        ctrl.value = V4L2_MPEG_VIDEO_H264_LEVEL_4_2;
         if (xioctl(_encoder_fd, VIDIOC_S_CTRL, &ctrl) < 0)
             throw std::runtime_error("failed to set level");
 
@@ -109,7 +108,7 @@ namespace Codec {
         ctrl.value = 2147483647;
         if (xioctl(_encoder_fd, VIDIOC_S_CTRL, &ctrl) < 0)
             throw std::runtime_error("failed to set bitrate");
-*/
+
 
         v4l2_format fmt = {};
         fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -321,7 +320,6 @@ namespace Codec {
 
     void V4l2Encoder::SendDownstreamBuffer(std::shared_ptr<BufferDescription> &downstream_buffer) {
         auto output_buffer = _b_pool.New();
-        std::cout << "getting: " << (void *)output_buffer.get() << std::endl;
         std::memcpy(
             (uint8_t *)output_buffer->GetMemory() + BspPacket::HeaderSize(),
             (uint8_t *)downstream_buffer->mem,
@@ -336,7 +334,6 @@ namespace Codec {
         auto out_buffer = std::shared_ptr<void>(
             (void *)output_buffer.get(),
             [this](void *b_ptr) {
-                std::cout << "freeing: " << b_ptr << std::endl;
                 _b_pool.FreeRaw(static_cast<SizedPayloadBuffer *>(b_ptr));
             }
         );
