@@ -13,10 +13,12 @@ include_directories(${root_dir}/third_party/doctest)
 
 set(
     tests
+    test_infrastructure/test_camera/camera.cpp
     test_infrastructure/test_codec/codec.cpp
     main.cpp
 )
 add_definitions(-DTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_executable(tests ${tests})
+target_link_libraries(tests camera)
 target_link_libraries(tests codec)
 target_include_directories(tests PRIVATE ${internal_dir})

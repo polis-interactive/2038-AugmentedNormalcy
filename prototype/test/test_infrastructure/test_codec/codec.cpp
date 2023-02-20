@@ -309,8 +309,8 @@ private:
             nullptr, buffer.length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd,
             buffer.m.offset
         );
-        auto size = buffer.length;
-        _buffer = std::shared_ptr<CameraBuffer>(new CameraBuffer(mem, expbuf.fd, size), [](CameraBuffer *c) {});
+        // auto size = buffer.length;
+        _buffer = std::shared_ptr<CameraBuffer>(new CameraBuffer(nullptr, mem, expbuf.fd, 1990656, 0), [](CameraBuffer *c) {});
 
         std::cout << "Created buffer" << std::endl;
     }
@@ -389,7 +389,6 @@ TEST_CASE("Let's just get an encoder running") {
         auto buffer = dev.GetBuffer();
         memcpy(buffer->GetMemory(), data, 1990656);
         in_time = Clock::now();
-        buffer->_size = 1990656;
         enc->QueueEncode(std::move(buffer));
         std::this_thread::sleep_for(50ms);
         REQUIRE(std::filesystem::exists(out_frame));

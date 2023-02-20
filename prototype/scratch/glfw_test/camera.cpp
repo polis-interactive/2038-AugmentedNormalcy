@@ -246,14 +246,16 @@ void CameraTest::stopCamera() {
 	{
 		std::lock_guard<std::mutex> lock(camera_stop_mutex_);
 		if (camera_started_) {
-    	if (camera_->stop())
-        throw std::runtime_error("failed to stop camera");
-      camera_started_ = false;
-  	}
+    	    if (camera_->stop()) {
+                throw std::runtime_error("failed to stop camera");
+            }
+            camera_started_ = false;
+        }
 	}
 
-  if (camera_)
-    camera_->requestCompleted.disconnect(this, &CameraTest::requestComplete);
+  if (camera_) {
+      camera_->requestCompleted.disconnect(this, &CameraTest::requestComplete);
+  }
 
   requests_.clear();
   _controls.clear();

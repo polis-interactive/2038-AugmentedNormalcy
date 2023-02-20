@@ -41,7 +41,6 @@ namespace Camera {
         virtual void CreateCamera(const Config &config) = 0;
         virtual void StartCamera() = 0;
         virtual void StopCamera() = 0;
-        virtual void TeardownCamera() = 0;
     };
 }
 
