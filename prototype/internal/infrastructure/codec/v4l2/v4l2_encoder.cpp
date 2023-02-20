@@ -10,7 +10,6 @@
 #include <unistd.h>
 
 #include <linux/videodev2.h>
-#include "preprocessor.hpp"
 
 #include "v4l2_encoder.hpp"
 
