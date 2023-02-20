@@ -332,9 +332,12 @@ namespace Codec {
         packet.sequence_number = _sequence_number;
         packet.Pack(output_buffer->_buffer.data(), downstream_buffer->bytes_used);
         output_buffer->_size = downstream_buffer->bytes_used + BspPacket::HeaderSize();
-        auto out_buffer = std::shared_ptr<void>(output_buffer.get(), [this, &output_buffer](void *b_ptr) {
-            _b_pool.Free(std::move(output_buffer));
-        });
+        auto out_buffer = std::shared_ptr<void>(
+            output_buffer.get(),
+            [this, output_buffer = std::move(output_buffer)](void *b_ptr) mutable {
+                _b_pool.Free(std::move(output_buffer));
+            }
+        );
         _send_callback(std::move(out_buffer));
     }
 
