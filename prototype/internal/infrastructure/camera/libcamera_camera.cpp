@@ -212,8 +212,9 @@ namespace Camera {
     }
 
     void LibcameraCamera::queueRequest(CameraBuffer *buffer) {
+        std::cout << "this should" << std::endl;
         std::lock_guard<std::mutex> stop_lock(_camera_stop_mutex);
-
+        std::cout << "deadlock" << std::endl;
         bool request_found;
         {
             std::lock_guard<std::mutex> lock(_camera_buffers_mutex);
