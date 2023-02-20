@@ -12,6 +12,7 @@ using namespace std::literals;
 
 #include "infrastructure/camera/camera.hpp"
 #include "infrastructure/codec/codec.hpp"
+#include "infrastructure/codec/bsp_packet.hpp"
 
 // this should only work on the rpi...
 #if _AN_PLATFORM_ == PLATFORM_RPI
@@ -83,7 +84,10 @@ private:
     }
     void EncoderCallback(std::shared_ptr<void> &&ptr) {
         auto encoded_buffer = std::static_pointer_cast<SizedPayloadBuffer>(ptr);
-        _test_file_out.write(reinterpret_cast<char*>(encoded_buffer->GetMemory()), encoded_buffer->GetSize());
+        _test_file_out.write(
+            reinterpret_cast<char*>((uint8_t *)encoded_buffer->GetMemory() + Codec::BspPacket::HeaderSize()),
+            encoded_buffer->GetSize() - Codec::BspPacket::HeaderSize()
+        );
         _test_file_out.flush();
     }
     HardcodedRpiConfig _config;
