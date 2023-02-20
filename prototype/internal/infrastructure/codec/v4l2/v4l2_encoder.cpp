@@ -239,7 +239,6 @@ namespace Codec {
             std::lock_guard<std::mutex> lock(_input_buffers_processing_mutex);
             _input_buffers_processing.push(std::move(buffer));
         }
-        std::cout << "queued" << std::endl;
     }
 
 
@@ -311,7 +310,6 @@ namespace Codec {
         buf.m.planes = planes;
         ret = xioctl(_encoder_fd, VIDIOC_DQBUF, &buf);
         if (ret == 0) {
-            std::cout << buf.m.planes[0].bytesused << std::endl;
             auto &downstream_buffer = _downstream_buffers.at(buf.index);
             downstream_buffer->bytes_used = buf.m.planes[0].bytesused;
             return downstream_buffer;
