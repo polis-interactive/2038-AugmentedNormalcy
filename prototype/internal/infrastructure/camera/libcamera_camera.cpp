@@ -245,18 +245,25 @@ namespace Camera {
             std::lock_guard<std::mutex> lock(_camera_stop_mutex);
             std::cout << "Lock?" << std::endl;
             if (_camera_started) {
+                std::cout << "1" << std::endl;
                 if (_camera->stop()) {
+                    std::cout << "2" << std::endl;
                     throw std::runtime_error("failed to stop camera");
                 }
+                std::cout << "3" << std::endl;
                 _camera_started = false;
             }
         }
+        std::cout << "4" << std::endl;
         if (_camera) {
             _camera->requestCompleted.disconnect(this, &LibcameraCamera::requestComplete);
         }
+        std::cout << "5" << std::endl;
         _camera_buffers.clear();
         _requests.clear();
         _controls.clear();
+
+        std::cout << "6" << std::endl;
     }
 
     void LibcameraCamera::teardownCamera() {
