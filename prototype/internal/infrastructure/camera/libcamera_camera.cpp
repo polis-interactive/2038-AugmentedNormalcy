@@ -67,7 +67,6 @@ namespace Camera {
 #endif
         _configuration->at(0).size = size;
         _configuration->at(0).bufferCount = config.get_camera_buffer_count();
-        _controls.set(controls::draft::NoiseReductionMode, 3);
 
         CameraConfiguration::Status validation = _configuration->validate();
         if (validation == CameraConfiguration::Invalid)

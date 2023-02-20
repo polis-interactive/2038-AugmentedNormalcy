@@ -76,6 +76,7 @@ namespace Codec {
         const int height = 864;
         const int stride = 1536;
 
+        /*
         v4l2_control ctrl = {};
 
         // set profile
@@ -108,6 +109,7 @@ namespace Codec {
         ctrl.value = 2147483647;
         if (xioctl(_encoder_fd, VIDIOC_S_CTRL, &ctrl) < 0)
             throw std::runtime_error("failed to set bitrate");
+*/
 
         v4l2_format fmt = {};
         fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
