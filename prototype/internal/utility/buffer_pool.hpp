@@ -90,7 +90,8 @@ namespace utility {
             }
             std::scoped_lock lock(buffer_mutex);
             auto node = BufferNode<BufferType>::New();
-            node->_buffer = std::move(*shared_buffer_itr);
+            // don't move here or we lose the reference
+            node->_buffer = *shared_buffer_itr;
             node->_previous_node = available_buffer_tail->_previous_node;
             available_buffer_tail->_previous_node->_next_node = node;
             node->_next_node = available_buffer_tail;
