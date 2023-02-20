@@ -82,11 +82,8 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
         cam->Start();
         in_time = Clock::now();
         std::this_thread::sleep_for(250ms);
-        std::cout << "Do I get" << std::endl;
         cam->Stop();
-        std::cout << "here" << std::endl;
     }
-    std::cout << "or..." << std::endl;
 
     REQUIRE(std::filesystem::exists(out_frame));
 

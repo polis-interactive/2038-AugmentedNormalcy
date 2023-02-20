@@ -15,6 +15,7 @@ set(
     tests
     test_infrastructure/test_camera/camera.cpp
     test_infrastructure/test_codec/codec.cpp
+    test_system/test_pipeline/camera_encoder.cpp
     main.cpp
 )
 add_definitions(-DTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
