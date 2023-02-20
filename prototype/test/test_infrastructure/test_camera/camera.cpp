@@ -8,9 +8,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <chrono>
 #include <thread>
-
+#include <chrono>
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
