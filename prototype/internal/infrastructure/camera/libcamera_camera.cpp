@@ -241,7 +241,9 @@ namespace Camera {
 
     void LibcameraCamera::StopCamera() {
         {
+            std::cout << "Do we" << std::endl;
             std::lock_guard<std::mutex> lock(_camera_stop_mutex);
+            std::cout << "Lock?" << std::endl;
             if (_camera_started) {
                 if (_camera->stop()) {
                     throw std::runtime_error("failed to stop camera");
