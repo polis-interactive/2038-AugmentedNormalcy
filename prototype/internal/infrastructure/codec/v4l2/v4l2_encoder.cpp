@@ -194,6 +194,7 @@ namespace Codec {
                 nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, _encoder_fd,
                 buffer.m.planes[0].m.mem_offset
             );
+            std::cout << b->mem << std::endl;
             if (b->mem == MAP_FAILED)
                 throw std::runtime_error("failed to mmap capture buffer " + std::to_string(i));
 
@@ -319,6 +320,8 @@ namespace Codec {
 
     void V4l2Encoder::SendDownstreamBuffer(std::shared_ptr<BufferDescription> &downstream_buffer) {
         auto output_buffer = _b_pool.New();
+        std::cout << output_buffer->GetMemory() << std::endl;
+        std::cout << downstream_buffer->mem << std::endl;
         std::memcpy(
             (uint8_t *)output_buffer->GetMemory(),
             (uint8_t *)downstream_buffer->mem,
