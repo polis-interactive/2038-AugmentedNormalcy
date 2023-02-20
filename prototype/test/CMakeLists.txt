@@ -13,7 +13,7 @@ include_directories(${root_dir}/third_party/doctest)
 
 set(
     tests
-#    test_infrastructure/test_camera/camera.cpp
+    test_infrastructure/test_camera/camera.cpp
     test_infrastructure/test_codec/codec.cpp
     main.cpp
 )
