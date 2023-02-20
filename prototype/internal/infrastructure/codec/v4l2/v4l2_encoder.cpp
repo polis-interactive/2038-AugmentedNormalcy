@@ -320,7 +320,7 @@ namespace Codec {
     void V4l2Encoder::SendDownstreamBuffer(std::shared_ptr<BufferDescription> &downstream_buffer) {
         auto output_buffer = _b_pool.New();
         std::memcpy(
-            (uint8_t *)output_buffer->GetMemory(),
+            (uint8_t *)output_buffer->GetMemory() + BspPacket::HeaderSize(),
             (uint8_t *)downstream_buffer->mem,
             downstream_buffer->bytes_used
         );
