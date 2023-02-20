@@ -126,7 +126,7 @@ namespace Camera {
         // set done callback
         _camera->requestCompleted.connect(this, &LibcameraCamera::requestComplete);
         // queue requests
-        for (std::unique_ptr<Request> &request : _requests)
+        for (auto &request : _requests)
         {
             if (_camera->queueRequest(request.get()) < 0)
                 throw std::runtime_error("Failed to queue request");
