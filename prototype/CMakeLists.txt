@@ -15,6 +15,11 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     )
 endif()
 
+if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
+    message("Setting debug flags")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS_RELEASE_INIT "-Wall")
 
