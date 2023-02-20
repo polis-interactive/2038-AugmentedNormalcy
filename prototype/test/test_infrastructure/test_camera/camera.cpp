@@ -81,7 +81,7 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
         auto cam = Camera::Camera::Create(config, callback);
         cam->Start();
         in_time = Clock::now();
-        std::this_thread::sleep_for(250ms);
+        std::this_thread::sleep_for(500ms);
         cam->Stop();
     }
 
