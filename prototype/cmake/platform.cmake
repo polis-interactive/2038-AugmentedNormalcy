@@ -3,7 +3,7 @@ if (WIN32)
     # assume broose windows; if we need, we can further disambiguate here
     set(AN_PLATFORM BROOSE_WINDOWS_LAPTOP)
     set(AN_PLATFORM_NUM 1)
-elseif(EXISTS opt/vc/include/bcm_host.h)
+elseif(EXISTS /opt/vc/include/bcm_host.h)
     # RPI; if we need, we can further disambiguate here (for instance, CM4 vs PI4B
     set(AN_PLATFORM RPI)
     set(AN_PLATFORM_NUM 20)
