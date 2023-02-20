@@ -194,7 +194,7 @@ namespace Codec {
                 nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, _encoder_fd,
                 buffer.m.planes[0].m.mem_offset
             );
-            std::cout << b->mem << std::endl;
+            std::cout << "Allocated mem: " << b->mem << std::endl;
             if (b->mem == MAP_FAILED)
                 throw std::runtime_error("failed to mmap capture buffer " + std::to_string(i));
 
@@ -320,8 +320,8 @@ namespace Codec {
 
     void V4l2Encoder::SendDownstreamBuffer(std::shared_ptr<BufferDescription> &downstream_buffer) {
         auto output_buffer = _b_pool.New();
-        std::cout << output_buffer->GetMemory() << std::endl;
-        std::cout << downstream_buffer->mem << std::endl;
+        std::cout << "Writing: " << output_buffer->GetMemory() << std::endl;
+        std::cout << "From: " << downstream_buffer->mem << std::endl;
         std::memcpy(
             (uint8_t *)output_buffer->GetMemory(),
             (uint8_t *)downstream_buffer->mem,
@@ -334,6 +334,7 @@ namespace Codec {
         packet.Pack(output_buffer->_buffer.data(), downstream_buffer->bytes_used);
         output_buffer->_size = downstream_buffer->bytes_used + BspPacket::HeaderSize();
         auto out_buffer = std::shared_ptr<void>(output_buffer.get(), [this, &output_buffer](void *b_ptr) {
+            std::cout << "Freed: " << output_buffer->GetMemory();
             _b_pool.Free(std::move(output_buffer));
         });
         _send_callback(std::move(output_buffer));
