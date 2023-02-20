@@ -32,6 +32,7 @@ namespace Camera {
         openCamera();
         configureViewFinder(config);
         setupBuffers(config.get_camera_buffer_count());
+        _streams["viewfinder"] = _configuration->at(0).stream();
         _frame_rate = config.get_fps();
     }
 
@@ -70,8 +71,7 @@ namespace Camera {
 #endif
         _configuration->at(0).size = size;
         _configuration->at(0).bufferCount = config.get_camera_buffer_count();
-        // think this just isn't available in my laptops version of lib camera? Just removing it for now
-        // _controls.set(controls::draft::NoiseReductionMode, 3);
+        _controls.set(controls::draft::NoiseReductionMode, 3);
 
         CameraConfiguration::Status validation = _configuration->validate();
         if (validation == CameraConfiguration::Invalid)
@@ -81,8 +81,6 @@ namespace Camera {
 
         if (_camera->configure(_configuration.get()) < 0)
             throw std::runtime_error("failed to configure streams");
-
-        _streams["viewfinder"] = _configuration->at(0).stream();
 
         std::cout << "Camera streams configured" << std::endl;
     }
@@ -189,6 +187,7 @@ namespace Camera {
             // request failed, probably closing
             return;
         }
+
         // I can't believe I need all this to get the memory location
         const Stream *stream = _configuration->at(0).stream();
         const BufferMap &buffers = request->buffers();
@@ -204,6 +203,11 @@ namespace Camera {
         auto *out_buffer = new CameraBuffer(
             static_cast<void *>(request), mem, fd, span.size(), timestamp_ns
         );
+        {
+            std::lock_guard<std::mutex> lock(_camera_buffers_mutex);
+            _camera_buffers.insert(out_buffer);
+        }
+
         auto out_ptr = std::shared_ptr<void>(static_cast<void *>(out_buffer), [this](void *p) {
             this->queueRequest(static_cast<CameraBuffer *>(p));
         });
@@ -219,21 +223,37 @@ namespace Camera {
     }
 
     void LibcameraCamera::queueRequest(CameraBuffer *buffer) {
-        auto *request = static_cast<Request *>(buffer->GetRequest());
-        delete buffer;
+        std::lock_guard<std::mutex> stop_lock(_camera_stop_mutex);
+
+        bool request_found;
         {
-            std::lock_guard<std::mutex> stop_lock(_camera_stop_mutex);
-            if (!_camera_started) {
-                return;
+            std::lock_guard<std::mutex> lock(_camera_buffers_mutex);
+            auto it = _camera_buffers.find(buffer);
+            if (it != _camera_buffers.end())
+            {
+                request_found = true;
+                _camera_buffers.erase(it);
+            }
+            else {
+                request_found = false;
             }
         }
+
+        auto *request = static_cast<Request *>(buffer->GetRequest());
+        delete buffer;
+        if (!_camera_started || !request_found) {
+            return;
+        }
+
         // I actually have no idea what this is for
+        /*
         BufferMap buffers(request->buffers());
         for (auto const &p : buffers)
         {
             if (request->addBuffer(p.first, p.second) < 0)
                 throw std::runtime_error("failed to add buffer to request in QueueRequest");
         }
+         */
         if (_camera->queueRequest(request) < 0)
             throw std::runtime_error("failed to queue request");
     }
@@ -251,18 +271,11 @@ namespace Camera {
         if (_camera) {
             _camera->requestCompleted.disconnect(this, &LibcameraCamera::requestComplete);
         }
+        _camera_buffers.clear();
         _requests.clear();
         _controls.clear();
     }
 
-    void LibcameraCamera::closeCamera() {
-        if (_camera_acquired) {
-            _camera->release();
-            _camera_acquired = false;
-        }
-        _camera.reset();
-        _camera_manager.reset();
-    }
     void LibcameraCamera::teardownCamera() {
         for (auto &iter : _mapped_buffers)
         {
@@ -275,6 +288,13 @@ namespace Camera {
         _configuration.reset();
         _frame_buffers.clear();
         _streams.clear();
-
+    }
+    void LibcameraCamera::closeCamera() {
+        if (_camera_acquired) {
+            _camera->release();
+            _camera_acquired = false;
+        }
+        _camera.reset();
+        _camera_manager.reset();
     }
 }

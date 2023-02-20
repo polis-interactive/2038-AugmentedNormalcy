@@ -25,8 +25,8 @@ namespace Camera {
         };
         ~LibcameraCamera() {
             StopCamera();
-            closeCamera();
             teardownCamera();
+            closeCamera();
         }
     private:
         void CreateCamera(const Config &config) final;
@@ -61,6 +61,9 @@ namespace Camera {
         std::map<libcamera::Stream *, std::queue<libcamera::FrameBuffer *>> _frame_buffers;
         std::map<libcamera::FrameBuffer *, std::vector<libcamera::Span<uint8_t>>> _mapped_buffers;
         std::vector<std::unique_ptr<libcamera::Request>> _requests;
+
+        std::mutex _camera_buffers_mutex;
+        std::set<CameraBuffer *> _camera_buffers;
 
         libcamera::ControlList _controls;
     };

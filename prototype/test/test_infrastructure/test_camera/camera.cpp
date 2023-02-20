@@ -49,7 +49,11 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
     test_dir /= "test_camera";
 
     std::filesystem::path out_frame = test_dir;
+#if _AN_PLATFORM_ == PLATFORM_RPI
     out_frame /= "out.yuv";
+#else
+    out_frame /= "out.jpeg";
+#endif
 
     if(std::filesystem::remove(out_frame)) {
         std::cout << "Removed output file" << std::endl;
@@ -76,7 +80,7 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
         auto cam = Camera::Camera::Create(config, callback);
         cam->Start();
         in_time = Clock::now();
-        std::this_thread::sleep_for(2s);
+        std::this_thread::sleep_for(10s);
         cam->Stop();
     }
 
