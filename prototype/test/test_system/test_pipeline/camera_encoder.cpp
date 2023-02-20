@@ -14,7 +14,7 @@ using namespace std::literals;
 #include "infrastructure/codec/codec.hpp"
 
 // this should only work on the rpi...
-#if _AN_PLATFORM_ != PLATFORM_RPI
+#if _AN_PLATFORM_ == PLATFORM_RPI
 
 struct HardcodedRpiConfig : Camera::Config, Codec::Config {
     [[nodiscard]] Camera::Type get_camera_type() const final {
