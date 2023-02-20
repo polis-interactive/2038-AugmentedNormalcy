@@ -80,7 +80,7 @@ namespace Codec {
 
         // set profile
         ctrl.id = V4L2_CID_MPEG_VIDEO_H264_PROFILE;
-        ctrl.value = V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_HIGH;
+        ctrl.value = V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE;
         if (xioctl(_encoder_fd, VIDIOC_S_CTRL, &ctrl) < 0)
             throw std::runtime_error("failed to set profile");
 
@@ -103,12 +103,12 @@ namespace Codec {
             throw std::runtime_error("failed to set bitrate");
 
         // set infinite gop
-
+/*
         ctrl.id = V4L2_CID_MPEG_VIDEO_H264_I_PERIOD;
         ctrl.value = 2147483647;
         if (xioctl(_encoder_fd, VIDIOC_S_CTRL, &ctrl) < 0)
-            throw std::runtime_error("failed to set bitrate");
-
+            throw std::runtime_error("failed to set gop");
+*/
 
         v4l2_format fmt = {};
         fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
