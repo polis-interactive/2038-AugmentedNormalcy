@@ -53,7 +53,7 @@ namespace Codec {
 
     Encoder::Encoder(
        const Config &config, std::shared_ptr<Context> &context,
-       std::function<void(std::shared_ptr<void>)> &&send_callback
+       SendCallback &&send_callback
     ) :
         _wt(utility::WorkerThread<void>::CreateWorkerThread(
             std::bind_front(&Encoder::TryEncode, this)
