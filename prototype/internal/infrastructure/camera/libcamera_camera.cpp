@@ -120,9 +120,6 @@ namespace Camera {
     void LibcameraCamera::StartCamera() {
         makeRequests();
         setControls();
-        // started!
-        _controls.clear();
-        _camera_started = true;
         // set done callback
         _camera->requestCompleted.connect(this, &LibcameraCamera::requestComplete);
         // queue requests
@@ -179,11 +176,16 @@ namespace Camera {
 
         if (_camera->start(&_controls))
             throw std::runtime_error("failed to start camera");
+
+        // started!
+        _controls.clear();
+        _camera_started = true;
     }
 
     void LibcameraCamera::requestComplete(Request *request) {
         if (request->status() == Request::RequestCancelled)
         {
+            std::cout << "Request cancelled, aghhh" << std::endl;
             // request failed, probably closing
             return;
         }
@@ -246,7 +248,7 @@ namespace Camera {
         }
 
         // I actually have no idea what this is for
-        BufferMap buffers(request->buffers());
+        BufferMap buffers(std::move(request->buffers()));
         for (auto const &p : buffers)
         {
             if (request->addBuffer(p.first, p.second) < 0)

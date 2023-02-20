@@ -26,7 +26,6 @@ include(cmake/platform.cmake)
 include(cmake/codec.cmake)
 include(cmake/camera.cmake)
 
-include_directories(${root_dir}/include)
 include_directories(${internal_dir})
 add_subdirectory(${internal_dir}/infrastructure/codec)
 add_subdirectory(${internal_dir}/infrastructure/camera)
