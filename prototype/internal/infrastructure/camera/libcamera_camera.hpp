@@ -40,7 +40,6 @@ namespace Camera {
         void makeRequests();
         void setControls();
         void requestComplete(libcamera::Request *request);
-        std::vector<libcamera::Span<uint8_t>> Mmap(libcamera::FrameBuffer *buffer) const;
         void queueRequest(CameraBuffer *buffer);
 
         void closeCamera();

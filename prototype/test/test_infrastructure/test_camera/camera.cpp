@@ -65,9 +65,12 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
     bool is_done = false;
 
     auto callback = [&out_frame, &out_time, &is_done](std::shared_ptr<void> &&ptr){
+        std::cout << "send callback" << std::endl;
         if (is_done) {
             return;
         }
+        std::cout << "Writing to file" << std::endl;
+        is_done = true;
         out_time = Clock::now();
         auto camera_buffer = std::static_pointer_cast<CameraBuffer>(ptr);
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);

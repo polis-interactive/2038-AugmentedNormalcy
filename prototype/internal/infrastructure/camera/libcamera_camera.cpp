@@ -192,19 +192,20 @@ namespace Camera {
 
         // I can't believe I need all this to get the memory location
         const Stream *stream = _configuration->at(0).stream();
-        const BufferMap &buffers = request->buffers();
-        FrameBuffer *buffer = buffers.at(stream);
-        auto span = Mmap(buffer)[0];
+        auto &buffers = request->buffers();
+        auto *buffer = buffers.at(stream);
+        auto span = _mapped_buffers.at(buffer)[0];
         void *mem = span.data();
 
         int fd = buffer->planes()[0].fd.get();
 
         auto ts = request->metadata().get(controls::SensorTimestamp);
-        int64_t timestamp_ns = ts ? *ts : buffer->metadata().timestamp;
+        int64_t timestamp_ns = (ts ? *ts : buffer->metadata().timestamp) / 1000;
 
         auto *out_buffer = new CameraBuffer(
             static_cast<void *>(request), mem, fd, span.size(), timestamp_ns
         );
+        std::cout << span.size() << std::endl;
         {
             std::lock_guard<std::mutex> lock(_camera_buffers_mutex);
             _camera_buffers.insert(out_buffer);
@@ -214,14 +215,6 @@ namespace Camera {
             this->queueRequest(static_cast<CameraBuffer *>(p));
         });
         _send_callback(std::move(out_ptr));
-    }
-
-    std::vector<libcamera::Span<uint8_t>> LibcameraCamera::Mmap(FrameBuffer *buffer) const
-    {
-        auto item = _mapped_buffers.find(buffer);
-        if (item == _mapped_buffers.end())
-            return {};
-        return item->second;
     }
 
     void LibcameraCamera::queueRequest(CameraBuffer *buffer) {
