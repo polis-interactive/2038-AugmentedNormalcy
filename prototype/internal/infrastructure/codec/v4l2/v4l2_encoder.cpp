@@ -334,8 +334,8 @@ namespace Codec {
         output_buffer->_size = downstream_buffer->bytes_used + BspPacket::HeaderSize();
         auto out_buffer = std::shared_ptr<void>(
             output_buffer.get(),
-            [this, output_buffer = std::move(output_buffer)](void *b_ptr) mutable {
-                _b_pool.Free(std::move(output_buffer));
+            [this](void *b_ptr) {
+                _b_pool.FreeRaw(static_cast<SizedPayloadBuffer *>(b_ptr));
             }
         );
         _send_callback(std::move(out_buffer));

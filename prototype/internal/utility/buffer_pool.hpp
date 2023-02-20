@@ -78,6 +78,25 @@ namespace utility {
             available_buffer_tail->_previous_node = node;
             available_buffers++;
         }
+        void FreeRaw(BufferType *buffer_ptr) {
+            auto shared_buffer_itr = std::find_if(
+                buffer_store.begin(), buffer_store.end(),
+                [&buffer_ptr](const std::shared_ptr<BufferType> &store_buffer) {
+                    return store_buffer.get() == buffer_ptr;
+                }
+            );
+            if (shared_buffer_itr == std::end(buffer_store)) {
+                throw std::runtime_error("Trying to free untracked buffer");
+            }
+            std::scoped_lock lock(buffer_mutex);
+            auto node = BufferNode<BufferType>::New();
+            node->_buffer = std::move(*shared_buffer_itr);
+            node->_previous_node = available_buffer_tail->_previous_node;
+            available_buffer_tail->_previous_node->_next_node = node;
+            node->_next_node = available_buffer_tail;
+            available_buffer_tail->_previous_node = node;
+            available_buffers++;
+        }
 
         [[nodiscard]] std::size_t AvailableBuffers() {
             std::scoped_lock lock(buffer_mutex);
