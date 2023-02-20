@@ -5,16 +5,12 @@
 #include "libcamera_camera.hpp"
 
 #include <iostream>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <linux/videodev2.h>
 #include <sys/mman.h>
 
 #include <libcamera/controls.h>
 #include <libcamera/control_ids.h>
 #include <libcamera/formats.h>
 
-using BufferMap = libcamera::Request::BufferMap;
 using CameraConfiguration = libcamera::CameraConfiguration;
 using CameraManager = libcamera::CameraManager;
 namespace controls = libcamera::controls;
@@ -141,7 +137,7 @@ namespace Camera {
                 {
                     if (free_buffers[stream].empty())
                     {
-                        std::cout << "Requests created" << std::endl;
+                        std::cout << "Requests created: " << _requests.size() << std::endl;
                         return;
                     }
                     std::unique_ptr<Request> request = _camera->createRequest();
@@ -185,7 +181,6 @@ namespace Camera {
     void LibcameraCamera::requestComplete(Request *request) {
         if (request->status() == Request::RequestCancelled)
         {
-            std::cout << "Request cancelled, aghhh" << std::endl;
             // request failed, probably closing
             return;
         }
@@ -197,7 +192,7 @@ namespace Camera {
         auto span = _mapped_buffers.at(buffer)[0];
         void *mem = span.data();
 
-        int fd = buffer->planes()[0].fd.get();
+        int fd = buffer->planes()[0].fd.get();request->reuse(Request::ReuseBuffers);
 
         auto ts = request->metadata().get(controls::SensorTimestamp);
         int64_t timestamp_ns = (ts ? *ts : buffer->metadata().timestamp) / 1000;
@@ -205,7 +200,6 @@ namespace Camera {
         auto *out_buffer = new CameraBuffer(
             static_cast<void *>(request), mem, fd, span.size(), timestamp_ns
         );
-        std::cout << span.size() << std::endl;
         {
             std::lock_guard<std::mutex> lock(_camera_buffers_mutex);
             _camera_buffers.insert(out_buffer);
@@ -240,15 +234,7 @@ namespace Camera {
             return;
         }
 
-        // I actually have no idea what this is for
-        /*
-        BufferMap buffers(std::move(request->buffers()));
-        for (auto const &p : buffers)
-        {
-            if (request->addBuffer(p.first, p.second) < 0)
-                throw std::runtime_error("failed to add buffer to request in QueueRequest");
-        }
-        */
+        request->reuse(Request::ReuseBuffers);
         if (_camera->queueRequest(request) < 0)
             throw std::runtime_error("failed to queue request");
     }

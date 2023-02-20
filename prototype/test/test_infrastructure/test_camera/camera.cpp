@@ -65,7 +65,6 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
     bool is_done = false;
 
     auto callback = [&out_frame, &out_time, &is_done](std::shared_ptr<void> &&ptr){
-        std::cout << "send callback" << std::endl;
         if (is_done) {
             return;
         }
@@ -83,7 +82,7 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
         auto cam = Camera::Camera::Create(config, callback);
         cam->Start();
         in_time = Clock::now();
-        std::this_thread::sleep_for(10s);
+        std::this_thread::sleep_for(250ms);
         cam->Stop();
     }
 
@@ -93,4 +92,15 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
     std::cout << "Time to capture: " << d1.count() << std::endl;
 }
 
+// Just proving we will be able to reconfigure, start, and stop :D
+TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Start_And_Stop_And") {
+    auto config = LibcameraTestConfig();
+    auto cam = Camera::Camera::Create(config, [](std::shared_ptr<void> &&ptr){});
+    for (int i = 0; i <= 10; i++) {
+        cam->Start();
+        std::this_thread::sleep_for(100ms);
+        cam->Stop();
+        std::this_thread::sleep_for(100ms);
+    }
+}
 #endif
