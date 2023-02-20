@@ -255,7 +255,7 @@ namespace Codec {
                 // pretty sure we are actually fkd here, need a way to recover...
                 continue;
             }
-            if (downstream_buffer->size != 0) {
+            if (downstream_buffer->bytes_used != 0) {
                 SendDownstreamBuffer(downstream_buffer);
             }
             QueueDownstreamBuffer(downstream_buffer);
