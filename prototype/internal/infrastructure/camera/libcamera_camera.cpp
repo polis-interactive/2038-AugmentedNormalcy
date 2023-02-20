@@ -246,14 +246,12 @@ namespace Camera {
         }
 
         // I actually have no idea what this is for
-        /*
         BufferMap buffers(request->buffers());
         for (auto const &p : buffers)
         {
             if (request->addBuffer(p.first, p.second) < 0)
                 throw std::runtime_error("failed to add buffer to request in QueueRequest");
         }
-         */
         if (_camera->queueRequest(request) < 0)
             throw std::runtime_error("failed to queue request");
     }
