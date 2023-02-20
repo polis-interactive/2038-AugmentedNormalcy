@@ -80,7 +80,7 @@ namespace Codec {
 
         // set profile
         ctrl.id = V4L2_CID_MPEG_VIDEO_H264_PROFILE;
-        ctrl.value = V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE;
+        ctrl.value = V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_HIGH;
         if (xioctl(_encoder_fd, VIDIOC_S_CTRL, &ctrl) < 0)
             throw std::runtime_error("failed to set profile");
 
