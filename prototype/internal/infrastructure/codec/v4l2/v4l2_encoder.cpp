@@ -174,7 +174,7 @@ namespace Codec {
             throw std::runtime_error("Couldn't allocate all downstream buffers");
         }
 
-        _downstream_buffers.resize(downstream_buffers_count);
+        _downstream_buffers.resize(reqbufs.count);
 
         for (unsigned int i = 0; i < reqbufs.count; i++)
         {
