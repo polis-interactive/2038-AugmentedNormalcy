@@ -1,0 +1,159 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3
+					],
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.18"
+					},
+					"projectIndex" : 0,
+					"source" : "."
+				},
+				{
+					"build" : "third_party/jetson_multimedia_api",
+					"jsonFile" : "directory-third_party.jetson_multimedia_api-Debug-2734fdcaf50e2a24ca27.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.18"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "third_party/jetson_multimedia_api",
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"build" : "internal/infrastructure/tcp",
+					"jsonFile" : "directory-internal.infrastructure.tcp-Debug-265887ccb49590a52bdc.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.18"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 2,
+					"source" : "internal/infrastructure/tcp",
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"build" : "test",
+					"jsonFile" : "directory-test-Debug-451c0598f41488bb20b9.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.18"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 3,
+					"source" : "test",
+					"targetIndexes" : 
+					[
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3
+					],
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "AugmentedNormalcy"
+				},
+				{
+					"directoryIndexes" : 
+					[
+						1
+					],
+					"name" : "AugmentedNormalcy_ThirdParty_JetsonMM",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						2
+					],
+					"name" : "AugmentedNormalcy_TcpServer",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						3
+					],
+					"name" : "AugmentedNormalcy_Prototype_Tests",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 1,
+					"id" : "jetson_mm::@20af2bb4c597c318d1b5",
+					"jsonFile" : "target-jetson_mm-Debug-20a6190068bd239a14ee.json",
+					"name" : "jetson_mm",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "tcp_server::@5c7de5aabe355c84fc42",
+					"jsonFile" : "target-tcp_server-Debug-13ca9e2ba13efae302e9.json",
+					"name" : "tcp_server",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "tests::@36f028580bb02cc8272a",
+					"jsonFile" : "target-tests-Debug-ffefd3944a600421dad0.json",
+					"name" : "tests",
+					"projectIndex" : 3
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc",
+		"source" : "/home/brucegoose/polis/2038-AugmentedNormalcy"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}

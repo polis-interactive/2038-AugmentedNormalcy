@@ -1,0 +1,5 @@
+/home/brucegoose/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/222.4345.21/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/home/brucegoose/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/222.4345.21/bin/ninja/linux/ninja -DAN_PLATFORM:STRING=JETSON_CC -G Ninja -S /home/brucegoose/polis/2038-AugmentedNormalcy -B /home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc
+Setting debug flags
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc

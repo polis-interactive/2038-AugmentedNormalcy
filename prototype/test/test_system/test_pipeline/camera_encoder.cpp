@@ -101,7 +101,7 @@ private:
 TEST_CASE("SYSTEM_PIPELINE-Hardcoded_Rpi_Recorder") {
     HardcodedRpiRecorder recorder;
     recorder.Start();
-    std::this_thread::sleep_for(1s);
+    std::this_thread::sleep_for(10s);
     recorder.Stop();
     REQUIRE_GT(recorder.FileSize(), 1000);
 }

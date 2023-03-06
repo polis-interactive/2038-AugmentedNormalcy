@@ -1,0 +1,11 @@
+/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/CMakeFiles/edit_cache.dir
+/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/CMakeFiles/rebuild_cache.dir
+/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/third_party/jetson_multimedia_api/CMakeFiles/jetson_mm.dir
+/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/third_party/jetson_multimedia_api/CMakeFiles/edit_cache.dir
+/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/third_party/jetson_multimedia_api/CMakeFiles/rebuild_cache.dir
+/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/internal/infrastructure/tcp/CMakeFiles/tcp_server.dir
+/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/internal/infrastructure/tcp/CMakeFiles/edit_cache.dir
+/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/internal/infrastructure/tcp/CMakeFiles/rebuild_cache.dir
+/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/test/CMakeFiles/tests.dir
+/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/test/CMakeFiles/edit_cache.dir
+/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/test/CMakeFiles/rebuild_cache.dir

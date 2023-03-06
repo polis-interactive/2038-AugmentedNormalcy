@@ -1,0 +1,221 @@
+The target system is: Linux -  - aarch64
+The host system is: Linux - 5.15.0-60-generic - x86_64
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/aarch64-buildroot-linux-gnu-g++ 
+Build flags: ;;;;;;;;;;;;;-ggdb;;;;;;;;;;;;;-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64;;;;;;;;;;;;;-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu;;;;;;;;;;;;;-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra;;;;;;;;;;;;;-Wl,-rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/aarch64-linux-gnu;;;;;;;;;;;;;-Wl,-rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu;;;;;;;;;;;;;-Wl,-rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra;;;;;;;;;;;;;-Wl,-rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64;;;;;;;;;;;;;-I/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include;;;;;;;;;;;;;-I/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu;;;;;
+Id flags: -c 
+
+The output was:
+0
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.o"
+
+The CXX compiler identification is GNU, found in "/home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/CMakeFiles/3.23.2/CompilerIdCXX/CMakeCXXCompilerId.o"
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: /home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/home/brucegoose/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/222.4345.21/bin/ninja/linux/ninja cmTC_47ed2 && [1/2] Building CXX object CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o
+Using built-in specs.
+COLLECT_GCC=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/aarch64-buildroot-linux-gnu-g++.br_real
+Target: aarch64-buildroot-linux-gnu
+Configured with: ./configure --prefix=/sources/build/build --sysconfdir=/sources/build/build/etc --enable-static --target=aarch64-buildroot-linux-gnu --with-sysroot=/sources/build/build/aarch64-buildroot-linux-gnu/sysroot --enable-__cxa_atexit --with-gnu-ld --disable-libssp --disable-multilib --disable-decimal-float --with-gmp=/sources/build/build --with-mpc=/sources/build/build --with-mpfr=/sources/build/build --with-pkgversion='Buildroot 2020.08' --with-bugurl=http://bugs.buildroot.net/ --without-zstd --disable-libquadmath --disable-libquadmath-support --enable-tls --enable-threads --without-isl --without-cloog --with-abi=lp64 --with-cpu=cortex-a53 --enable-languages=c,c++,fortran --with-build-time-tools=/sources/build/build/aarch64-buildroot-linux-gnu/bin --enable-shared --enable-libgomp
+Thread model: posix
+gcc version 9.3.0 (Buildroot 2020.08) 
+COLLECT_GCC_OPTIONS='-ggdb' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu' '-v' '-std=gnu++2a' '-o' 'CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/cc1plus -quiet -v -I /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include -I /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu -iprefix /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/ -isysroot /home/brucegoose/cross-compile/jetson-orin/rootfs -D_GNU_SOURCE /home/brucegoose/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/222.4345.21/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpbase CMakeCXXCompilerABI.cpp -mcpu=cortex-a53 -mlittle-endian -mabi=lp64 -auxbase-strip CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o -ggdb -std=gnu++2a -version -o /tmp/ccisE7H0.s
+GNU C++17 (Buildroot 2020.08) version 9.3.0 (aarch64-buildroot-linux-gnu)
+	compiled by GNU C version 4.8.4, GMP version 6.1.2, MPFR version 4.0.2, MPC version 1.1.0, isl version none
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+ignoring duplicate directory "/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/../../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0"
+ignoring duplicate directory "/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/../../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0/aarch64-buildroot-linux-gnu"
+ignoring duplicate directory "/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/../../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0/backward"
+ignoring duplicate directory "/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/../../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include"
+ignoring duplicate directory "/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/../../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include-fixed"
+ignoring duplicate directory "/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/../../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include
+ /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu
+ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0
+ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0/aarch64-buildroot-linux-gnu
+ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0/backward
+ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include
+ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include-fixed
+ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include
+ /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/include
+ /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include
+End of search list.
+GNU C++17 (Buildroot 2020.08) version 9.3.0 (aarch64-buildroot-linux-gnu)
+	compiled by GNU C version 4.8.4, GMP version 6.1.2, MPFR version 4.0.2, MPC version 1.1.0, isl version none
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+Compiler executable checksum: 24882dc309369d77308315f572973e0b
+COLLECT_GCC_OPTIONS='-ggdb' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu' '-v' '-std=gnu++2a' '-o' 'CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/bin/as -v -I /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include -I /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu -EL -march=armv8-a+crc -mabi=lp64 -o CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccisE7H0.s
+GNU assembler version 2.33.1 (aarch64-buildroot-linux-gnu) using BFD version (GNU Binutils) 2.33.1
+COMPILER_PATH=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/bin/
+LIBRARY_PATH=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/../lib64/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/:/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/:/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/
+COLLECT_GCC_OPTIONS='-ggdb' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu' '-v' '-std=gnu++2a' '-o' 'CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+[2/2] Linking CXX executable cmTC_47ed2
+Using built-in specs.
+COLLECT_GCC=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/aarch64-buildroot-linux-gnu-g++.br_real
+COLLECT_LTO_WRAPPER=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/lto-wrapper
+Target: aarch64-buildroot-linux-gnu
+Configured with: ./configure --prefix=/sources/build/build --sysconfdir=/sources/build/build/etc --enable-static --target=aarch64-buildroot-linux-gnu --with-sysroot=/sources/build/build/aarch64-buildroot-linux-gnu/sysroot --enable-__cxa_atexit --with-gnu-ld --disable-libssp --disable-multilib --disable-decimal-float --with-gmp=/sources/build/build --with-mpc=/sources/build/build --with-mpfr=/sources/build/build --with-pkgversion='Buildroot 2020.08' --with-bugurl=http://bugs.buildroot.net/ --without-zstd --disable-libquadmath --disable-libquadmath-support --enable-tls --enable-threads --without-isl --without-cloog --with-abi=lp64 --with-cpu=cortex-a53 --enable-languages=c,c++,fortran --with-build-time-tools=/sources/build/build/aarch64-buildroot-linux-gnu/bin --enable-shared --enable-libgomp
+Thread model: posix
+gcc version 9.3.0 (Buildroot 2020.08) 
+COMPILER_PATH=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/bin/
+LIBRARY_PATH=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/../lib64/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/:/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/:/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/
+COLLECT_GCC_OPTIONS='-ggdb' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu' '-v' '-o' 'cmTC_47ed2' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/collect2 -plugin /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/liblto_plugin.so -plugin-opt=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/lto-wrapper -plugin-opt=-fresolution=/tmp/cc1aPoCH.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --sysroot=/home/brucegoose/cross-compile/jetson-orin/rootfs --eh-frame-hdr -dynamic-linker /lib/ld-linux-aarch64.so.1 -X -EL -maarch64linux -o cmTC_47ed2 /home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crt1.o /home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crti.o /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtbegin.o -L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64 -L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu -L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra -L/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0 -L/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc -L/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/../lib64 -L/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib -L/home/brucegoose/cross-compile/jetson-orin/rootfs/lib -L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib -rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/aarch64-linux-gnu -rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu -rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra -rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64 CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtend.o /home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crtn.o
+COLLECT_GCC_OPTIONS='-ggdb' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu' '-v' '-o' 'cmTC_47ed2' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64'
+
+
+
+Parsed CXX implicit include dir info from above output: rv=done
+  found start of include info
+  found start of implicit include info
+    add: [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include]
+    add: [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu]
+    add: [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0]
+    add: [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0/aarch64-buildroot-linux-gnu]
+    add: [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0/backward]
+    add: [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include]
+    add: [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include-fixed]
+    add: [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include]
+    add: [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/include]
+    add: [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include]
+  end of search list found
+  collapse include dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include] ==> [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include]
+  collapse include dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu] ==> [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu]
+  collapse include dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0] ==> [/home/brucegoose/cross-compile/jetson-orin/toolchain/aarch64-buildroot-linux-gnu/include/c++/9.3.0]
+  collapse include dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0/aarch64-buildroot-linux-gnu] ==> [/home/brucegoose/cross-compile/jetson-orin/toolchain/aarch64-buildroot-linux-gnu/include/c++/9.3.0/aarch64-buildroot-linux-gnu]
+  collapse include dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0/backward] ==> [/home/brucegoose/cross-compile/jetson-orin/toolchain/aarch64-buildroot-linux-gnu/include/c++/9.3.0/backward]
+  collapse include dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include] ==> [/home/brucegoose/cross-compile/jetson-orin/toolchain/lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include]
+  collapse include dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include-fixed] ==> [/home/brucegoose/cross-compile/jetson-orin/toolchain/lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include-fixed]
+  collapse include dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include] ==> [/home/brucegoose/cross-compile/jetson-orin/toolchain/aarch64-buildroot-linux-gnu/include]
+  collapse include dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/include] ==> [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/include]
+  collapse include dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include] ==> [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include]
+  implicit include dirs: [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include;/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu;/home/brucegoose/cross-compile/jetson-orin/toolchain/aarch64-buildroot-linux-gnu/include/c++/9.3.0;/home/brucegoose/cross-compile/jetson-orin/toolchain/aarch64-buildroot-linux-gnu/include/c++/9.3.0/aarch64-buildroot-linux-gnu;/home/brucegoose/cross-compile/jetson-orin/toolchain/aarch64-buildroot-linux-gnu/include/c++/9.3.0/backward;/home/brucegoose/cross-compile/jetson-orin/toolchain/lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include;/home/brucegoose/cross-compile/jetson-orin/toolchain/lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include-fixed;/home/brucegoose/cross-compile/jetson-orin/toolchain/aarch64-buildroot-linux-gnu/include;/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/include;/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include]
+
+
+Parsed CXX implicit link information from above output:
+  link line regex: [^( *|.*[/\])(aarch64-buildroot-linux-gnu-ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /home/brucegoose/polis/2038-AugmentedNormalcy/cmake-build-debug_jetson_cc/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command(s):/home/brucegoose/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/222.4345.21/bin/ninja/linux/ninja cmTC_47ed2 && [1/2] Building CXX object CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/aarch64-buildroot-linux-gnu-g++.br_real]
+  ignore line: [Target: aarch64-buildroot-linux-gnu]
+  ignore line: [Configured with: ./configure --prefix=/sources/build/build --sysconfdir=/sources/build/build/etc --enable-static --target=aarch64-buildroot-linux-gnu --with-sysroot=/sources/build/build/aarch64-buildroot-linux-gnu/sysroot --enable-__cxa_atexit --with-gnu-ld --disable-libssp --disable-multilib --disable-decimal-float --with-gmp=/sources/build/build --with-mpc=/sources/build/build --with-mpfr=/sources/build/build --with-pkgversion='Buildroot 2020.08' --with-bugurl=http://bugs.buildroot.net/ --without-zstd --disable-libquadmath --disable-libquadmath-support --enable-tls --enable-threads --without-isl --without-cloog --with-abi=lp64 --with-cpu=cortex-a53 --enable-languages=c,c++,fortran --with-build-time-tools=/sources/build/build/aarch64-buildroot-linux-gnu/bin --enable-shared --enable-libgomp]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 9.3.0 (Buildroot 2020.08) ]
+  ignore line: [COLLECT_GCC_OPTIONS='-ggdb' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu' '-v' '-std=gnu++2a' '-o' 'CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64']
+  ignore line: [ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/cc1plus -quiet -v -I /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include -I /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu -iprefix /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/ -isysroot /home/brucegoose/cross-compile/jetson-orin/rootfs -D_GNU_SOURCE /home/brucegoose/.local/share/JetBrains/Toolbox/apps/CLion/ch-0/222.4345.21/bin/cmake/linux/share/cmake-3.23/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpbase CMakeCXXCompilerABI.cpp -mcpu=cortex-a53 -mlittle-endian -mabi=lp64 -auxbase-strip CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o -ggdb -std=gnu++2a -version -o /tmp/ccisE7H0.s]
+  ignore line: [GNU C++17 (Buildroot 2020.08) version 9.3.0 (aarch64-buildroot-linux-gnu)]
+  ignore line: [	compiled by GNU C version 4.8.4  GMP version 6.1.2  MPFR version 4.0.2  MPC version 1.1.0  isl version none]
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [ignoring duplicate directory "/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/../../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0"]
+  ignore line: [ignoring duplicate directory "/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/../../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0/aarch64-buildroot-linux-gnu"]
+  ignore line: [ignoring duplicate directory "/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/../../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0/backward"]
+  ignore line: [ignoring duplicate directory "/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/../../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include"]
+  ignore line: [ignoring duplicate directory "/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/../../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include-fixed"]
+  ignore line: [ignoring duplicate directory "/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/../../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include"]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include]
+  ignore line: [ /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu]
+  ignore line: [ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0]
+  ignore line: [ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0/aarch64-buildroot-linux-gnu]
+  ignore line: [ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include/c++/9.3.0/backward]
+  ignore line: [ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include]
+  ignore line: [ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/include-fixed]
+  ignore line: [ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/include]
+  ignore line: [ /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/include]
+  ignore line: [ /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include]
+  ignore line: [End of search list.]
+  ignore line: [GNU C++17 (Buildroot 2020.08) version 9.3.0 (aarch64-buildroot-linux-gnu)]
+  ignore line: [	compiled by GNU C version 4.8.4  GMP version 6.1.2  MPFR version 4.0.2  MPC version 1.1.0  isl version none]
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [Compiler executable checksum: 24882dc309369d77308315f572973e0b]
+  ignore line: [COLLECT_GCC_OPTIONS='-ggdb' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu' '-v' '-std=gnu++2a' '-o' 'CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64']
+  ignore line: [ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/bin/as -v -I /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include -I /home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu -EL -march=armv8-a+crc -mabi=lp64 -o CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o /tmp/ccisE7H0.s]
+  ignore line: [GNU assembler version 2.33.1 (aarch64-buildroot-linux-gnu) using BFD version (GNU Binutils) 2.33.1]
+  ignore line: [COMPILER_PATH=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/bin/]
+  ignore line: [LIBRARY_PATH=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/../lib64/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/:/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/:/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-ggdb' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu' '-v' '-std=gnu++2a' '-o' 'CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64']
+  ignore line: [[2/2] Linking CXX executable cmTC_47ed2]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/aarch64-buildroot-linux-gnu-g++.br_real]
+  ignore line: [COLLECT_LTO_WRAPPER=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/lto-wrapper]
+  ignore line: [Target: aarch64-buildroot-linux-gnu]
+  ignore line: [Configured with: ./configure --prefix=/sources/build/build --sysconfdir=/sources/build/build/etc --enable-static --target=aarch64-buildroot-linux-gnu --with-sysroot=/sources/build/build/aarch64-buildroot-linux-gnu/sysroot --enable-__cxa_atexit --with-gnu-ld --disable-libssp --disable-multilib --disable-decimal-float --with-gmp=/sources/build/build --with-mpc=/sources/build/build --with-mpfr=/sources/build/build --with-pkgversion='Buildroot 2020.08' --with-bugurl=http://bugs.buildroot.net/ --without-zstd --disable-libquadmath --disable-libquadmath-support --enable-tls --enable-threads --without-isl --without-cloog --with-abi=lp64 --with-cpu=cortex-a53 --enable-languages=c,c++,fortran --with-build-time-tools=/sources/build/build/aarch64-buildroot-linux-gnu/bin --enable-shared --enable-libgomp]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 9.3.0 (Buildroot 2020.08) ]
+  ignore line: [COMPILER_PATH=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/bin/]
+  ignore line: [LIBRARY_PATH=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/../lib64/:/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/:/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/:/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-ggdb' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu' '-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/include' '-I' '/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/include/aarch64-linux-gnu' '-v' '-o' 'cmTC_47ed2' '-shared-libgcc' '-mcpu=cortex-a53' '-mlittle-endian' '-mabi=lp64']
+  link line: [ /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/collect2 -plugin /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/liblto_plugin.so -plugin-opt=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/lto-wrapper -plugin-opt=-fresolution=/tmp/cc1aPoCH.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --sysroot=/home/brucegoose/cross-compile/jetson-orin/rootfs --eh-frame-hdr -dynamic-linker /lib/ld-linux-aarch64.so.1 -X -EL -maarch64linux -o cmTC_47ed2 /home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crt1.o /home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crti.o /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtbegin.o -L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64 -L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu -L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra -L/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0 -L/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc -L/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/../lib64 -L/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib -L/home/brucegoose/cross-compile/jetson-orin/rootfs/lib -L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib -rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/aarch64-linux-gnu -rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu -rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra -rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64 CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtend.o /home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crtn.o]
+    arg [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/collect2] ==> ignore
+    arg [-plugin] ==> ignore
+    arg [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/liblto_plugin.so] ==> ignore
+    arg [-plugin-opt=/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../libexec/gcc/aarch64-buildroot-linux-gnu/9.3.0/lto-wrapper] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/cc1aPoCH.res] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [--sysroot=/home/brucegoose/cross-compile/jetson-orin/rootfs] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib/ld-linux-aarch64.so.1] ==> ignore
+    arg [-X] ==> ignore
+    arg [-EL] ==> ignore
+    arg [-maarch64linux] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_47ed2] ==> ignore
+    arg [/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crt1.o] ==> obj [/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crt1.o]
+    arg [/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crti.o] ==> obj [/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crti.o]
+    arg [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtbegin.o] ==> obj [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtbegin.o]
+    arg [-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64] ==> dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64]
+    arg [-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu] ==> dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu]
+    arg [-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra] ==> dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra]
+    arg [-L/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0] ==> dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0]
+    arg [-L/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc] ==> dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc]
+    arg [-L/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/../lib64] ==> dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/../lib64]
+    arg [-L/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib] ==> dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib]
+    arg [-L/home/brucegoose/cross-compile/jetson-orin/rootfs/lib] ==> dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/lib]
+    arg [-L/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib] ==> dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib]
+    arg [-rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/aarch64-linux-gnu] ==> ignore
+    arg [-rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu] ==> ignore
+    arg [-rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra] ==> ignore
+    arg [-rpath-link=/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64] ==> ignore
+    arg [CMakeFiles/cmTC_47ed2.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [-lstdc++] ==> lib [stdc++]
+    arg [-lm] ==> lib [m]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [-lc] ==> lib [c]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtend.o] ==> obj [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtend.o]
+    arg [/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crtn.o] ==> obj [/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crtn.o]
+  collapse obj [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtbegin.o] ==> [/home/brucegoose/cross-compile/jetson-orin/toolchain/lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtbegin.o]
+  collapse obj [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtend.o] ==> [/home/brucegoose/cross-compile/jetson-orin/toolchain/lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtend.o]
+  collapse library dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64] ==> [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64]
+  collapse library dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu] ==> [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu]
+  collapse library dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra] ==> [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra]
+  collapse library dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0] ==> [/home/brucegoose/cross-compile/jetson-orin/toolchain/lib/gcc/aarch64-buildroot-linux-gnu/9.3.0]
+  collapse library dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc] ==> [/home/brucegoose/cross-compile/jetson-orin/toolchain/lib/gcc]
+  collapse library dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib/../lib64] ==> [/home/brucegoose/cross-compile/jetson-orin/toolchain/aarch64-buildroot-linux-gnu/lib64]
+  collapse library dir [/home/brucegoose/cross-compile/jetson-orin/toolchain/bin/../lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/../../../../aarch64-buildroot-linux-gnu/lib] ==> [/home/brucegoose/cross-compile/jetson-orin/toolchain/aarch64-buildroot-linux-gnu/lib]
+  collapse library dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/lib] ==> [/home/brucegoose/cross-compile/jetson-orin/rootfs/lib]
+  collapse library dir [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib] ==> [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib]
+  implicit libs: [stdc++;m;gcc_s;gcc;c;gcc_s;gcc]
+  implicit objs: [/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crt1.o;/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crti.o;/home/brucegoose/cross-compile/jetson-orin/toolchain/lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtbegin.o;/home/brucegoose/cross-compile/jetson-orin/toolchain/lib/gcc/aarch64-buildroot-linux-gnu/9.3.0/crtend.o;/home/brucegoose/cross-compile/jetson-orin/rootfs/lib/crtn.o]
+  implicit dirs: [/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/local/cuda/lib64;/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu;/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib/aarch64-linux-gnu/tegra;/home/brucegoose/cross-compile/jetson-orin/toolchain/lib/gcc/aarch64-buildroot-linux-gnu/9.3.0;/home/brucegoose/cross-compile/jetson-orin/toolchain/lib/gcc;/home/brucegoose/cross-compile/jetson-orin/toolchain/aarch64-buildroot-linux-gnu/lib64;/home/brucegoose/cross-compile/jetson-orin/toolchain/aarch64-buildroot-linux-gnu/lib;/home/brucegoose/cross-compile/jetson-orin/rootfs/lib;/home/brucegoose/cross-compile/jetson-orin/rootfs/usr/lib]
+  implicit fwks: []
+
+
