@@ -1,4 +1,0 @@
-# ninja log v5
-2594	2712	1678060989880341942	test/tests	ffd6a3763c0b22ea
-0	2592	1678060989756343867	test/CMakeFiles/tests.dir/test_infrastructure/test_tcp/context.cpp.o	c27ae773c91f7c3
-0	2423	1678060989584346535	test/CMakeFiles/tests.dir/main.cpp.o	43f840b43273fac
