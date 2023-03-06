@@ -1,12 +1,7 @@
 
-cmake_minimum_required(VERSION 3.18)
-
-project(AugmentedNormalcy_TcpServer LANGUAGES CXX)
-
 set(Boost_NO_WARN_NEW_VERSIONS 1)
 find_package(Boost ${Boost_Version} REQUIRED COMPONENTS system regex)
 include_directories(${BOOST_INCLUDEDIR})
-
 
 if (FEATURE_TCP_SERVER)
     add_library(tcp_server STATIC tcp_server.cpp)

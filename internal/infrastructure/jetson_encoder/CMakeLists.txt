@@ -1,6 +1,4 @@
 
-cmake_minimum_required(VERSION 3.18)
-
 project(AugmentedNormalcy_JetsonEncoder LANGUAGES CXX)
 
 set(
