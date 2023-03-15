@@ -14,7 +14,7 @@ if (CMAKE_BUILD_TYPE STREQUAL Debug)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 endif()
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_RELEASE_INIT "-Wall")
 
 SET(AN_PLATFORM "BROOSE_LINUX_LAPTOP" CACHE STRING "Sets up the build env")
@@ -33,7 +33,7 @@ set(root_dir ${CMAKE_CURRENT_LIST_DIR})
 set(internal_dir ${root_dir}/internal)
 set(third_party_dir ${root_dir}/third_party)
 
-if(AN_PLATFORM STREQUAL JETSON_CC OR AN_PLATFORM STREQUAL JETSON)
+if(${FEATURE_JETSON_ENCODER})
     add_subdirectory(third_party/jetson_multimedia_api)
     # add_subdirectory(internal/infrastructure/jetson_encoder)
 endif()

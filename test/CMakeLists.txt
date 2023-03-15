@@ -6,10 +6,10 @@ project(AugmentedNormalcy_Prototype_Tests LANGUAGES CXX)
 include_directories(${root_dir}/third_party/doctest)
 include_directories(${BOOST_INCLUDEDIR})
 
-set(tests main.cpp test_infrastructure/test_tcp/context.cpp)
+set(tests main.cpp test_infrastructure/test_tcp/context.cpp test_infrastructure/test_tcp/server.cpp)
 
 add_definitions(-DTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_executable(tests ${tests})
 
-target_link_libraries(tests pthread)
+target_link_libraries(tests pthread tcp_server)
 target_include_directories(tests PRIVATE ${internal_dir})

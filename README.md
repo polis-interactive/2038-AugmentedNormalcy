@@ -1,5 +1,13 @@
 # 2038-AugmentedNormalcy
 
+## Mounting jetson image
+
+Getting cross compiling going was a nightmare; had to follow this mainly, but stumbled alot along the way:
+https://forums.developer.nvidia.com/t/question-about-cross-compilation-link-errors/238711/7
+
+```
+$ sudo mount build/Linux_for_Tegra/jetson-cc.img.raw ~/cross-compile/jetson-orin/rootfs
+```
 
 ## Compiling on jetson
 
