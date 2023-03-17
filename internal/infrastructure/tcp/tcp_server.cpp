@@ -78,6 +78,9 @@ namespace infrastructure {
                     return;
                 }
                 if (!ec) {
+                    socket.set_option(tcp::no_delay(true));
+                    net::socket_base::keep_alive option(true);
+                    socket.set_option(option);
                     auto connection_type = _manager->GetConnectionType(socket.remote_endpoint());
                     if (connection_type == TcpConnectionType::CAMERA_CONNECTION) {
                         std::shared_ptr<TcpCameraSession>(new TcpCameraSession(std::move(socket), _manager))->Run();

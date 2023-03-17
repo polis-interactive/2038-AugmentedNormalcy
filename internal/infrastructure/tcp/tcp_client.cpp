@@ -21,7 +21,11 @@ namespace infrastructure {
         _socket(net::make_strand(context)),
         _manager(manager),
         _is_camera(config.get_tcp_client_is_camera())
-    {}
+    {
+        _socket.set_option(tcp::no_delay(true));
+        net::socket_base::keep_alive option(true);
+        _socket.set_option(option);
+    }
 
     void TcpClient::Start() {
         if (_is_stopped) {
