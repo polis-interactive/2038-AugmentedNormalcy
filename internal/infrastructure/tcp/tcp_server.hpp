@@ -5,23 +5,15 @@
 #ifndef AUGMENTEDNORMALCY_INFRASTRUCTURE_TCP_SERVER_HPP
 #define AUGMENTEDNORMALCY_INFRASTRUCTURE_TCP_SERVER_HPP
 
-#include <boost/asio.hpp>
-#include <map>
 #include "tcp_context.hpp"
+#include "tcp_common.hpp"
 
 using boost::asio::ip::tcp;
 using boost::system::error_code;
 
-struct SizedBuffer {
-    [[nodiscard]] virtual void *GetMemory() = 0;
-    [[nodiscard]] virtual std::size_t GetSize() = 0;
-};
 
-class CameraBufferPool {
-public:
-    [[nodiscard]] virtual std::shared_ptr<SizedBuffer> &&GetCameraBuffer() = 0;
-    virtual void SendCameraBuffer(std::shared_ptr<SizedBuffer> &&buffer) = 0;
-};
+
+
 
 namespace infrastructure {
 
@@ -31,7 +23,7 @@ namespace infrastructure {
         UNKNOWN_CONNECTION
     };
 
-    typedef std::pair<unsigned long, std::shared_ptr<CameraBufferPool>> CameraConnectionPayload;
+    typedef std::pair<unsigned long, std::shared_ptr<PushingBufferPool>> CameraConnectionPayload;
     typedef std::function<void(std::shared_ptr<SizedBuffer>&&)> HeadsetWriteCall;
 
     class TcpServerManager {
@@ -68,7 +60,7 @@ namespace infrastructure {
         tcp::socket _socket;
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
         std::shared_ptr<TcpServerManager> &_manager;
-        std::shared_ptr<CameraBufferPool> _buffer_pool = nullptr;
+        std::shared_ptr<PushingBufferPool> _buffer_pool = nullptr;
         unsigned long _session_id;
     };
 

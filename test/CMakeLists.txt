@@ -11,5 +11,5 @@ set(tests main.cpp test_infrastructure/test_tcp/context.cpp test_infrastructure/
 add_definitions(-DTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_executable(tests ${tests})
 
-target_link_libraries(tests pthread tcp_server)
+target_link_libraries(tests pthread tcp)
 target_include_directories(tests PRIVATE ${internal_dir})

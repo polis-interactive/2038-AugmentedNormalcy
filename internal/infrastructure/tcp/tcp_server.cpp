@@ -53,16 +53,21 @@ namespace infrastructure {
     }
 
     void TcpServer::Start() {
-        _is_stopped = false;
-        acceptConnections();
+        if (_is_stopped) {
+            _is_stopped = false;
+            acceptConnections();
+        }
+
     }
 
     void TcpServer::Stop() {
-        _is_stopped = true;
-        boost::asio::post(
-            net::make_strand(_context),
-            [&acceptor = _acceptor]() { acceptor.cancel(); }
-        );
+        if (!_is_stopped) {
+            _is_stopped = true;
+            boost::asio::post(
+                net::make_strand(_context),
+                [&acceptor = _acceptor]() { acceptor.cancel(); }
+            );
+        }
     }
 
     void TcpServer::acceptConnections() {
@@ -104,16 +109,15 @@ namespace infrastructure {
     }
 
     void TcpCameraSession::readStream() {
-        auto buffer = _buffer_pool->GetCameraBuffer();
+        auto buffer = _buffer_pool->GetSizedBuffer();
         auto buffer_memory = buffer->GetMemory();
         auto buffer_size = buffer->GetSize();
         auto self(shared_from_this());
-        boost::asio::async_read(
-            _socket,
+        _socket.async_receive(
             boost::asio::buffer(buffer_memory, buffer_size),
             [this, self, camera_buffer = std::move(buffer)] (error_code ec, std::size_t bytes_written) mutable {
                 if (!ec && bytes_written == camera_buffer->GetSize()) {
-                    _buffer_pool->SendCameraBuffer(std::move(camera_buffer));
+                    _buffer_pool->SendSizedBuffer(std::move(camera_buffer));
                     readStream();
                 } else {
                     TryClose();
@@ -155,14 +159,11 @@ namespace infrastructure {
         auto self(shared_from_this());
         _socket.async_send(
             net::buffer(buffer_memory, buffer_size),
-            net::bind_executor(
-                _socket.get_executor(),
-                [this, self, send_buffer = std::move(buffer)](error_code ec, std::size_t bytes_written) {
-                    if (ec || bytes_written != send_buffer->GetSize()) {
-                        TryClose();
-                    }
+            [this, self, send_buffer = std::move(buffer)](error_code ec, std::size_t bytes_written) mutable {
+                if (ec || bytes_written != send_buffer->GetSize()) {
+                    TryClose();
                 }
-            )
+            }
         );
     }
 
