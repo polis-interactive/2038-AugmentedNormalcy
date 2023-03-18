@@ -20,7 +20,7 @@ namespace infrastructure {
         ),
         _socket(net::make_strand(context)),
         _manager(manager),
-        _is_camera(true)
+        _is_camera(config.get_tcp_client_is_camera())
     {
 
     }
@@ -108,7 +108,6 @@ namespace infrastructure {
 
     void TcpClient::read() {
         if (_is_stopped || !_is_connected) return;
-        std::cout << "TcpClient connected; attempting to read" << std::endl;
         auto buffer = _buffer_pool->GetSizedBuffer();
         auto buffer_memory = buffer->GetMemory();
         auto buffer_size = buffer->GetSize();

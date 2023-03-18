@@ -71,6 +71,7 @@ namespace infrastructure {
     protected:
         friend class TcpServer;
         TcpHeadsetSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager);
+        void ConnectAndWait();
     private:
         void write(std::shared_ptr<SizedBuffer> &&send_buffer);
         tcp::socket _socket;

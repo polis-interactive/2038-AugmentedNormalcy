@@ -88,7 +88,7 @@ namespace infrastructure {
                     if (connection_type == TcpConnectionType::CAMERA_CONNECTION) {
                         std::shared_ptr<TcpCameraSession>(new TcpCameraSession(std::move(socket), _manager))->Run();
                     } else if (connection_type == TcpConnectionType::HEADSET_CONNECTION) {
-                        std::shared_ptr<TcpHeadsetSession>(new TcpHeadsetSession(std::move(socket), _manager));
+                        std::shared_ptr<TcpHeadsetSession>(new TcpHeadsetSession(std::move(socket), _manager))->ConnectAndWait();
                     } else {
                         std::cout << "TcpServer: Unknown connection, abort" << std::endl;
                         socket.shutdown(tcp::socket::shutdown_send, ec);
@@ -155,6 +155,9 @@ namespace infrastructure {
         _manager(manager)
     {
         std::cout << "TcpHeadsetSession: creating connection" << std::endl;
+    }
+
+    void TcpHeadsetSession::ConnectAndWait() {
         auto self(shared_from_this());
         _session_id = _manager->CreateHeadsetServerConnection(
                 _socket.remote_endpoint(),
