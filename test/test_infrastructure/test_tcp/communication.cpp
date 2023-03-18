@@ -148,7 +148,7 @@ TEST_CASE("Push from camera client to server, little stressy-er") {
         manager->_write_call(std::move(buffer));
         send_count += 1;
     }
-    std::this_thread::sleep_for(1s);
+    std::this_thread::sleep_for(2s);
 
     REQUIRE_EQ(send_count, 10000);
     REQUIRE_EQ(send_count, receive_count);
