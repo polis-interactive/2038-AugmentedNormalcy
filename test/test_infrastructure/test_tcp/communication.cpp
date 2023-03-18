@@ -67,8 +67,10 @@ TEST_CASE("Push from camera client to server") {
     std::vector<std::string> output {};
     auto on_receive = [&output](std::shared_ptr<SizedBuffer> &&buffer) {
         auto fake_buffer = std::static_pointer_cast<FakeSizedBuffer>(buffer);
-        std::cout << "received buffer: " << fake_buffer->_buffer << std::endl;
-        output.emplace_back(fake_buffer->_buffer);
+        std::string s;
+        s.assign(fake_buffer->_buffer, fake_buffer->_buffer_size);
+        std::cout << "received buffer: " << s << std::endl;
+        output.push_back(s);
         buffer.reset();
     };
     // 5 buffers total means one needs to be reused
