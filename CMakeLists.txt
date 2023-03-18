@@ -33,6 +33,8 @@ set(root_dir ${CMAKE_CURRENT_LIST_DIR})
 set(internal_dir ${root_dir}/internal)
 set(third_party_dir ${root_dir}/third_party)
 
+include_directories(${root_dir}/internal)
+
 if(${FEATURE_JETSON_ENCODER})
     add_subdirectory(third_party/jetson_multimedia_api)
     # add_subdirectory(internal/infrastructure/jetson_encoder)

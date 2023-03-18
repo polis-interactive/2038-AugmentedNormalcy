@@ -8,7 +8,7 @@
 #include <utility>
 #include <string>
 
-#include "tcp_common.hpp"
+#include "utils/buffer_pool/buffer_pool.hpp"
 #include "tcp_context.hpp"
 
 using boost::asio::ip::tcp;
@@ -27,12 +27,12 @@ namespace infrastructure {
     class TcpClientManager {
     public:
         // camera session
-        virtual void CreateCameraConnection(CameraWriteCall writeCall) = 0;
-        virtual void DestroyCameraConnection() = 0;
+        virtual void CreateCameraClientConnection(CameraWriteCall write_call) = 0;
+        virtual void DestroyCameraClientConnection() = 0;
 
         // headset session
-        virtual std::shared_ptr<PushingBufferPool> CreateHeadsetConnection() = 0;
-        virtual void DestroyHeadsetConnection() = 0;
+        virtual std::shared_ptr<PushingBufferPool> CreateHeadsetClientConnection() = 0;
+        virtual void DestroyHeadsetClientConnection() = 0;
     };
 
     class TcpClient {

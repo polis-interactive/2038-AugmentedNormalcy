@@ -71,9 +71,12 @@ namespace infrastructure {
     }
 
     void TcpServer::acceptConnections() {
+        std::cout << "TcpServer: starting to accept connections" << std::endl;
         _acceptor.async_accept(
             net::make_strand(_context),
             [this](error_code ec, tcp::socket socket) {
+                std::cout << "TcpServer: attempting connection" << std::endl;
+                std::cout << ec << std::endl;
                 if (_is_stopped) {
                     return;
                 }
@@ -84,6 +87,11 @@ namespace infrastructure {
                     auto connection_type = _manager->GetConnectionType(socket.remote_endpoint());
                     if (connection_type == TcpConnectionType::CAMERA_CONNECTION) {
                         std::shared_ptr<TcpCameraSession>(new TcpCameraSession(std::move(socket), _manager))->Run();
+                    } else if (connection_type == TcpConnectionType::HEADSET_CONNECTION) {
+                        std::shared_ptr<TcpHeadsetSession>(new TcpHeadsetSession(std::move(socket), _manager));
+                    } else {
+                        std::cout << "TcpServer: Unknown connection, abort" << std::endl;
+                        socket.shutdown(tcp::socket::shutdown_send, ec);
                     }
                 }
                 if (ec != net::error::operation_aborted) {
@@ -96,12 +104,14 @@ namespace infrastructure {
     TcpCameraSession::TcpCameraSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager):
         _socket(std::move(socket)), _manager(manager)
     {
-        auto [session_id, buffer_pool] = _manager->CreateCameraConnection(_socket.remote_endpoint());
+        std::cout << "TcpCameraSession: creating connection" << std::endl;
+        auto [session_id, buffer_pool] = _manager->CreateCameraServerConnection(_socket.remote_endpoint());
         _session_id = session_id;
         _buffer_pool = buffer_pool;
     }
 
     void TcpCameraSession::Run() {
+        std::cout << "TcpCameraSession: running readStream" << std::endl;
         auto self(shared_from_this());
         net::dispatch(
             _socket.get_executor(),
@@ -134,8 +144,8 @@ namespace infrastructure {
             error_code ec;
             _socket.shutdown(tcp::socket::shutdown_send, ec);
         }
-        _manager->DestroyCameraConnection(
-            _socket.remote_endpoint(), _session_id
+        _manager->DestroyCameraServerConnection(
+                _socket.remote_endpoint(), _session_id
         );
     }
 
@@ -144,12 +154,13 @@ namespace infrastructure {
         _is_live(true),
         _manager(manager)
     {
+        std::cout << "TcpHeadsetSession: creating connection" << std::endl;
         auto self(shared_from_this());
-        _session_id = _manager->CreateHeadsetConnection(
-            _socket.remote_endpoint(),
-            [this, self](std::shared_ptr<SizedBuffer> &&buffer) {
-                write(std::move(buffer));
-            }
+        _session_id = _manager->CreateHeadsetServerConnection(
+                _socket.remote_endpoint(),
+                [this, self](std::shared_ptr<SizedBuffer> &&buffer) {
+                    write(std::move(buffer));
+                }
         );
     }
 
@@ -177,6 +188,6 @@ namespace infrastructure {
             error_code ec;
             _socket.shutdown(tcp::socket::shutdown_send, ec);
         }
-        _manager->DestroyHeadsetConnection(_socket.remote_endpoint(), _session_id);
+        _manager->DestroyHeadsetServerConnection(_socket.remote_endpoint(), _session_id);
     }
 }

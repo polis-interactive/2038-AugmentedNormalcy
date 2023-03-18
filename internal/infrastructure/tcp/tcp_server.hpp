@@ -6,13 +6,10 @@
 #define AUGMENTEDNORMALCY_INFRASTRUCTURE_TCP_SERVER_HPP
 
 #include "tcp_context.hpp"
-#include "tcp_common.hpp"
+#include "utils/buffer_pool/buffer_pool.hpp"
 
 using boost::asio::ip::tcp;
 using boost::system::error_code;
-
-
-
 
 
 namespace infrastructure {
@@ -31,15 +28,15 @@ namespace infrastructure {
         // tcp server
         [[nodiscard]] virtual TcpConnectionType GetConnectionType(tcp::endpoint endpoint) = 0;
         // camera session
-        [[nodiscard]]  virtual CameraConnectionPayload CreateCameraConnection(tcp::endpoint endpoint) = 0;
-        virtual void DestroyCameraConnection(tcp::endpoint endpoint, unsigned long session_id) = 0;
+        [[nodiscard]]  virtual CameraConnectionPayload CreateCameraServerConnection(tcp::endpoint endpoint) = 0;
+        virtual void DestroyCameraServerConnection(tcp::endpoint endpoint, unsigned long session_id) = 0;
 
         // headset session
-        [[nodiscard]]  virtual unsigned long CreateHeadsetConnection(
+        [[nodiscard]]  virtual unsigned long CreateHeadsetServerConnection(
             tcp::endpoint endpoint,
             HeadsetWriteCall writeCall
         ) = 0;
-        virtual void DestroyHeadsetConnection(tcp::endpoint endpoint, unsigned long session_id) = 0;
+        virtual void DestroyHeadsetServerConnection(tcp::endpoint endpoint, unsigned long session_id) = 0;
     };
 
 

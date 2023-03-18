@@ -120,7 +120,7 @@ TEST_CASE("simple send / receive") {
 
     ctx.Start();
     srv.Start();
-    auto client = c_pool.GetOrCreateClient("127.0.0.1", b_pool);
+    auto client = c_pool.GetOrCreateClient("s", b_pool);
 
     for (auto &sample : samples) {
         auto buffer = client->GetBuffer();
