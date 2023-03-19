@@ -17,3 +17,12 @@ $ cd build
 $ cmake -DAN_PLATFORM:STRING=JETSON
 $ make -j4
 ```
+
+## Compiling on RPI
+
+```
+$ mkdir build
+$ cd build
+$ cmake -DAN_PLATFORM:STRING=RPI_CAMERA (or RPI_HEADSET)
+$ make -j4
+```
