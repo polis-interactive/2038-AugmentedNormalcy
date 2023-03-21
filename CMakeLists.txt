@@ -19,16 +19,19 @@ set(CMAKE_CXX_FLAGS_RELEASE_INIT "-Wall")
 
 SET(AN_PLATFORM "BROOSE_LINUX_LAPTOP" CACHE STRING "Sets up the build env")
 
+# pre-project cmake files
 include(cmake/platform.cmake)
 include(cmake/toolchain.cmake)
-include(cmake/boost.cmake)
-include(cmake/camera.cmake)
 
 project (
     AugmentedNormalcy
     VERSION 1.0
     LANGUAGES CXX
 )
+
+# post-project cmake files
+include(cmake/boost.cmake)
+include(cmake/camera.cmake)
 
 set(root_dir ${CMAKE_CURRENT_LIST_DIR})
 set(internal_dir ${root_dir}/internal)
