@@ -173,6 +173,7 @@ namespace Camera {
     }
 
     void LibcameraCamera::requestComplete(Request *request) {
+        std::cout << "completed request" << std::endl;
         if (request->status() == Request::RequestCancelled)
         {
             // request failed, probably closing
