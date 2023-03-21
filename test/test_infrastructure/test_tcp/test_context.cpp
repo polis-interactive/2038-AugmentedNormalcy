@@ -28,11 +28,11 @@ TEST_CASE("Graceful context startup and teardown with some timing") {
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4;
     {
         t1 = Clock::now();
-        infrastructure::TcpContext ctx(conf);
+        auto ctx = infrastructure::TcpContext::Create(conf);
         t2 = Clock::now();
-        ctx.Start();
+        ctx->Start();
         t3 = Clock::now();
-        ctx.Stop();
+        ctx->Stop();
         t4 = Clock::now();
     }
     auto d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);

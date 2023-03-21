@@ -16,7 +16,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 #include "infrastructure/camera/camera.hpp"
 
-struct BaseTestConfig : Camera::Config {
+struct BaseTestConfig : infrastructure::CameraConfig {
     [[nodiscard]] std::pair<int, int> get_camera_width_height() const final {
 #if _AN_PLATFORM_ == PLATFORM_RPI
         return {1536, 864};
@@ -33,8 +33,8 @@ struct BaseTestConfig : Camera::Config {
 };
 
 struct LibcameraTestConfig : BaseTestConfig {
-    [[nodiscard]] Camera::Type get_camera_type() const final {
-        return Camera::Type::LIBCAMERA;
+    [[nodiscard]] infrastructure::Type get_camera_type() const final {
+        return infrastructure::Type::LIBCAMERA;
     }
 };
 
@@ -75,7 +75,7 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
     };
     // scope cam so it deconstructs before REQUIRE
     {
-        auto cam = Camera::Camera::Create(config, callback);
+        auto cam = infrastructure::Camera::Create(config, callback);
         cam->Start();
         in_time = Clock::now();
         std::this_thread::sleep_for(500ms);
@@ -91,7 +91,7 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
 // Just proving we will be able to reconfigure, start, and stop :D
 TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Start_And_Stop_And") {
     auto config = LibcameraTestConfig();
-    auto cam = Camera::Camera::Create(config, [](std::shared_ptr<void> &&ptr){});
+    auto cam = infrastructure::Camera::Create(config, [](std::shared_ptr<void> &&ptr){});
     for (int i = 0; i <= 10; i++) {
         cam->Start();
         std::this_thread::sleep_for(250ms);

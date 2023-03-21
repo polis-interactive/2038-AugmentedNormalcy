@@ -23,8 +23,8 @@ using Stream = libcamera::Stream;
 using StreamRole = libcamera::StreamRole;
 using StreamRoles = libcamera::StreamRoles;
 
-namespace Camera {
-    void LibcameraCamera::CreateCamera(const Config &config) {
+namespace infrastructure {
+    void LibcameraCamera::CreateCamera(const CameraConfig &config) {
         openCamera();
         configureViewFinder(config);
         setupBuffers(config.get_camera_buffer_count());
@@ -48,7 +48,7 @@ namespace Camera {
         _camera_acquired = true;
     }
 
-    void LibcameraCamera::configureViewFinder(const Config &config) {
+    void LibcameraCamera::configureViewFinder(const CameraConfig &config) {
         StreamRoles stream_roles = { StreamRole::Viewfinder };
         _configuration = _camera->generateConfiguration(stream_roles);
         if (!_configuration) {
@@ -199,8 +199,8 @@ namespace Camera {
             std::lock_guard<std::mutex> lock(_camera_buffers_mutex);
             _camera_buffers.insert(out_buffer);
         }
-
-        auto out_ptr = std::shared_ptr<SizedBuffer>(out_buffer, [this, out_buffer](SizedBuffer *p) {
+        auto self(shared_from_this());
+        auto out_ptr = std::shared_ptr<SizedBuffer>(out_buffer, [this, self, out_buffer](SizedBuffer *p) {
             this->queueRequest(out_buffer);
         });
         _send_callback(std::move(out_ptr));

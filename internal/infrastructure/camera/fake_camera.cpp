@@ -4,8 +4,8 @@
 
 #include "fake_camera.hpp"
 
-namespace Camera {
-    void FakeCamera::CreateCamera(const Config &config) {
+namespace infrastructure {
+    void FakeCamera::CreateCamera(const CameraConfig &config) {
 
     }
     void FakeCamera::StartCamera() {

@@ -7,16 +7,16 @@
 
 #include "camera.hpp"
 
-namespace Camera {
+namespace infrastructure {
     class FakeCamera : public Camera {
     public:
-        FakeCamera(const Config &config, SizedBufferCallback &&send_callback):
+        FakeCamera(const CameraConfig &config, SizedBufferCallback &&send_callback):
             Camera(config, std::move(send_callback))
         {
             CreateCamera(config);
         }
     private:
-        void CreateCamera(const Config &config) final;
+        void CreateCamera(const CameraConfig &config) final;
         void StartCamera() final;
         void StopCamera() final;
     };

@@ -34,11 +34,17 @@ namespace infrastructure {
         virtual void DestroyHeadsetClientConnection() = 0;
     };
 
-    class TcpClient {
+    class TcpClient: public std::enable_shared_from_this<TcpClient> {
     public:
+        static std::shared_ptr<TcpClient> Create(
+            const TcpClientConfig &config, net::io_context &context, std::shared_ptr<TcpClientManager> &manager
+        ) {
+            return std::make_shared<TcpClient>(config, context, manager);
+        }
         TcpClient() = delete;
         TcpClient (const TcpClient&) = delete;
         TcpClient& operator= (const TcpClient&) = delete;
+        ~TcpClient() { Stop(); }
         TcpClient (
             const TcpClientConfig &config, net::io_context &context, std::shared_ptr<TcpClientManager> &manager
         );

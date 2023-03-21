@@ -17,12 +17,17 @@ namespace infrastructure {
         [[nodiscard]] virtual int get_tcp_pool_size() const = 0;
     };
 
-    class TcpContext {
+    class TcpContext: public std::enable_shared_from_this<TcpContext> {
     public:
+
+        static std::shared_ptr<TcpContext> Create(const TcpContextConfig &config) {
+            return std::make_shared<TcpContext>(config);
+        }
+
         explicit TcpContext(const TcpContextConfig &config) :
-            _context(config.get_tcp_pool_size()),
-            _guard(net::make_work_guard(_context)),
-            _pool(std::vector<std::thread>(config.get_tcp_pool_size()))
+                _context(config.get_tcp_pool_size()),
+                _guard(net::make_work_guard(_context)),
+                _pool(std::vector<std::thread>(config.get_tcp_pool_size()))
         {}
 
         void Start() noexcept {
@@ -73,7 +78,11 @@ namespace infrastructure {
         net::io_context &GetContext() {
             return _context;
         }
+        ~TcpContext() {
+            Stop();
+        }
     private:
+
         net::io_context _context;
         net::executor_work_guard<net::io_context::executor_type> _guard;
         std::vector<std::thread> _pool;

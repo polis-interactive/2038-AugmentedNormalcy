@@ -9,14 +9,14 @@
 
 #include "utils/buffers.hpp"
 
-namespace Camera {
+namespace infrastructure {
 
     enum class Type {
         LIBCAMERA,
         FAKE,
     };
 
-    struct Config {
+    struct CameraConfig {
         [[nodiscard]] virtual std::pair<int, int> get_camera_width_height() const = 0;
         // as opposed to 30
         [[nodiscard]] virtual int get_fps() const = 0;
@@ -27,9 +27,9 @@ namespace Camera {
     class Camera {
     public:
         [[nodiscard]] static std::shared_ptr<Camera> Create(
-            const Config &config, SizedBufferCallback &&send_callback
+            const CameraConfig &config, SizedBufferCallback &&send_callback
         );
-        Camera(const Config &config, SizedBufferCallback &&send_callback);
+        Camera(const CameraConfig &config, SizedBufferCallback &&send_callback);
         void Start() {
             StartCamera();
         }
@@ -39,7 +39,7 @@ namespace Camera {
     protected:
         SizedBufferCallback _send_callback;
     private:
-        virtual void CreateCamera(const Config &config) = 0;
+        virtual void CreateCamera(const CameraConfig &config) = 0;
         virtual void StartCamera() = 0;
         virtual void StopCamera() = 0;
     };

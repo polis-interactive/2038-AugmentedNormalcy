@@ -16,10 +16,10 @@
 #include <libcamera/camera_manager.h>
 #include <libcamera/framebuffer_allocator.h>
 
-namespace Camera {
-    class LibcameraCamera : public Camera {
+namespace infrastructure {
+    class LibcameraCamera : public Camera, public std::enable_shared_from_this<LibcameraCamera> {
     public:
-        LibcameraCamera(const Config &config, SizedBufferCallback &&send_callback):
+        LibcameraCamera(const CameraConfig &config, SizedBufferCallback &&send_callback):
             Camera(config, std::move(send_callback))
         {
             CreateCamera(config);
@@ -30,12 +30,12 @@ namespace Camera {
             closeCamera();
         }
     private:
-        void CreateCamera(const Config &config) final;
+        void CreateCamera(const CameraConfig &config) final;
         void StartCamera() final;
         void StopCamera() final;
 
         void openCamera();
-        void configureViewFinder(const Config &config);
+        void configureViewFinder(const CameraConfig &config);
         void setupBuffers(const int &camera_buffer_count);
 
         void makeRequests();

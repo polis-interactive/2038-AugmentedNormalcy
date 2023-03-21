@@ -41,5 +41,6 @@ include_directories(${root_dir}/internal)
 
 add_subdirectory(${internal_dir}/infrastructure/tcp)
 add_subdirectory(${internal_dir}/infrastructure/camera)
+add_subdirectory(${internal_dir}/service)
 
 add_subdirectory(test)

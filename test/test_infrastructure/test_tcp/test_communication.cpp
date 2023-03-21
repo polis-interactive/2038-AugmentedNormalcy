@@ -19,48 +19,48 @@ typedef std::chrono::high_resolution_clock Clock;
 
 TEST_CASE("Server bring up and tear down") {
     TestServerConfig conf(3, 6969);
-    infrastructure::TcpContext ctx(conf);
-    ctx.Start();
+    auto ctx = infrastructure::TcpContext::Create(conf);
+    ctx->Start();
     auto manager = std::make_shared<NoSessionManager>();
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx.GetContext(), srv_manager);
+    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
     srv.Start();
     std::this_thread::sleep_for(1s);
     srv.Stop();
-    ctx.Stop();
+    ctx->Stop();
 }
 
 TEST_CASE("Client bring up and tear down, camera client") {
     TestClientServerConfig conf(2, 6969, "127.0.0.1", true);
-    infrastructure::TcpContext ctx(conf);
-    ctx.Start();
+    auto ctx = infrastructure::TcpContext::Create(conf);
+    ctx->Start();
     auto manager = std::make_shared<TcpClientManager>(nullptr);
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
-    infrastructure::TcpClient client(conf, ctx.GetContext(), client_manager);
-    client.Start();
+    auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
+    client->Start();
     std::this_thread::sleep_for(1s);
-    client.Stop();
-    ctx.Stop();
+    client->Stop();
+    ctx->Stop();
 }
 
 TEST_CASE("Client bring up and tear down, headset client") {
     TestClientServerConfig conf(2, 6969, "127.0.0.1", false);
-    infrastructure::TcpContext ctx(conf);
-    ctx.Start();
+    auto ctx = infrastructure::TcpContext::Create(conf);
+    ctx->Start();
     auto manager = std::make_shared<TcpClientManager>(nullptr);
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
-    infrastructure::TcpClient client(conf, ctx.GetContext(), client_manager);
-    client.Start();
+    auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
+    client->Start();
     std::this_thread::sleep_for(1s);
-    client.Stop();
-    ctx.Stop();
+    client->Stop();
+    ctx->Stop();
 }
 
 
 TEST_CASE("Push from camera client to server") {
     TestClientServerConfig conf(3, 6969, "127.0.0.1", true);
-    infrastructure::TcpContext ctx(conf);
-    ctx.Start();
+    auto ctx = infrastructure::TcpContext::Create(conf);
+    ctx->Start();
 
     // setting up an upstream / downstream to send receive values
     // samples must be 5 chars each
@@ -82,10 +82,10 @@ TEST_CASE("Push from camera client to server") {
 
     // just to be cheeky, we are going to start up the client first
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
-    infrastructure::TcpClient client(conf, ctx.GetContext(), client_manager);
-    client.Start();
+    auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
+    client->Start();
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx.GetContext(), srv_manager);
+    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
     srv.Start();
     std::this_thread::sleep_for(3s);
     REQUIRE(manager->ClientIsConnected());
@@ -106,15 +106,15 @@ TEST_CASE("Push from camera client to server") {
     // make sure we freed them to boot (one should be held by the pool on receive)
     REQUIRE_EQ(pool->AvailableBuffers(), 5 - 1);
 
-    client.Stop();
+    client->Stop();
     srv.Stop();
-    ctx.Stop();
+    ctx->Stop();
 }
 
 TEST_CASE("Push from camera client to server, little stressy-er") {
     TestClientServerConfig conf(3, 6969, "127.0.0.1", true);
-    infrastructure::TcpContext ctx(conf);
-    ctx.Start();
+    auto ctx = infrastructure::TcpContext::Create(conf);
+    ctx->Start();
 
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2;
 
@@ -130,12 +130,12 @@ TEST_CASE("Push from camera client to server, little stressy-er") {
     auto manager = std::make_shared<TcpCameraClientServerManager>(pool);
 
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx.GetContext(), srv_manager);
+    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
     srv.Start();
 
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
-    infrastructure::TcpClient client(conf, ctx.GetContext(), client_manager);
-    client.Start();
+    auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
+    client->Start();
 
     std::this_thread::sleep_for(2s);
     REQUIRE(manager->ClientIsConnected());
@@ -160,16 +160,16 @@ TEST_CASE("Push from camera client to server, little stressy-er") {
     std::cout << "test_infrastructure/test_tcp/communication/pull_server sends 10000 messages: " <<
         d1.count() << "ms" << std::endl;
 
-    client.Stop();
+    client->Stop();
     srv.Stop();
-    ctx.Stop();
+    ctx->Stop();
 }
 
 TEST_CASE("Pull headset from server to client") {
     /* this looks really similar, but all the buffers are pushed from server to client in this case */
     TestClientServerConfig conf(3, 6969, "127.0.0.1", false);
-    infrastructure::TcpContext ctx(conf);
-    ctx.Start();
+    auto ctx = infrastructure::TcpContext::Create(conf);
+    ctx->Start();
 
     // setting up an upstream / downstream to send receive values
     // samples must be 5 chars each
@@ -192,10 +192,11 @@ TEST_CASE("Pull headset from server to client") {
 
     // just to be cheeky, we are going to start up the client first
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
-    infrastructure::TcpClient client(conf, ctx.GetContext(), client_manager);
-    client.Start();
+    auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
+    client->Start();
+
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx.GetContext(), srv_manager);
+    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
     srv.Start();
     std::this_thread::sleep_for(3s);
     REQUIRE(manager->ClientIsConnected());
@@ -216,16 +217,16 @@ TEST_CASE("Pull headset from server to client") {
     // make sure we freed them to boot (one should be held by the pool on receive)
     REQUIRE_EQ(pool->AvailableBuffers(), 5 - 1);
 
-    client.Stop();
+    client->Stop();
     srv.Stop();
-    ctx.Stop();
+    ctx->Stop();
 }
 
 TEST_CASE("Pull headset from server to client, little stressy-er") {
     /* again, looks really similar, but all the buffers are pushed from server to client in this case */
     TestClientServerConfig conf(3, 6969, "127.0.0.1", false);
-    infrastructure::TcpContext ctx(conf);
-    ctx.Start();
+    auto ctx = infrastructure::TcpContext::Create(conf);
+    ctx->Start();
 
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2;
 
@@ -241,12 +242,12 @@ TEST_CASE("Pull headset from server to client, little stressy-er") {
     auto manager = std::make_shared<TcpHeadsetClientServerManager>(pool);
 
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx.GetContext(), srv_manager);
+    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
     srv.Start();
 
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
-    infrastructure::TcpClient client(conf, ctx.GetContext(), client_manager);
-    client.Start();
+    auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
+    client->Start();
 
     std::this_thread::sleep_for(2s);
     REQUIRE(manager->ClientIsConnected());
@@ -271,7 +272,7 @@ TEST_CASE("Pull headset from server to client, little stressy-er") {
     std::cout << "test_infrastructure/test_tcp/communication/push_server sends 10000 messages: " <<
               d1.count() << "ms" << std::endl;
 
-    client.Stop();
+    client->Stop();
     srv.Stop();
-    ctx.Stop();
+    ctx->Stop();
 }
