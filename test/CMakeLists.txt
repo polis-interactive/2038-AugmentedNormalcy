@@ -10,12 +10,16 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 set(
     tests
         main.cpp
-        test_infrastructure/test_tcp/context.cpp
-        test_infrastructure/test_tcp/communication.cpp
+        test_infrastructure/test_tcp/test_context.cpp
+        test_infrastructure/test_tcp/test_communication.cpp
 )
+
+if (LIBCAMERA_AVAILABLE)
+    set(tests ${tests} test_infrastructure/test_camera/frame_capture.cpp)
+endif()
 
 add_definitions(-DTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_executable(tests ${tests})
 
-target_link_libraries(tests pthread tcp)
+target_link_libraries(tests pthread tcp camera)
 target_include_directories(tests PRIVATE ${internal_dir})

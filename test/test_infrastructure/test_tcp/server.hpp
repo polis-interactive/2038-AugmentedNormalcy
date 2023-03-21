@@ -38,7 +38,7 @@ public:
     }
     void DestroyCameraServerConnection(tcp::endpoint endpoint, unsigned long session_id) override {}
     [[nodiscard]] unsigned long CreateHeadsetServerConnection(
-            tcp::endpoint endpoint, infrastructure::HeadsetWriteCall writeCall
+            tcp::endpoint endpoint, SizedBufferCallback writeCall
     ) override {
         return 0;
     }

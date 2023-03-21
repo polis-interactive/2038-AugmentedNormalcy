@@ -17,7 +17,7 @@ public:
             : _buffer_pool(std::move(buffer_pool))
     {}
     /* camera client */
-    void CreateCameraClientConnection(infrastructure::CameraWriteCall write_call) override {
+    void CreateCameraClientConnection(SizedBufferCallback write_call) override {
         client_is_connected = true;
         _write_call = std::move(write_call);
     };
@@ -29,7 +29,7 @@ public:
         return client_is_connected;
     }
     std::atomic_bool client_is_connected = false;
-    infrastructure::CameraWriteCall _write_call;
+    SizedBufferCallback _write_call;
 
 
     /* camera server */
@@ -44,7 +44,7 @@ public:
 
     /* dummy for headset server */
     [[nodiscard]] unsigned long CreateHeadsetServerConnection(
-            tcp::endpoint endpoint, infrastructure::HeadsetWriteCall writeCall
+            tcp::endpoint endpoint, SizedBufferCallback writeCall
     ) override {
         return 0;
     }

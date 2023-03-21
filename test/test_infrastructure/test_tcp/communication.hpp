@@ -8,7 +8,7 @@
 #include <utility>
 #include <deque>
 
-#include "utils/buffer_pool/buffer_pool.hpp"
+#include "utils/buffers.hpp"
 
 
 class FakeSizedBuffer: public SizedBuffer {

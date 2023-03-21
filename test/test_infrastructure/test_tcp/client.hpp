@@ -45,11 +45,11 @@ class TcpClientManager: public infrastructure::TcpClientManager {
 public:
     explicit TcpClientManager(std::shared_ptr<PushingBufferPool> optional_buffer_pool) {
         if (optional_buffer_pool != nullptr) {
-            _optional_pushing_buffer_pool = optional_buffer_pool;
+            _optional_pushing_buffer_pool = std::move(optional_buffer_pool);
         }
     }
     // camera session
-    void CreateCameraClientConnection(infrastructure::CameraWriteCall write_call) override {
+    void CreateCameraClientConnection(SizedBufferCallback write_call) override {
         _write_call = std::move(write_call);
     };
     void DestroyCameraClientConnection() override {
@@ -64,7 +64,7 @@ public:
     void DestroyHeadsetClientConnection() override {
         is_headset_connected = false;
     };
-    infrastructure::CameraWriteCall _write_call;
+    SizedBufferCallback _write_call;
     std::shared_ptr<PushingBufferPool> _optional_pushing_buffer_pool = nullptr;
     std::atomic_bool is_headset_connected = false;
 };

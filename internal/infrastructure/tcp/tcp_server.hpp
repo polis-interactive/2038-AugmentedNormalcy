@@ -6,7 +6,7 @@
 #define AUGMENTEDNORMALCY_INFRASTRUCTURE_TCP_SERVER_HPP
 
 #include "tcp_context.hpp"
-#include "utils/buffer_pool/buffer_pool.hpp"
+#include "utils/buffers.hpp"
 
 using boost::asio::ip::tcp;
 using boost::system::error_code;
@@ -21,7 +21,6 @@ namespace infrastructure {
     };
 
     typedef std::pair<unsigned long, std::shared_ptr<PushingBufferPool>> CameraConnectionPayload;
-    typedef std::function<void(std::shared_ptr<SizedBuffer>&&)> HeadsetWriteCall;
 
     class TcpServerManager {
     public:
@@ -34,7 +33,7 @@ namespace infrastructure {
         // headset session
         [[nodiscard]]  virtual unsigned long CreateHeadsetServerConnection(
             tcp::endpoint endpoint,
-            HeadsetWriteCall writeCall
+            SizedBufferCallback writeCall
         ) = 0;
         virtual void DestroyHeadsetServerConnection(tcp::endpoint endpoint, unsigned long session_id) = 0;
     };

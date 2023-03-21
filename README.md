@@ -14,7 +14,7 @@ $ sudo mount ~/build/Linux_for_Tegra/jetson-cc.img.raw ~/cross-compile/jetson-or
 ```
 $ mkdir build
 $ cd build
-$ cmake -DAN_PLATFORM:STRING=JETSON
+$ cmake -DAN_PLATFORM:STRING=JETSON ..
 $ make -j4
 ```
 
@@ -23,6 +23,7 @@ $ make -j4
 ```
 $ mkdir build
 $ cd build
-$ cmake -DAN_PLATFORM:STRING=RPI_CAMERA (or RPI_HEADSET)
+$ cmake -DAN_PLATFORM:STRING=RPI_CAMERA ..
+    (or RPI_HEADSET)
 $ make -j4
 ```

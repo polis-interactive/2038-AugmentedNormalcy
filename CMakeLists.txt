@@ -4,8 +4,8 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
     message(
-            FATAL_ERROR
-            "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there."
+        FATAL_ERROR
+        "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there."
     )
 endif()
 
@@ -21,7 +21,8 @@ SET(AN_PLATFORM "BROOSE_LINUX_LAPTOP" CACHE STRING "Sets up the build env")
 
 include(cmake/platform.cmake)
 include(cmake/toolchain.cmake)
-include(cmake/features.cmake)
+include(cmake/boost.cmake)
+include(cmake/camera.cmake)
 
 project (
     AugmentedNormalcy
@@ -35,11 +36,7 @@ set(third_party_dir ${root_dir}/third_party)
 
 include_directories(${root_dir}/internal)
 
-if(${FEATURE_JETSON_ENCODER})
-    add_subdirectory(third_party/jetson_multimedia_api)
-    # add_subdirectory(internal/infrastructure/jetson_encoder)
-endif()
-
-add_subdirectory(internal/infrastructure/tcp)
+add_subdirectory(${internal_dir}/infrastructure/tcp)
+add_subdirectory(${internal_dir}/infrastructure/camera)
 
 add_subdirectory(test)
