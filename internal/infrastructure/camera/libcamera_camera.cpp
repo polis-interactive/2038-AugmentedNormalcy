@@ -59,12 +59,7 @@ namespace Camera {
         size.alignDownTo(2, 2); // YUV420 will want to be even
         std::cout << "Viewfinder size chosen is " << size.toString() << std::endl;
 
-#if _AN_PLATFORM_ == PLATFORM_RPI
         _configuration->at(0).pixelFormat = formats::YUV420;
-#else
-        // I think my comp wants it different, but probs won't even test...
-        _configuration->at(0).pixelFormat = formats::YUV420;
-#endif
         _configuration->at(0).size = size;
         _configuration->at(0).bufferCount = config.get_camera_buffer_count();
 
