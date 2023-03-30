@@ -79,10 +79,91 @@ void dma_buffer() {
 
     delete[] out_buf;
     delete jpegenc;
+}
+
+class MmapDmaBuffer {
+public:
+    MmapDmaBuffer() {
+
+        NvBufSurf::NvCommonAllocateParams params;
+        /* Create PitchLinear output buffer for transform. */
+        params.memType = NVBUF_MEM_SURFACE_ARRAY;
+        params.width = 1536;
+        params.height = 864;
+        params.layout = NVBUF_LAYOUT_PITCH;
+        params.colorFormat = NVBUF_COLOR_FORMAT_YUV420;
+
+        params.memtag = NvBufSurfaceTag_VIDEO_CONVERT;
+
+        auto ret = NvBufSurf::NvAllocate(&params, 1, &fd);
+        NvBufSurfaceMap(nvbuf_surf, 0, -1, NVBUF_MAP_READ_WRITE);
+        sync_cpu();
+    }
+    void sync_cpu() {
+        NvBufSurfaceSyncForCpu (nvbuf_surf, 0, -1);
+    }
+    char * get_memory() {
+        return (char *) nvbuf_surf;
+    }
+    [[nodiscard]] int get_fd() const {
+        return fd;
+    }
+    std::size_t get_size() {
+        return nvbuf_surf->batchSize;
+    }
+    void sync_gpu() {
+        NvBufSurfaceSyncForDevice (nvbuf_surf, 0, -1);
+    }
+    ~MmapDmaBuffer() {
+        if (nvbuf_surf != nullptr) {
+            NvBufSurfaceUnMap(nvbuf_surf, 0, -1);
+            nvbuf_surf = nullptr;
+        }
+        if (fd != -1) {
+            NvBufSurf::NvDestroy(fd);
+            fd = -1;
+        }
+    }
+private:
+    int fd = -1;
+    NvBufSurface *nvbuf_surf = nullptr;
+};
+
+void mmap_buffer() {
+    MmapDmaBuffer buffer;
+
+    std::filesystem::path this_dir = TMP_DIR;
+
+    auto in_frame = this_dir;
+    in_frame /= "in.yuv";
+
+    auto out_frame = this_dir;
+    out_frame /= "out_mmap.jpeg";
+
+    std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
+    std::cout << "reported size: " << buffer.get_size() << std::endl;
+    std::cout << "I think size: " << 1990656 << std::endl;
+    test_in_file.read(buffer.get_memory(), 1990656);
+
+    buffer.sync_gpu();
+
+    auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
+    unsigned long out_buf_size = 1536 * 864 * 3 / 2;
+    auto *out_buf = new unsigned char[out_buf_size];
+
+    auto ret = jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &out_buf, out_buf_size, 75);
+
+    std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+
+    test_file_out.write((char *) out_buf, out_buf_size);
+
+    delete[] out_buf;
+    delete jpegenc;
 
 }
 
 int main(int argc, char *argv[]) {
     user_buffer();
     dma_buffer();
+    mmap_buffer();
 }
