@@ -40,7 +40,7 @@ elseif (AN_PLATFORM STREQUAL JETSON)
             ${CMAKE_CXX_FLAGS} \
 	        -L/usr/local/cuda/lib64 \
 	        -L/usr/lib/aarch64-linux-gnu \
-	        -L/usr/lib/aarch64-linux-gnu \
+	        -L/usr/lib/aarch64-linux-gnu/tegra \
     ")
 
 endif()
