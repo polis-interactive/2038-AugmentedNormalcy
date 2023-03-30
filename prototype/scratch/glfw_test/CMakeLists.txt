@@ -7,14 +7,14 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "-Wall")
 set(CMAKE_CXX_FLAGS_RELEASE_INIT "-Wall")
 
-set(GLAD_DIR ./include/glad/)
-include_directories(./include ${GLAD_DIR}/include)
+set(GLAD_DIR include/glad)
+include_directories(include ${GLAD_DIR}/include)
 
 add_executable(
   glfw_test
-  main.cpp
-  graphics.cpp
-  camera.cpp
+        main.cpp
+        graphics.cpp
+        camera.cpp
   ${GLAD_DIR}/src/glad.c
   ${GLAD_DIR}/src/glad_egl.c
 )

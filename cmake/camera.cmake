@@ -1,9 +1,7 @@
 
-if (
-    AN_PLATFORM STREQUAL RPI_CAMERA
-    OR AN_PLATFORM STREQUAL RPI_CAMERA_CC
-    OR AN_PLATFORM STREQUAL BROOSE_LINUX_LAPTOP
-)
+# this needs to filter rpi / broose linux to compile on windows with fake camera
+
+if (FEATURE_CAMERA)
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(LIBCAMERA REQUIRED libcamera)
     message(STATUS "libcamera library found:")

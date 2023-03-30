@@ -5,6 +5,8 @@
 #ifndef AUGMENTEDNORMALCY_INFRASTRUCTURE_TCP_SERVER_HPP
 #define AUGMENTEDNORMALCY_INFRASTRUCTURE_TCP_SERVER_HPP
 
+#include <memory>
+
 #include "tcp_context.hpp"
 #include "utils/buffers.hpp"
 
@@ -20,7 +22,7 @@ namespace infrastructure {
         UNKNOWN_CONNECTION
     };
 
-    typedef std::pair<unsigned long, std::shared_ptr<PushingBufferPool>> CameraConnectionPayload;
+    typedef std::pair<unsigned long, std::shared_ptr<SizedBufferPool>> CameraConnectionPayload;
 
     class TcpServerManager {
     public:
@@ -28,6 +30,7 @@ namespace infrastructure {
         [[nodiscard]] virtual TcpConnectionType GetConnectionType(tcp::endpoint endpoint) = 0;
         // camera session
         [[nodiscard]]  virtual CameraConnectionPayload CreateCameraServerConnection(tcp::endpoint endpoint) = 0;
+        virtual void PostCameraServerBuffer(std::shared_ptr<SizedBuffer> &&buffer) = 0;
         virtual void DestroyCameraServerConnection(tcp::endpoint endpoint, unsigned long session_id) = 0;
 
         // headset session
@@ -53,10 +56,11 @@ namespace infrastructure {
         void Run();
     private:
         void readStream();
+        void continueReadStream(std::shared_ptr<SizedBuffer> &&buffer, std::size_t bytes_written);
         tcp::socket _socket;
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
         std::shared_ptr<TcpServerManager> &_manager;
-        std::shared_ptr<PushingBufferPool> _buffer_pool = nullptr;
+        std::shared_ptr<SizedBufferPool> _buffer_pool = nullptr;
         unsigned long _session_id;
     };
 

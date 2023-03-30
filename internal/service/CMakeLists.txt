@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-set(SOURCES camera_streamer.cpp)
+set(SOURCES)
 set(TARGET_LIBS)
 
 if (
@@ -10,5 +10,9 @@ if (
     set(TARGET_LIBS ${TARGET_LIBS} pthread)
 endif()
 
-add_library(service STATIC ${SOURCES})
-target_link_libraries(service ${TARGET_LIBS})
+if (FEATURE_CAMERA)
+    set(SOURCES ${SOURCES} camera_streamer.cpp)
+# for now, putting this here so non camera services don't get boned
+    add_library(service STATIC ${SOURCES})
+    target_link_libraries(service PRIVATE ${TARGET_LIBS})
+endif()

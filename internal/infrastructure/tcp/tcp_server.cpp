@@ -115,7 +115,7 @@ namespace infrastructure {
         auto self(shared_from_this());
         net::dispatch(
             _socket.get_executor(),
-            [this, self]() {
+            [this, s = std::move(self)]() {
                 readStream();
             }
         );
@@ -128,14 +128,36 @@ namespace infrastructure {
         auto self(shared_from_this());
         _socket.async_receive(
             boost::asio::buffer(buffer_memory, buffer_size),
-            [this, self, camera_buffer = std::move(buffer)] (error_code ec, std::size_t bytes_written) mutable {
+            [this, s = std::move(self), camera_buffer = std::move(buffer)] (error_code ec, std::size_t bytes_written) mutable {
                 if (!ec && bytes_written == camera_buffer->GetSize()) {
-                    _buffer_pool->SendSizedBuffer(std::move(camera_buffer));
+                    _manager->PostCameraServerBuffer(std::move(camera_buffer));
                     readStream();
+                } else if (!ec) {
+                    continueReadStream(std::move(camera_buffer), bytes_written);
                 } else {
                     TryClose();
                 }
             }
+        );
+    }
+
+    void TcpCameraSession::continueReadStream(std::shared_ptr<SizedBuffer> &&buffer, std::size_t bytes_written) {
+        auto buffer_memory = static_cast<uint8_t *>(buffer->GetMemory()) + bytes_written;
+        auto buffer_size = buffer->GetSize() - bytes_written;
+        auto self(shared_from_this());
+        _socket.async_receive(
+                boost::asio::buffer(buffer_memory, buffer_size),
+                [this, s = std::move(self), camera_buffer = std::move(buffer), current_bytes = bytes_written]
+                (error_code ec, std::size_t bytes_written) mutable {
+                    if (!ec && (bytes_written + current_bytes) == camera_buffer->GetSize()) {
+                        _manager->PostCameraServerBuffer(std::move(camera_buffer));
+                        readStream();
+                    } else if (!ec) {
+                        continueReadStream(std::move(camera_buffer), bytes_written + current_bytes);
+                    } else {
+                        TryClose();
+                    }
+                }
         );
     }
 
@@ -161,7 +183,7 @@ namespace infrastructure {
         auto self(shared_from_this());
         _session_id = _manager->CreateHeadsetServerConnection(
                 _socket.remote_endpoint(),
-                [this, self](std::shared_ptr<SizedBuffer> &&buffer) {
+                [this, s = std::move(self)](std::shared_ptr<SizedBuffer> &&buffer) {
                     write(std::move(buffer));
                 }
         );
@@ -176,7 +198,7 @@ namespace infrastructure {
         auto self(shared_from_this());
         _socket.async_send(
             net::buffer(buffer_memory, buffer_size),
-            [this, self, send_buffer = std::move(buffer)](error_code ec, std::size_t bytes_written) mutable {
+            [this, s = std::move(self), send_buffer = std::move(buffer)](error_code ec, std::size_t bytes_written) mutable {
                 if (ec || bytes_written != send_buffer->GetSize()) {
                     TryClose();
                 }

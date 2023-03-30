@@ -43,21 +43,18 @@ struct TestClientServerConfig:
 
 class TcpClientManager: public infrastructure::TcpClientManager {
 public:
-    explicit TcpClientManager(std::shared_ptr<PushingBufferPool> optional_buffer_pool) {
+    explicit TcpClientManager(std::shared_ptr<SizedBufferPool> optional_buffer_pool) {
         if (optional_buffer_pool != nullptr) {
             _optional_pushing_buffer_pool = std::move(optional_buffer_pool);
         }
     }
     // camera session
-    void CreateCameraClientConnection(SizedBufferCallback write_call) override {
-        _write_call = std::move(write_call);
-    };
-    void DestroyCameraClientConnection() override {
-        _write_call = nullptr;
-    };
+    void CreateCameraClientConnection() override {};
+    void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) override {};
+    void DestroyCameraClientConnection() override {};
 
     // headset session
-    std::shared_ptr<PushingBufferPool> CreateHeadsetClientConnection() override {
+    std::shared_ptr<SizedBufferPool> CreateHeadsetClientConnection() override {
         is_headset_connected = true;
         return _optional_pushing_buffer_pool;
     };
@@ -65,7 +62,7 @@ public:
         is_headset_connected = false;
     };
     SizedBufferCallback _write_call;
-    std::shared_ptr<PushingBufferPool> _optional_pushing_buffer_pool = nullptr;
+    std::shared_ptr<SizedBufferPool> _optional_pushing_buffer_pool = nullptr;
     std::atomic_bool is_headset_connected = false;
 };
 

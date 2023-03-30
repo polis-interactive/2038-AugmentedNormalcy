@@ -16,6 +16,5 @@ if (LIBCAMERA_AVAILABLE)
 endif()
 
 
-
 add_library(camera STATIC ${SOURCES})
-target_link_libraries(camera ${TARGET_LIBS})
+target_link_libraries(camera PRIVATE ${TARGET_LIBS})

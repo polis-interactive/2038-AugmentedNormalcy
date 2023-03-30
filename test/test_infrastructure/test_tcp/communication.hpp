@@ -34,14 +34,11 @@ public:
     const unsigned int _buffer_size;
 };
 
-class FakeBufferPool: public PushingBufferPool {
+class FakeBufferPool: public SizedBufferPool {
 public:
     explicit FakeBufferPool(
-        std::function<void(std::shared_ptr<SizedBuffer> &&buffer)> callback,
         unsigned int buffer_size, unsigned int buffer_count
-    ):
-        _callback(std::move(callback))
-    {
+    ){
         for (int i = 0; i < buffer_count; i++) {
             _buffers.push_back(new FakeSizedBuffer(buffer_size));
         }
@@ -58,16 +55,12 @@ public:
         );
         return std::move(buffer);
     }
-    void SendSizedBuffer(std::shared_ptr<SizedBuffer> &&buffer) override {
-        _callback(std::move(buffer));
-    }
     std::size_t AvailableBuffers() {
         std::unique_lock<std::mutex> lock(_buffer_mutex);
         return _buffers.size();
     }
     std::deque<FakeSizedBuffer *> _buffers;
     std::mutex _buffer_mutex;
-    std::function<void(std::shared_ptr<SizedBuffer> &&buffer)> _callback;
 };
 
 
