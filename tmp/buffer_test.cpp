@@ -79,6 +79,7 @@ void dma_buffer() {
 
     delete[] out_buf;
     delete jpegenc;
+    NvBufSurf::NvDestroy(src_dma_fd);
 }
 
 class MmapDmaBuffer {
@@ -93,14 +94,17 @@ public:
         params.layout = NVBUF_LAYOUT_PITCH;
         params.colorFormat = NVBUF_COLOR_FORMAT_YUV420;
 
-        params.memtag = NvBufSurfaceTag_VIDEO_CONVERT;
+        params.memtag = NvBufSurfaceTag_CAMERA;
 
         auto ret = NvBufSurf::NvAllocate(&params, 1, &fd);
-        NvBufSurfaceMap(nvbuf_surf, 0, -1, NVBUF_MAP_READ_WRITE);
+        std::cout << ret << std::endl;
+        ret = NvBufSurfaceMap(nvbuf_surf, 0, -1, NVBUF_MAP_READ_WRITE);
+        std::cout << ret << std::endl;
         sync_cpu();
     }
     void sync_cpu() {
-        NvBufSurfaceSyncForCpu (nvbuf_surf, 0, -1);
+        auto ret = NvBufSurfaceSyncForCpu (nvbuf_surf, 0, -1);
+        std::cout << ret << std::endl;
     }
     char * get_memory() {
         return (char *) nvbuf_surf;
