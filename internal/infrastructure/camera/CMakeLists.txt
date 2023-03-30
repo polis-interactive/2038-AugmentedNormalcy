@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 3.18)
 
 set(SOURCES camera.cpp fake_camera.cpp)
 set(TARGET_LIBS)

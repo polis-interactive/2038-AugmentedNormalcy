@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 3.18)
 
 set(SOURCES buffer.cpp array_buffer.cpp)
 set(TARGET_LIBS)
