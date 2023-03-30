@@ -63,9 +63,9 @@ void dma_buffer() {
     auto ret = NvBufSurf::NvAllocate(&params, 1, &src_dma_fd);
 
     std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
-    read_dmabuf(src_dma_fd, 0, &test_file_in);
-    read_dmabuf(src_dma_fd, 1, &test_file_in);
-    read_dmabuf(src_dma_fd, 2, &test_file_in);
+    read_dmabuf(src_dma_fd, -1, &test_file_in);
+    // read_dmabuf(src_dma_fd, 1, &test_file_in);
+    // read_dmabuf(src_dma_fd, 2, &test_file_in);
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
     unsigned long out_buf_size = 1536 * 864 * 3 / 2;
