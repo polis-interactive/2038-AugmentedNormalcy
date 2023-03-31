@@ -111,6 +111,7 @@ public:
         std::cout << nvbuf_surf->surfaceList->mappedAddr.addr[0] << std::endl;
         std::cout << nvbuf_surf->surfaceList->planeParams.width[0] << std::endl;
         std::cout << nvbuf_surf->surfaceList->mappedAddr.addr[1] << std::endl;
+        std::cout << nvbuf_surf->surfaceList->mappedAddr.addr[2] << std::endl;
         std::cout << nvbuf_surf->surfaceList->planeParams.pitch[0] *
             nvbuf_surf->surfaceList->planeParams.height[0] * 3 / 2
         << std::endl;
