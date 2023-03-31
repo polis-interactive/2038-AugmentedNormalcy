@@ -113,10 +113,6 @@ public:
         auto m2 = mmap(
             (uint8_t *) _memory + 1327104 + 331776, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1835008
         );
-        std::cout << fd << std::endl;
-        std::cout << _memory << std::endl;
-        std::cout << m1 << std::endl;
-        std::cout << m2 << std::endl;
 
     }
     char * get_memory() {
@@ -192,7 +188,7 @@ void stress_test_mmap() {
 
 void run_thread_test(const int thread_number) {
     try {
-        std::cout << "Thread " << thread_number << " Starting" << std::endl;
+        std::cout << thread_number << " Starting" << std::endl;
 
         std::filesystem::path this_dir = TMP_DIR;
 
@@ -200,11 +196,16 @@ void run_thread_test(const int thread_number) {
         in_frame /= "in.yuv";
 
         MmapDmaBuffer buffer;
+
+        std::cout << thread_number << " Created buffer" << std::endl;
+
         std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
 
         auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
         unsigned long out_buf_size = 1536 * 864 * 3 / 2;
         std::array<unsigned char, 1990656> out_buf = {};
+
+        std::cout << thread_number << " Created encoder" << std::endl;
 
         bool found_diff = false;
 
@@ -223,14 +224,13 @@ void run_thread_test(const int thread_number) {
             std::cout << thread_number << " there were difss abound" << std::endl;
         }
 
-        std::cout << "I think this" << std::endl;
+        std::cout <<  thread_number << " removing encoder" << std::endl;
         delete jpegenc;
-        std::cout << "Is the seg faulter" << std::endl;
     } catch(...) {
-        std::cout << "Thread " << thread_number << " failed?" << std::endl;
+        std::cout << thread_number << " failed?" << std::endl;
     }
 
-
+    std::cout <<  thread_number << " exiting" << std::endl;
 }
 
 void thread_test() {
