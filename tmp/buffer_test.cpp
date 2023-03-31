@@ -248,6 +248,7 @@ void thread_test() {
     t1 = Clock::now();
     for (int i = 0; i < 9; i++) {
         threads.emplace_back(std::thread(run_thread_test, i));
+        std::this_thread::sleep_for(0.5s);
     }
 
     std::cout << "Waiting for threads to finish" << std::endl;
