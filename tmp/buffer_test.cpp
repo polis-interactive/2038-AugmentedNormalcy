@@ -98,40 +98,19 @@ public:
         params.memtag = NvBufSurfaceTag_CAMERA;
 
         auto ret = NvBufSurf::NvAllocate(&params, 1, &fd);
-        std::cout << ret << std::endl;
-        ret = NvBufSurfaceFromFd(fd, (void**)(&nvbuf_surf));
-        std::cout << ret << std::endl;
 
         // just going to mmap it myself
         _memory = mmap(NULL, 1327104, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         auto m1 = mmap(
-            (uint8_t *)_memory + 1327104, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1441792
+            (uint8_t *) _memory + 1327104, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1441792
         );
         auto m2 = mmap(
-            (uint8_t *)_memory + 1327104 + 331776, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1835008
+            (uint8_t *) _memory + 1327104 + 331776, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1835008
         );
         std::cout << _memory << std::endl;
         std::cout << m1 << std::endl;
         std::cout << m2 << std::endl;
 
-        std::cout << ret << std::endl;
-        // sync_cpu();
-        std::cout << "things i think are right" << std::endl;
-        std::cout << nvbuf_surf->surfaceList->dataPtr << std::endl;
-        std::cout << nvbuf_surf->surfaceList->dataSize << std::endl;
-        std::cout << "what about these" << std::endl;
-        std::cout << nvbuf_surf->numFilled << std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.psize[0] << std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.offset[0]<< std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.psize[1] << std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.offset[1]<< std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.psize[2] << std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.offset[2]<< std::endl;
-        std::cout << "maybe?" << std::endl;
-    }
-    void sync_cpu() {
-        auto ret = NvBufSurfaceSyncForCpu (nvbuf_surf, -1, -1);
-        std::cout << ret << std::endl;
     }
     char * get_memory() {
         return (char *) _memory;
@@ -142,14 +121,7 @@ public:
     std::size_t get_size() {
         return 1990656;
     }
-    void sync_gpu() {
-        NvBufSurfaceSyncForDevice (nvbuf_surf, -1, -1);
-    }
     ~MmapDmaBuffer() {
-        if (nvbuf_surf != nullptr) {
-            NvBufSurfaceUnMap(nvbuf_surf, -1, -1);
-            nvbuf_surf = nullptr;
-        }
         if (_memory != nullptr) {
             munmap(_memory, 1990656);
         }
@@ -161,7 +133,6 @@ public:
     }
 private:
     int fd = -1;
-    NvBufSurface *nvbuf_surf = nullptr;
     void * _memory = nullptr;
 };
 
