@@ -171,14 +171,18 @@ void mmap_buffer() {
 }
 
 void stress_test_mmap() {
-    std::vector<MmapDmaBuffer> vec;
+    std::vector<MmapDmaBuffer*> vec;
     for (int i = 0; i < 8 * 6 * 2; i++) {
-        auto buf = MmapDmaBuffer();
-        vec.push_back(std::move(buf));
+        auto buf = new MmapDmaBuffer();
+        vec.push_back(buf);
     }
 
     std::cout << "any nullptrs in the chat?" << std::endl;
-    vec.clear();
+    for (int i = 0; i < 8 * 6 * 2; i++) {
+        auto buf = vec.back();
+        delete buf;
+        vec.pop_back();
+    }
 }
 
 int main(int argc, char *argv[]) {
