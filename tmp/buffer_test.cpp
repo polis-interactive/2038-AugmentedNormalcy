@@ -5,6 +5,7 @@
 #include <utility>
 #include <filesystem>
 #include <fstream>
+#include <sys/mman.h>
 
 #include "NvUtils.h"
 #include "NvJpegEncoder.h"
@@ -100,9 +101,11 @@ public:
         std::cout << ret << std::endl;
         ret = NvBufSurfaceFromFd(fd, (void**)(&nvbuf_surf));
         std::cout << ret << std::endl;
-        ret = NvBufSurfaceMap(nvbuf_surf, 0, 1, NVBUF_MAP_READ_WRITE);
-        ret = NvBufSurfaceMap(nvbuf_surf, 0, 2, NVBUF_MAP_READ_WRITE);
-        ret = NvBufSurfaceMap(nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
+
+        // just going to mmap it myself
+        _memory = mmap(NULL, 1990656, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        std::cout << _memory << std::endl;
+
         std::cout << ret << std::endl;
         sync_cpu();
         std::cout << "things i think are right" << std::endl;
@@ -126,15 +129,13 @@ public:
         std::cout << ret << std::endl;
     }
     char * get_memory() {
-        return (char *) nvbuf_surf->surfaceList->mappedAddr.addr[0];
+        return (char *) _memory;
     }
     [[nodiscard]] int get_fd() const {
         return fd;
     }
     std::size_t get_size() {
-        return nvbuf_surf->surfaceList->planeParams.pitch[0] *
-            nvbuf_surf->surfaceList->planeParams.height[0] * 3 / 2
-        ;
+        return 1990656;
     }
     void sync_gpu() {
         NvBufSurfaceSyncForDevice (nvbuf_surf, -1, -1);
@@ -144,6 +145,10 @@ public:
             NvBufSurfaceUnMap(nvbuf_surf, -1, -1);
             nvbuf_surf = nullptr;
         }
+        if (_memory != nullptr) {
+            munmap(_memory, 1990656);
+        }
+
         if (fd != -1) {
             NvBufSurf::NvDestroy(fd);
             fd = -1;
@@ -152,6 +157,7 @@ public:
 private:
     int fd = -1;
     NvBufSurface *nvbuf_surf = nullptr;
+    void * _memory = nullptr;
 };
 
 void mmap_buffer() {
