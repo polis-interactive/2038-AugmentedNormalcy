@@ -107,6 +107,7 @@ public:
         std::cout << nvbuf_surf->surfaceList->dataPtr << std::endl;
         std::cout << nvbuf_surf->surfaceList->dataSize << std::endl;
         std::cout << "what about these" << std::endl;
+        std::cout << nvbuf_surf->numFilled << std::endl;
         std::cout << nvbuf_surf->surfaceList->mappedAddr.addr[0] << std::endl;
         std::cout << nvbuf_surf->surfaceList->planeParams.pitch[0] * nvbuf_surf->surfaceList->planeParams.height[0] << std::endl;
         std::cout << "maybe?" << std::endl;
