@@ -7,6 +7,8 @@
 #include <fstream>
 #include <sys/mman.h>
 
+#include <vector>
+
 #include "NvUtils.h"
 #include "NvJpegEncoder.h"
 #include "NvBufSurface.h"
@@ -122,6 +124,7 @@ public:
         return 1990656;
     }
     ~MmapDmaBuffer() {
+        std::cout << "unmapping!" << std::endl;
         if (_memory != nullptr) {
             munmap(_memory, 1990656);
         }
@@ -165,6 +168,17 @@ void mmap_buffer() {
     delete[] out_buf;
     delete jpegenc;
 
+}
+
+void stress_test_mmap() {
+    std::vector<MmapDmaBuffer> vec;
+    for (int i = 0; i < 8 * 6 * 2; i++) {
+        auto buf = MmapDmaBuffer();
+        vec.push_back(buf);
+    }
+
+    std::cout << "any nullptrs in the chat?" << std::endl;
+    vec.clear();
 }
 
 int main(int argc, char *argv[]) {
