@@ -174,7 +174,7 @@ void stress_test_mmap() {
     std::vector<MmapDmaBuffer> vec;
     for (int i = 0; i < 8 * 6 * 2; i++) {
         auto buf = MmapDmaBuffer();
-        vec.push_back(buf);
+        vec.push_back(std::move(buf));
     }
 
     std::cout << "any nullptrs in the chat?" << std::endl;
