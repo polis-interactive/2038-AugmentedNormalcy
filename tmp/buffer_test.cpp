@@ -103,11 +103,15 @@ public:
         std::cout << ret << std::endl;
 
         // just going to mmap it myself
-        _memory = mmap(NULL, 1990656, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        _memory = mmap(NULL, 1327104, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        void *memory_1 = mmap(NULL, 331776, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 1327104);
+        void *memory_2 = mmap(NULL, 331776, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 1658880);
         std::cout << _memory << std::endl;
+        std::cout << memory_1 << std::endl;
+        std::cout << memory_2 << std::endl;
 
         std::cout << ret << std::endl;
-        sync_cpu();
+        // sync_cpu();
         std::cout << "things i think are right" << std::endl;
         std::cout << nvbuf_surf->surfaceList->dataPtr << std::endl;
         std::cout << nvbuf_surf->surfaceList->dataSize << std::endl;
