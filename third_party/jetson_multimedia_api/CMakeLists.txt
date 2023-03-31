@@ -19,5 +19,5 @@ set(
 )
 
 add_library(jetson_mm STATIC ${JETSON_MM_SOURCES})
-target_link_libraries(jetson_mm PUBLIC cuda cudart nvjpeg v4l2 nvbufsurface nvbufsurftransform nvosd)
+target_link_libraries(jetson_mm PUBLIC nvjpeg nvbufsurface nvbufsurftransform)
 target_include_directories(jetson_mm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
