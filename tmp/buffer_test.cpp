@@ -100,7 +100,9 @@ public:
         std::cout << ret << std::endl;
         ret = NvBufSurfaceFromFd(fd, (void**)(&nvbuf_surf));
         std::cout << ret << std::endl;
-        ret = NvBufSurfaceMap(nvbuf_surf, -1, -1, NVBUF_MAP_READ_WRITE);
+        ret = NvBufSurfaceMap(nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
+        ret = NvBufSurfaceMap(nvbuf_surf, 1, 1, NVBUF_MAP_READ_WRITE);
+        ret = NvBufSurfaceMap(nvbuf_surf, 2, 2, NVBUF_MAP_READ_WRITE);
         std::cout << ret << std::endl;
         sync_cpu();
         std::cout << "things i think are right" << std::endl;
@@ -109,7 +111,6 @@ public:
         std::cout << "what about these" << std::endl;
         std::cout << nvbuf_surf->numFilled << std::endl;
         std::cout << nvbuf_surf->surfaceList->mappedAddr.addr[0] << std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.width[0] << std::endl;
         std::cout << nvbuf_surf->surfaceList->mappedAddr.addr[1] << std::endl;
         std::cout << nvbuf_surf->surfaceList->mappedAddr.addr[2] << std::endl;
         std::cout << nvbuf_surf->surfaceList->planeParams.pitch[0] *
