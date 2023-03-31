@@ -247,7 +247,7 @@ void thread_test() {
 
 
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-    std::cout << "roughly took " << d1 << " milliseconds to run"
+    std::cout << "roughly took " << d1.count() << " milliseconds to run" << std::endl;
 }
 
 int main(int argc, char *argv[]) {
