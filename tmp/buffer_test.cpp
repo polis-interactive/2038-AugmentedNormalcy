@@ -104,8 +104,12 @@ public:
 
         // just going to mmap it myself
         _memory = mmap(NULL, 1327104, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        auto m1 = mmap((uint8_t *)_memory + 1327104, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1441792);
-        auto m2 = mmap((uint8_t *)m1 + 331776, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1835008);
+        auto m1 = mmap(
+            (uint8_t *)_memory + 1327104, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1441792
+        );
+        auto m2 = mmap(
+            (uint8_t *)_memory + 1327104 + 331776, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1835008
+        );
         std::cout << _memory << std::endl;
         std::cout << m1 << std::endl;
         std::cout << m2 << std::endl;
