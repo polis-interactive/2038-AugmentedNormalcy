@@ -191,40 +191,45 @@ void stress_test_mmap() {
 }
 
 void run_thread_test(const int thread_number) {
-    std::cout << "Thread " << thread_number << " Starting" << std::endl;
+    try {
+        std::cout << "Thread " << thread_number << " Starting" << std::endl;
 
-    std::filesystem::path this_dir = TMP_DIR;
+        std::filesystem::path this_dir = TMP_DIR;
 
-    auto in_frame = this_dir;
-    in_frame /= "in.yuv";
+        auto in_frame = this_dir;
+        in_frame /= "in.yuv";
 
-    MmapDmaBuffer buffer;
-    std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
+        MmapDmaBuffer buffer;
+        std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
 
-    auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
-    unsigned long out_buf_size = 1536 * 864 * 3 / 2;
-    std::array<unsigned char, 1990656> out_buf = {};
+        auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
+        unsigned long out_buf_size = 1536 * 864 * 3 / 2;
+        std::array<unsigned char, 1990656> out_buf = {};
 
-    bool found_diff = false;
+        bool found_diff = false;
 
-    auto buf_ptr = out_buf.data();
+        auto buf_ptr = out_buf.data();
 
 
-    for (int i = 0; i < 100; i++) {
-        test_in_file.clear();
-        test_in_file.seekg(0);
-        test_in_file.read(buffer.get_memory(), 1990656);
-        jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
+        for (int i = 0; i < 100; i++) {
+            test_in_file.clear();
+            test_in_file.seekg(0);
+            test_in_file.read(buffer.get_memory(), 1990656);
+            jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
+        }
+        if (!found_diff) {
+            std::cout << thread_number << " no difference here :D" << std::endl;
+        } else {
+            std::cout << thread_number << " there were difss abound" << std::endl;
+        }
+
+        std::cout << "I think this" << std::endl;
+        delete jpegenc;
+        std::cout << "Is the seg faulter" << std::endl;
+    } catch(...) {
+        std::cout << "Thread " << thread_number << " failed?" << std::endl;
     }
-    if (!found_diff) {
-        std::cout << thread_number << " no difference here :D" << std::endl;
-    } else {
-        std::cout << thread_number << " there were difss abound" << std::endl;
-    }
 
-    std::cout << "I think this" << std::endl;
-    delete jpegenc;
-    std::cout << "Is the seg faulter" << std::endl;
 
 }
 
