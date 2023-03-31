@@ -117,15 +117,12 @@ public:
         std::cout << nvbuf_surf->surfaceList->dataSize << std::endl;
         std::cout << "what about these" << std::endl;
         std::cout << nvbuf_surf->numFilled << std::endl;
-        std::cout << nvbuf_surf->surfaceList->mappedAddr.addr[0] << std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.pitch[0] *
-                nvbuf_surf->surfaceList->planeParams.height[0] << std::endl;
-        std::cout << nvbuf_surf->surfaceList->mappedAddr.addr[1] << std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.pitch[1] *
-                     nvbuf_surf->surfaceList->planeParams.height[1] << std::endl;
-        std::cout << nvbuf_surf->surfaceList->mappedAddr.addr[2] << std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.pitch[2] *
-                     nvbuf_surf->surfaceList->planeParams.height[2] << std::endl;
+        std::cout << nvbuf_surf->surfaceList->planeParams.psize[0] << std::endl;
+        std::cout << nvbuf_surf->surfaceList->planeParams.offset[0]<< std::endl;
+        std::cout << nvbuf_surf->surfaceList->planeParams.psize[1] << std::endl;
+        std::cout << nvbuf_surf->surfaceList->planeParams.offset[1]<< std::endl;
+        std::cout << nvbuf_surf->surfaceList->planeParams.psize[2] << std::endl;
+        std::cout << nvbuf_surf->surfaceList->planeParams.offset[2]<< std::endl;
         std::cout << "maybe?" << std::endl;
     }
     void sync_cpu() {
