@@ -209,23 +209,13 @@ void run_thread_test(const int thread_number) {
 
     auto buf_ptr = out_buf.data();
 
-    jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
 
-    /*
     for (int i = 0; i < 100; i++) {
         test_in_file.clear();
         test_in_file.seekg(0);
         test_in_file.read(buffer.get_memory(), 1990656);
-        if (i == 0) {
-            jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &ref_buf, out_buf_size, 75);
-        } else {
-            jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &out_buf, out_buf_size, 75);
-            if (!strcmp((const char *) ref_buf , (const char *) out_buf)) {
-                found_diff = true;
-            }
-        }
+        jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
     }
-     */
     if (!found_diff) {
         std::cout << thread_number << " no difference here :D" << std::endl;
     } else {
