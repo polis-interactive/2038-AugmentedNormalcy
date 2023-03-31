@@ -198,7 +198,7 @@ void run_thread_test(const int thread_number) {
     auto in_frame = this_dir;
     in_frame /= "in.yuv";
 
-    MmapDmaBuffer buffer;
+    auto buffer = MmapDmaBuffer::Create();
     std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
@@ -208,6 +208,9 @@ void run_thread_test(const int thread_number) {
 
     bool found_diff = false;
 
+    pegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &ref_buf, out_buf_size, 75);
+
+    /*
     for (int i = 0; i < 100; i++) {
         test_in_file.clear();
         test_in_file.seekg(0);
@@ -221,6 +224,7 @@ void run_thread_test(const int thread_number) {
             }
         }
     }
+     */
     if (!found_diff) {
         std::cout << thread_number << " no difference here :D" << std::endl;
     } else {
