@@ -123,7 +123,7 @@ public:
         std::cout << ret << std::endl;
     }
     char * get_memory() {
-        return (char *) nvbuf_surf->surfaceList->mappedAddr.addr[2];
+        return (char *) nvbuf_surf->surfaceList->mappedAddr.addr[0];
     }
     [[nodiscard]] int get_fd() const {
         return fd;
