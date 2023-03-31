@@ -208,7 +208,7 @@ void run_thread_test(const int thread_number) {
 
     bool found_diff = false;
 
-    pegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &ref_buf, out_buf_size, 75);
+    jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &ref_buf, out_buf_size, 75);
 
     /*
     for (int i = 0; i < 100; i++) {
