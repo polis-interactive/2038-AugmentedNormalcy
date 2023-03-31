@@ -185,4 +185,5 @@ int main(int argc, char *argv[]) {
     user_buffer();
     dma_buffer();
     mmap_buffer();
+    stress_test_mmap();
 }
