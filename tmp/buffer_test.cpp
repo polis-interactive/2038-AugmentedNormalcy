@@ -8,6 +8,10 @@
 #include <sys/mman.h>
 
 #include <vector>
+#include <thread>
+#include <chrono>
+using namespace std::literals;
+typedef std::chrono::high_resolution_clock Clock;
 
 #include "NvUtils.h"
 #include "NvJpegEncoder.h"
@@ -186,9 +190,66 @@ void stress_test_mmap() {
     }
 }
 
+void run_thread_test(const int thread_number) {
+    std::cout << "Thread " << thread_number << " Starting" << std::endl;
+
+    std::filesystem::path this_dir = TMP_DIR;
+
+    auto in_frame = this_dir;
+    in_frame /= "in.yuv";
+
+    MmapDmaBuffer buffer;
+    std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
+
+    auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
+    unsigned long out_buf_size = 1536 * 864 * 3 / 2;
+    auto *ref_buf = new unsigned char[out_buf_size];
+    auto *out_buf = new unsigned char[out_buf_size];
+
+    for (int i = 0; i < 100; i++) {
+        test_in_file.clear();
+        test_in_file.seekg(0);
+        test_in_file.read(buffer.get_memory(), 1990656);
+        if (i == 0) {
+            jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &ref_buf, out_buf_size, 75);
+        } else {
+            jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &out_buf, out_buf_size, 75);
+            if (!strcmp((const char *) ref_buf , (const char *) out_buf)) {
+                std::cout << thread_number << "reported a diff D:" << std::endl;
+                return;
+            }
+        }
+    }
+
+    std::cout << thread_number << " no difference here :D" << std::endl;
+
+    delete[] ref_buf;
+    delete[] out_buf;
+    delete jpegenc;
+
+}
+
+void thread_test() {
+    std::vector<std::thread> threads;
+    std::cout << "Starting threads" << std::endl;
+    std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2;
+    for (int i = 0; i < 9; i++) {
+        threads.emplace_back(std::thread(run_thread_test, i));
+    }
+    t1 = Clock::now();
+
+    std::cout << "Waiting for threads to finish" << std::endl;
+    for (auto &th: threads) {
+        th.join();
+    }
+
+    t2 = Clock::now();
+
+
+    auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+    std::cout << "roughly took " << d1 << " milliseconds to run"
+}
+
 int main(int argc, char *argv[]) {
-    user_buffer();
-    dma_buffer();
-    mmap_buffer();
-    stress_test_mmap();
+    thread_test();
 }
