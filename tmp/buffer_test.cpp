@@ -104,6 +104,9 @@ public:
         params.memtag = NvBufSurfaceTag_CAMERA;
 
         auto ret = NvBufSurf::NvAllocate(&params, 1, &fd);
+        if (ret < 0) {
+            std::cout << "Error allocating buffer: " << ret << std::endl;
+        }
 
         // just going to mmap it myself
         _memory = mmap(NULL, 1327104, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -216,7 +219,11 @@ void run_thread_test(const int thread_number) {
 
         for (int i = 0; i < 100; i++) {
             memcpy(buffer.get_memory(), (void *) in_buf.data(), 1990656);
-            jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
+            auto ret = jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
+            if (ret < 0) {
+                std::cout << thread_number << " Error while encoding from fd" << std::endl;
+                break;
+            }
         }
         if (!found_diff) {
             std::cout << thread_number << " no difference here :D" << std::endl;
@@ -237,10 +244,11 @@ void thread_test() {
     std::vector<std::thread> threads;
     std::cout << "Starting threads" << std::endl;
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2;
+
+    t1 = Clock::now();
     for (int i = 0; i < 9; i++) {
         threads.emplace_back(std::thread(run_thread_test, i));
     }
-    t1 = Clock::now();
 
     std::cout << "Waiting for threads to finish" << std::endl;
     for (auto &th: threads) {
