@@ -203,11 +203,11 @@ void run_thread_test(const int thread_number) {
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
     unsigned long out_buf_size = 1536 * 864 * 3 / 2;
-    auto *out_buf = new unsigned char[out_buf_size];
+    std::array<char, 1990656> out_buf = {};
 
     bool found_diff = false;
 
-    jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &out_buf, out_buf_size, 75);
+    jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &out_buf.data(), out_buf_size, 75);
 
     /*
     for (int i = 0; i < 100; i++) {
@@ -230,7 +230,6 @@ void run_thread_test(const int thread_number) {
         std::cout << thread_number << " there were difss abound" << std::endl;
     }
 
-    delete[] out_buf;
     delete jpegenc;
 
 }
