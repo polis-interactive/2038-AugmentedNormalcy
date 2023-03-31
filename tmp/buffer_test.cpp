@@ -206,6 +206,8 @@ void run_thread_test(const int thread_number) {
     auto *ref_buf = new unsigned char[out_buf_size];
     auto *out_buf = new unsigned char[out_buf_size];
 
+    bool found_diff = false;
+
     for (int i = 0; i < 100; i++) {
         test_in_file.clear();
         test_in_file.seekg(0);
@@ -215,13 +217,15 @@ void run_thread_test(const int thread_number) {
         } else {
             jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &out_buf, out_buf_size, 75);
             if (!strcmp((const char *) ref_buf , (const char *) out_buf)) {
-                std::cout << thread_number << "reported a diff D:" << std::endl;
-                return;
+                std::cout << thread_number << " reported a diff on iteration " << i << " D:" << std::endl;
+                found_diff = true;
+                break;
             }
         }
     }
-
-    std::cout << thread_number << " no difference here :D" << std::endl;
+    if (!found_diff) {
+        std::cout << thread_number << " no difference here :D" << std::endl;
+    }
 
     delete[] ref_buf;
     delete[] out_buf;
