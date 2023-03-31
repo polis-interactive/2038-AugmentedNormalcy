@@ -100,8 +100,8 @@ public:
         std::cout << ret << std::endl;
         ret = NvBufSurfaceFromFd(fd, (void**)(&nvbuf_surf));
         std::cout << ret << std::endl;
-        ret = NvBufSurfaceMap(nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
         ret = NvBufSurfaceMap(nvbuf_surf, 0, 1, NVBUF_MAP_READ_WRITE);
+        ret = NvBufSurfaceMap(nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
         ret = NvBufSurfaceMap(nvbuf_surf, 0, 2, NVBUF_MAP_READ_WRITE);
         std::cout << ret << std::endl;
         sync_cpu();
