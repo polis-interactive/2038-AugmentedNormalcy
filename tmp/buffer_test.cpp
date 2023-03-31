@@ -103,13 +103,17 @@ public:
         ret = NvBufSurfaceMap(nvbuf_surf, 0, -1, NVBUF_MAP_READ_WRITE);
         std::cout << ret << std::endl;
         sync_cpu();
+        std::cout << "things i think are right" << std::endl;
+        std::cout << nvbuf_surf->surfaceList->dataPtr << std::endl;
+        std::cout << nvbuf_surf->surfaceList->dataSize << std::endl;
+        std::cout << "maybe?" << std::endl;
     }
     void sync_cpu() {
         auto ret = NvBufSurfaceSyncForCpu (nvbuf_surf, 0, -1);
         std::cout << ret << std::endl;
     }
     char * get_memory() {
-        return (char *) nvbuf_surf;
+        return (char *) nvbuf_surf->surfaceList;
     }
     [[nodiscard]] int get_fd() const {
         return fd;
