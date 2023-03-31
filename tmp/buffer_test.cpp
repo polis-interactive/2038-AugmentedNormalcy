@@ -203,11 +203,13 @@ void run_thread_test(const int thread_number) {
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
     unsigned long out_buf_size = 1536 * 864 * 3 / 2;
-    std::array<char, 1990656> out_buf = {};
+    std::array<unsigned char, 1990656> out_buf = {};
 
     bool found_diff = false;
 
-    jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &out_buf.data(), out_buf_size, 75);
+    auto buf_ptr = out_buf.data();
+
+    jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
 
     /*
     for (int i = 0; i < 100; i++) {
