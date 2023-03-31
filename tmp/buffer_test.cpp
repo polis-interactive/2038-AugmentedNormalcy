@@ -100,7 +100,7 @@ public:
         std::cout << ret << std::endl;
         ret = NvBufSurfaceFromFd(fd, (void**)(&nvbuf_surf));
         std::cout << ret << std::endl;
-        ret = NvBufSurfaceMap(nvbuf_surf, 0, -1, NVBUF_MAP_READ_WRITE);
+        ret = NvBufSurfaceMap(nvbuf_surf, -1, -1, NVBUF_MAP_READ_WRITE);
         std::cout << ret << std::endl;
         sync_cpu();
         std::cout << "things i think are right" << std::endl;
@@ -117,7 +117,7 @@ public:
         std::cout << "maybe?" << std::endl;
     }
     void sync_cpu() {
-        auto ret = NvBufSurfaceSyncForCpu (nvbuf_surf, 0, -1);
+        auto ret = NvBufSurfaceSyncForCpu (nvbuf_surf, -1, -1);
         std::cout << ret << std::endl;
     }
     char * get_memory() {
@@ -132,11 +132,11 @@ public:
         ;
     }
     void sync_gpu() {
-        NvBufSurfaceSyncForDevice (nvbuf_surf, 0, -1);
+        NvBufSurfaceSyncForDevice (nvbuf_surf, -1, -1);
     }
     ~MmapDmaBuffer() {
         if (nvbuf_surf != nullptr) {
-            NvBufSurfaceUnMap(nvbuf_surf, 0, -1);
+            NvBufSurfaceUnMap(nvbuf_surf, -1, -1);
             nvbuf_surf = nullptr;
         }
         if (fd != -1) {
