@@ -222,7 +222,9 @@ void run_thread_test(const int thread_number) {
         std::cout << thread_number << " there were difss abound" << std::endl;
     }
 
+    std::cout << "I think this" << std::endl;
     delete jpegenc;
+    std::cout << "Is the seg faulter" << std::endl;
 
 }
 
