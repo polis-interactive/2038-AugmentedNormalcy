@@ -152,8 +152,7 @@ void mmap_buffer() {
     out_frame /= "out_mmap.jpeg";
 
     std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
-    std::cout << "reported size: " << buffer.get_size() << std::endl;
-    std::cout << "I think size: " << 1990656 << std::endl;
+
     test_in_file.read(buffer.get_memory(), 1990656);
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
@@ -201,7 +200,7 @@ void run_thread_test(const int thread_number) {
 
         std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
 
-        std::array<unsigned char, 1990656> in_buf = {};
+        std::array<char, 1990656> in_buf = {};
         test_in_file.read(in_buf.data(), 1990656);
 
         auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
@@ -256,5 +255,6 @@ void thread_test() {
 }
 
 int main(int argc, char *argv[]) {
+    mmap_buffer();
     thread_test();
 }
