@@ -217,14 +217,14 @@ void run_thread_test(const int thread_number) {
         } else {
             jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &out_buf, out_buf_size, 75);
             if (!strcmp((const char *) ref_buf , (const char *) out_buf)) {
-                std::cout << thread_number << " reported a diff on iteration " << i << " D:" << std::endl;
                 found_diff = true;
-                break;
             }
         }
     }
     if (!found_diff) {
         std::cout << thread_number << " no difference here :D" << std::endl;
+    } else {
+        std::cout << thread_number << " there were difss abound" << std::endl;
     }
 
     delete[] ref_buf;
