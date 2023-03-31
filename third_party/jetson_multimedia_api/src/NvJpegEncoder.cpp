@@ -53,6 +53,7 @@ NvJPEGEncoder::createJPEGEncoder(const char *comp_name)
     NvJPEGEncoder *jpegenc = new NvJPEGEncoder(comp_name);
     if (jpegenc->isInError())
     {
+        std::cout << jpegenc->isInError() << std::endl;
         delete jpegenc;
         return NULL;
     }
