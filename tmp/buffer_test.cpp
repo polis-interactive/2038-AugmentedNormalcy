@@ -201,6 +201,9 @@ void run_thread_test(const int thread_number) {
 
         std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
 
+        std::array<unsigned char, 1990656> in_buf = {};
+        test_in_file.read(in_buf.data(), 1990656);
+
         auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
         unsigned long out_buf_size = 1536 * 864 * 3 / 2;
         std::array<unsigned char, 1990656> out_buf = {};
@@ -213,9 +216,7 @@ void run_thread_test(const int thread_number) {
 
 
         for (int i = 0; i < 100; i++) {
-            test_in_file.clear();
-            test_in_file.seekg(0);
-            test_in_file.read(buffer.get_memory(), 1990656);
+            memcpy(buffer.get_memory(), (void *) in_buf.data(), 1990656);
             jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
         }
         if (!found_diff) {
