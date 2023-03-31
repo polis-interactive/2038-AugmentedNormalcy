@@ -109,6 +109,7 @@ public:
         auto m2 = mmap(
             (uint8_t *) _memory + 1327104 + 331776, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1835008
         );
+        std::cout << fd << std::endl;
         std::cout << _memory << std::endl;
         std::cout << m1 << std::endl;
         std::cout << m2 << std::endl;
@@ -124,7 +125,7 @@ public:
         return 1990656;
     }
     ~MmapDmaBuffer() {
-        std::cout << "unmapping!" << std::endl;
+        std::cout << "removing!" << std::endl;
         if (_memory != nullptr) {
             munmap(_memory, 1990656);
         }
