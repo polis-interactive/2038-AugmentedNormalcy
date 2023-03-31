@@ -198,7 +198,7 @@ void run_thread_test(const int thread_number) {
     auto in_frame = this_dir;
     in_frame /= "in.yuv";
 
-    auto buffer = MmapDmaBuffer::Create();
+    MmapDmaBuffer buffer;
     std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
