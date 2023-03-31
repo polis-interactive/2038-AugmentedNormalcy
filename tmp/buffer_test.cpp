@@ -112,8 +112,7 @@ public:
         std::cout << nvbuf_surf->surfaceList->planeParams.width[0] << std::endl;
 
         std::cout << nvbuf_surf->surfaceList->planeParams.pitch[0] *
-            nvbuf_surf->surfaceList->planeParams.height[0] *
-            nvbuf_surf->surfaceList->planeParams.bytesPerPix[0]
+            nvbuf_surf->surfaceList->planeParams.height[0] * 3 / 2
         << std::endl;
         std::cout << "maybe?" << std::endl;
     }
@@ -122,13 +121,15 @@ public:
         std::cout << ret << std::endl;
     }
     char * get_memory() {
-        return (char *) nvbuf_surf->surfaceList->dataPtr;
+        return (char *) nvbuf_surf->surfaceList->mappedAddr.addr[0];
     }
     [[nodiscard]] int get_fd() const {
         return fd;
     }
     std::size_t get_size() {
-        return nvbuf_surf->batchSize;
+        return nvbuf_surf->surfaceList->planeParams.pitch[0] *
+            nvbuf_surf->surfaceList->planeParams.height[0] * 3 / 2
+        ;
     }
     void sync_gpu() {
         NvBufSurfaceSyncForDevice (nvbuf_surf, 0, -1);
