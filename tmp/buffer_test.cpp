@@ -63,9 +63,9 @@ void dma_buffer() {
     auto ret = NvBufSurf::NvAllocate(&params, 1, &src_dma_fd);
 
     std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
-    read_dmabuf(src_dma_fd, -1, &test_file_in);
-    // read_dmabuf(src_dma_fd, 1, &test_file_in);
-    // read_dmabuf(src_dma_fd, 2, &test_file_in);
+    read_dmabuf(src_dma_fd, 0, &test_file_in);
+    read_dmabuf(src_dma_fd, 1, &test_file_in);
+    read_dmabuf(src_dma_fd, 2, &test_file_in);
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
     unsigned long out_buf_size = 1536 * 864 * 3 / 2;
@@ -97,6 +97,8 @@ public:
         params.memtag = NvBufSurfaceTag_CAMERA;
 
         auto ret = NvBufSurf::NvAllocate(&params, 1, &fd);
+        std::cout << ret << std::endl;
+        ret = NvBufSurfaceFromFd(fd, (void**)(&nvbuf_surf));
         std::cout << ret << std::endl;
         ret = NvBufSurfaceMap(nvbuf_surf, 0, -1, NVBUF_MAP_READ_WRITE);
         std::cout << ret << std::endl;
