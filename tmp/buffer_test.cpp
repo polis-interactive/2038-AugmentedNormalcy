@@ -117,7 +117,7 @@ public:
         std::cout << ret << std::endl;
     }
     char * get_memory() {
-        return (char *) nvbuf_surf->surfaceList;
+        return (char *) nvbuf_surf->surfaceList->dataPtr;
     }
     [[nodiscard]] int get_fd() const {
         return fd;
