@@ -103,8 +103,8 @@ public:
         std::cout << ret << std::endl;
 
         // just going to mmap it myself
-        void *memory_2 = mmap(NULL, 331776, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 1658880);
-        void *memory_1 = mmap(NULL, 331776, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 1327104);
+        void *memory_2 = mmap(NULL, 331776, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 1835008);
+        void *memory_1 = mmap(NULL, 331776, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 1441792);
         _memory = mmap(NULL, 1327104, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         std::cout << _memory << std::endl;
         std::cout << memory_1 << std::endl;
