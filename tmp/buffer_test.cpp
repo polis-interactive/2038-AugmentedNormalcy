@@ -152,8 +152,6 @@ void mmap_buffer() {
     std::cout << "I think size: " << 1990656 << std::endl;
     test_in_file.read(buffer.get_memory(), 1990656);
 
-    buffer.sync_gpu();
-
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
     unsigned long out_buf_size = 1536 * 864 * 3 / 2;
     auto *out_buf = new unsigned char[out_buf_size];
