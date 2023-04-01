@@ -137,8 +137,6 @@ public:
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
 
-        nvbuf_surf->
-
     }
     char * get_memory() {
         return (char *) _memory;
