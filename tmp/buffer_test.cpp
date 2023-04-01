@@ -110,12 +110,18 @@ public:
 
         // just going to mmap it myself
         _memory = mmap(NULL, 1327104, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        if (_memory == nullptr)
         auto m1 = mmap(
             (uint8_t *) _memory + 1327104, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1441792
         );
         auto m2 = mmap(
             (uint8_t *) _memory + 1327104 + 331776, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1835008
         );
+
+        if (_memory == MAP_FAILED || m1 == MAP_FAILED || m2 == MAP_FAILED) {
+            std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
+        }
+
 
     }
     char * get_memory() {
