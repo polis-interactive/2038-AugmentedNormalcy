@@ -127,7 +127,7 @@ public:
         }
         _memory_1 = mmap(
             (uint8_t *) _memory + _nvbuf_surf->surfaceList->planeParams.psize[0],
-            nvbuf_surf->surfaceList->planeParams.psize[1],
+            _nvbuf_surf->surfaceList->planeParams.psize[1],
             PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
             _nvbuf_surf->surfaceList->planeParams.offset[1]
         );
@@ -136,7 +136,7 @@ public:
         }
         _memory_2 = mmap(
             (uint8_t *) _memory_1 + _nvbuf_surf->surfaceList->planeParams.psize[1],
-            nvbuf_surf->surfaceList->planeParams.psize[2],
+            _nvbuf_surf->surfaceList->planeParams.psize[2],
             PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
             _nvbuf_surf->surfaceList->planeParams.offset[2]
         );
