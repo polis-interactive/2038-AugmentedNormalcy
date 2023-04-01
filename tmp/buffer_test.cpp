@@ -144,7 +144,7 @@ public:
         NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, -1);
     }
     void sync_for_gpu() {
-        NvBufSurfaceSyncForGpu(_nvbuf_surf, 0, -1);
+        NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, -1);
     }
     char * get_memory() {
         return (char *) _memory;
