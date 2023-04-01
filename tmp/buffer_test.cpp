@@ -115,10 +115,6 @@ public:
             std::cout << "failed to get surface from fd" << std::endl;
         }
 
-        std::cout << _nvbuf_surf->surfaceList->planeParams.psize[0] <<  "? " << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->planeParams.psize[1] <<  "? " << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->planeParams.psize[2] <<  "? " << std::endl;
-
         // just going to mmap it myself
         _memory = mmap(
                 NULL,
@@ -126,30 +122,32 @@ public:
                 PROT_READ | PROT_WRITE, MAP_SHARED, fd,
                 _nvbuf_surf->surfaceList->planeParams.offset[0]
         );
-        auto m1 = mmap(
+        if (_memory == MAP_FAILED) {
+            std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
+        }
+        _memory_1 = mmap(
             (uint8_t *) _memory + _nvbuf_surf->surfaceList->planeParams.psize[0],
             nvbuf_surf->surfaceList->planeParams.psize[1],
             PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
             _nvbuf_surf->surfaceList->planeParams.offset[1]
         );
-        auto m2 = mmap(
-            (uint8_t *) _memory + _nvbuf_surf->surfaceList->planeParams.psize[0] +
-                _nvbuf_surf->surfaceList->planeParams.psize[1],
+        if (_memory_1 == MAP_FAILED) {
+            std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
+        }
+        _memory_2 = mmap(
+            (uint8_t *) _memory_1 + _nvbuf_surf->surfaceList->planeParams.psize[1],
             nvbuf_surf->surfaceList->planeParams.psize[2],
             PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
             _nvbuf_surf->surfaceList->planeParams.offset[2]
         );
-
-        if (_memory == MAP_FAILED || m1 == MAP_FAILED || m2 == MAP_FAILED) {
+        if (_memory_2 == MAP_FAILED) {
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
 
-    }
-    void sync_for_cpu() {
-        NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, -1);
-    }
-    void sync_for_gpu() {
-        NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, -1);
+        _size = _nvbuf_surf->surfaceList->planeParams.psize[0];
+        _size_1 = _nvbuf_surf->surfaceList->planeParams.psize[1];
+        _size_2 = _nvbuf_surf->surfaceList->planeParams.psize[2];
+
     }
     char * get_memory() {
         return (char *) _memory;
@@ -158,14 +156,21 @@ public:
         return fd;
     }
     std::size_t get_size() {
-        return 1990656;
+        return _size + _size_1 + _size_2;
     }
     ~MmapDmaBuffer() {
         std::cout << "removing!" << std::endl;
         if (_memory != nullptr) {
-            munmap(_memory, 1990656);
+            munmap(_memory, _size);
         }
+        if (_memory_1 != nullptr) {
+            munmap(_memory, _size_1);
 
+        }
+        if (_memory_2 != nullptr) {
+            munmap(_memory, _size_2);
+
+        }
         if (fd != -1) {
             NvBufSurf::NvDestroy(fd);
             fd = -1;
@@ -174,7 +179,12 @@ public:
 private:
     int fd = -1;
     void * _memory = nullptr;
+    void * _memory_1 = nullptr;
+    void * _memory_2 = nullptr;
     NvBufSurface *_nvbuf_surf = 0;
+    std::size_t _size = 0;
+    std::size_t _size_1 = 0;
+    std::size_t _size_2 = 0;
 };
 
 void mmap_buffer() {
@@ -255,7 +265,7 @@ void run_thread_test(const int thread_number) {
 
         for (int i = 0; i < 100; i++) {
             // buffer.sync_for_cpu();
-            memcpy(buffer.get_memory(), (void *) in_buf.data(), 1990656);
+            memcpy(buffer.get_memory(), (void *) in_buf.data(), buffer.get_size());
             // buffer.sync_for_gpu();
             auto buf_ptr = out_buf.data();
             auto ret = jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
