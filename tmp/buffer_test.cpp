@@ -226,7 +226,8 @@ void run_thread_test(const int thread_number) {
 
         for (int i = 0; i < 100; i++) {
             memcpy(buffer.get_memory(), (void *) in_buf.data(), 1990656);
-            auto ret = jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &((unsigned char *)out_buf.data()), out_buf_size, 75);
+            auto buf_ptr = out_buf.data();
+            auto ret = jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
             if (ret < 0) {
                 std::cout << thread_number << " Error while encoding from fd" << std::endl;
                 break;
