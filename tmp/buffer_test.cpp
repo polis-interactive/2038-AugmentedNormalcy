@@ -110,7 +110,6 @@ public:
 
         // just going to mmap it myself
         _memory = mmap(NULL, 1327104, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        if (_memory == nullptr)
         auto m1 = mmap(
             (uint8_t *) _memory + 1327104, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1441792
         );
@@ -223,9 +222,9 @@ void run_thread_test(const int thread_number) {
         auto buf_ptr = out_buf.data();
 
         std::cout << (void *) out_buf.data() << ", " << (void *) buffer.get_memory() << std::endl;
+        memcpy(buffer.get_memory(), (void *) in_buf.data(), 1990656);
 
         for (int i = 0; i < 100; i++) {
-            memcpy(buffer.get_memory(), (void *) in_buf.data(), 1990656);
             auto buf_ptr = out_buf.data();
             auto ret = jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
             if (ret < 0) {
