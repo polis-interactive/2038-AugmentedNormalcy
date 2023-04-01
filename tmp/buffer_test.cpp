@@ -115,9 +115,9 @@ public:
             std::cout << "failed to get surface from fd" << std::endl;
         }
 
-        std::cout << nvbuf_surf->surfaceList->planeParams.offset[0] << ": " << 0 "? " << std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.offset[1] << ": " << 1441792 "? " << std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.offset[2] << ": " << 1835008 "? " << std::endl;
+        std::cout << nvbuf_surf->surfaceList->planeParams.offset[0] << ": " << 0 << "? " << std::endl;
+        std::cout << nvbuf_surf->surfaceList->planeParams.offset[1] << ": " << 1441792 << "? " << std::endl;
+        std::cout << nvbuf_surf->surfaceList->planeParams.offset[2] << ": " << 1835008 << "? " << std::endl;
 
         // just going to mmap it myself
         _memory = mmap(NULL, 1327104, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
