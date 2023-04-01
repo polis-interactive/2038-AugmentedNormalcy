@@ -108,35 +108,43 @@ public:
             std::cout << "Error allocating buffer: " << ret << std::endl;
         }
 
-        NvBufSurface *nvbuf_surf = 0;
-        ret = NvBufSurfaceFromFd(fd, (void**)(&nvbuf_surf));
+
+        ret = NvBufSurfaceFromFd(fd, (void**)(&_nvbuf_surf));
         if (ret != 0)
         {
             std::cout << "failed to get surface from fd" << std::endl;
         }
 
-        std::cout << nvbuf_surf->surfaceList->planeParams.offset[0] << ": " << 0 << "? " << std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.offset[1] << ": " << 1441792 << "? " << std::endl;
-        std::cout << nvbuf_surf->surfaceList->planeParams.offset[2] << ": " << 1835008 << "? " << std::endl;
+        std::cout << _nvbuf_surf->surfaceList->planeParams.psize[0] <<  "? " << std::endl;
+        std::cout << _nvbuf_surf->surfaceList->planeParams.psize[1] <<  "? " << std::endl;
+        std::cout << _nvbuf_surf->surfaceList->planeParams.psize[2] <<  "? " << std::endl;
 
         // just going to mmap it myself
         _memory = mmap(
                 NULL,
                 1327104,
                 PROT_READ | PROT_WRITE, MAP_SHARED, fd,
-                nvbuf_surf->surfaceList->planeParams.offset[0]
+                _nvbuf_surf->surfaceList->planeParams.offset[0]
         );
         auto m1 = mmap(
-            (uint8_t *) _memory + 1327104, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1441792
+            (uint8_t *) _memory + 1327104, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
+            _nvbuf_surf->surfaceList->planeParams.offset[1]
         );
         auto m2 = mmap(
-            (uint8_t *) _memory + 1327104 + 331776, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 1835008
+            (uint8_t *) _memory + 1327104 + 331776, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
+            _nvbuf_surf->surfaceList->planeParams.offset[2]
         );
 
         if (_memory == MAP_FAILED || m1 == MAP_FAILED || m2 == MAP_FAILED) {
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
 
+    }
+    void sync_for_cpu() {
+        NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, -1);
+    }
+    void sync_for_gpu() {
+        NvBufSurfaceSyncForGpu(_nvbuf_surf, 0, -1);
     }
     char * get_memory() {
         return (char *) _memory;
@@ -161,6 +169,7 @@ public:
 private:
     int fd = -1;
     void * _memory = nullptr;
+    NvBufSurface *_nvbuf_surf = 0;
 };
 
 void mmap_buffer() {
@@ -240,7 +249,9 @@ void run_thread_test(const int thread_number) {
 
 
         for (int i = 0; i < 100; i++) {
+            buffer.sync_for_cpu();
             memcpy(buffer.get_memory(), (void *) in_buf.data(), 1990656);
+            buffer.sync_for_gpu();
             auto buf_ptr = out_buf.data();
             auto ret = jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
             if (ret < 0) {
