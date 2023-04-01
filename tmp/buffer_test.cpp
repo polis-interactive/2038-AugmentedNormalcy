@@ -122,16 +122,21 @@ public:
         // just going to mmap it myself
         _memory = mmap(
                 NULL,
-                1327104,
+                _nvbuf_surf->surfaceList->planeParams.psize[0],
                 PROT_READ | PROT_WRITE, MAP_SHARED, fd,
                 _nvbuf_surf->surfaceList->planeParams.offset[0]
         );
         auto m1 = mmap(
-            (uint8_t *) _memory + 1327104, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
+            (uint8_t *) _memory + _nvbuf_surf->surfaceList->planeParams.psize[0],
+            nvbuf_surf->surfaceList->planeParams.psize[1],
+            PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
             _nvbuf_surf->surfaceList->planeParams.offset[1]
         );
         auto m2 = mmap(
-            (uint8_t *) _memory + 1327104 + 331776, 331776, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
+            (uint8_t *) _memory + _nvbuf_surf->surfaceList->planeParams.psize[0] +
+                _nvbuf_surf->surfaceList->planeParams.psize[1],
+            nvbuf_surf->surfaceList->planeParams.psize[2],
+            PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
             _nvbuf_surf->surfaceList->planeParams.offset[2]
         );
 
@@ -249,9 +254,9 @@ void run_thread_test(const int thread_number) {
 
 
         for (int i = 0; i < 100; i++) {
-            buffer.sync_for_cpu();
+            // buffer.sync_for_cpu();
             memcpy(buffer.get_memory(), (void *) in_buf.data(), 1990656);
-            buffer.sync_for_gpu();
+            // buffer.sync_for_gpu();
             auto buf_ptr = out_buf.data();
             auto ret = jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &buf_ptr, out_buf_size, 75);
             if (ret < 0) {
