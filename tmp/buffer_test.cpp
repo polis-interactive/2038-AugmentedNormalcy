@@ -108,6 +108,17 @@ public:
             std::cout << "Error allocating buffer: " << ret << std::endl;
         }
 
+        NvBufSurface *nvbuf_surf = 0;
+        ret = NvBufSurfaceFromFd(fd, (void**)(&nvbuf_surf));
+        if (ret != 0)
+        {
+            std::cout << "failed to get surface from fd" << std::endl;
+        }
+
+        std::cout << nvbuf_surf->surfaceList->planeParams.offset[0] << ": " << 0 "? " << std::endl;
+        std::cout << nvbuf_surf->surfaceList->planeParams.offset[1] << ": " << 1441792 "? " << std::endl;
+        std::cout << nvbuf_surf->surfaceList->planeParams.offset[2] << ": " << 1835008 "? " << std::endl;
+
         // just going to mmap it myself
         _memory = mmap(NULL, 1327104, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         auto m1 = mmap(
