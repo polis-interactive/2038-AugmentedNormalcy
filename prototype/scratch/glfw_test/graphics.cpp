@@ -6,6 +6,8 @@
 
 #define BUFFER_OFFSET(idx) (static_cast<char*>(0) + (idx))
 
+#define IS_VIVE 2
+
 
 static GLint compile_shader(GLenum target, const char *source)
 {
@@ -80,8 +82,8 @@ static void gl_setup(int width, int height, int window_width, int window_height)
 			 "\n"
 			 "void main() {\n"
 			 "  gl_Position = vec4(v_pos, 1.0);\n"
-			 "  texcoord.x = v_tex.x;\n"
-			 "  texcoord.y = 1.0 - v_tex.y;\n"
+			 "  texcoord.x = 1.0 - v_tex.x;\n"
+			 "  texcoord.y = v_tex.y;\n"
 			 "  c_pos = v_color.x;\n"
 			 "}\n",
 			 2.0 * w_factor, 2.0 * h_factor);
@@ -103,21 +105,7 @@ static void gl_setup(int width, int height, int window_width, int window_height)
 					 "	return c.z * mix( vec3(1.0), rgb, c.y);\n"
 					 "}\n"
 					 "void main() {\n"
-					 "  vec4 color_modifier = vec4(1.0, 1.0, 1.0, 1.0);\n"
-					 "  vec2 out_coord = texcoord;\n"
-					 " 	if (c_pos == 0.1) {\n"
-					 "		vec2 toCenter = vec2(0.5)-out_coord;\n"
-					 "		float angle = atan(toCenter.y,toCenter.x);\n"
-					 "		float radius = length(toCenter)*2.0;\n"
-					 "		color_modifier = vec4(hsb2rgb(vec3((angle/TWO_PI)+0.5,radius,1.0)), 1.0);\n"
-					 "		out_coord.x = 1.0 - texcoord.x;\n"
-					 "	}\n"
-					 " 	if (c_pos == 0.2) {\n"
-					 "		out_coord.x = 1.0 -texcoord.y; \n"
-					 "		out_coord.y = texcoord.x; \n"
-					 "	}\n"
-					 "  fragColor = texture2D(s, out_coord) * color_modifier;\n"
-					 " 	if (c_pos == 0.3) { fragColor = vec4(1.0 - fragColor.x, 1.0 - fragColor.y, 1.0 - fragColor.z, 1.0); }\n"
+					 "  fragColor = texture2D(s, texcoord);\n"
 					 "}\n";
 	GLint fs_s = compile_shader(GL_FRAGMENT_SHADER, fs);
 	GLint prog = link_program(vs_s, fs_s);
@@ -240,8 +228,22 @@ void GlesHandler::Run(std::stop_token st) {
   std::cout << "Running graphics handler" << std::endl;
   
   int width, height;
-  width = 1920;
-  height = 1080;
+  // width = 1920;
+  // height = 1080;
+#if IS_VIVE == 1
+    width = 2160;
+    height = 1200;
+#elif IS_VIVE == 2
+    width = 1920;
+    height = 1080;
+#else
+    width = 1440;
+    height = 2560;
+#endif
+
+  // width = 1280;
+  // height = 720;
+
   GraphicsRunner::WindowHints();
   window = glfwCreateWindow(width, height, "OpenGL ES 2.0 Triangle (EGL)", NULL, NULL);
   if (!window)
@@ -294,7 +296,7 @@ void GlesHandler::Run(std::stop_token st) {
   glfwSwapInterval(0);
   glfwSwapBuffers(window);
   
-  gl_setup(1920, 1080, 1920, 1080);
+  gl_setup(width, height, width, height);
   
   glfwSetKeyCallback(window,
     [](GLFWwindow * w, int key, int scancode, int action, int mods) {
@@ -315,39 +317,97 @@ void GlesHandler::Run(std::stop_token st) {
   std::stop_callback cb(st, [this]() {
     _cv.notify_all(); //Wake thread on stop request
   });
-
+#if IS_VIVE == 1
+// vive
       float vertices[] = {
         // positions          // colors           // texture coords
-         0.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right, left side
-         0.0f,  0.0f, 0.0f,   0.0f, 0.0f, 0.0f,   1.0f, 0.0f, // bottom right, left side
-        -1.0f,  0.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 0.0f, // bottom left, left side
+         0.0f,  0.4f, 0.0f,   0.0f, 0.0f, 0.0f,   0.865f, 1.0f, // top right, left side
+         0.0f,  -0.6f, 0.0f,   0.0f, 0.0f, 0.0f,   0.865f, 0.0f, // bottom right, left side
+        -1.0f,  -0.6f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 0.0f, // bottom left, left side
+        -1.0f,  0.4f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 1.0f, // top left, left side
+
+         1.0f,  0.4f, 0.0f,   0.1f, 0.0f, 0.0f,   1.0f, 1.0f, // top right, right side
+         1.0f,  -0.6f, 0.0f,   0.1f, 0.0f, 0.0f,   1.0f, 0.0f, // bottom right, right side
+         0.0f,  -0.6f, 0.0f,   0.1f, 0.0f, 0.0f,   0.135f, 0.0f, // bottom left, right side
+         0.0f,  0.4f, 0.0f,   0.1f, 0.0f, 0.0f,   0.135f, 1.0f,  // top left, right side
+    };
+#elif IS_VIVE == 2
+   float vertices[] = {
+        // positions          // colors           // texture coords
+         0.2f,  0.8f, 0.0f,   0.0f, 0.0f, 0.0f,   0.5f, 1.0f, // top right, left side
+         0.2f,  -0.8f, 0.0f,   0.0f, 0.0f, 0.0f,   0.5f, 0.0f, // bottom right, left side
+        -0.8f,  -0.8f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 0.0f, // bottom left, left side
+        -0.8f,  0.8f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 1.0f, // top left, left side
+
+         0.8f,  0.8f, 0.0f,   0.1f, 0.0f, 0.0f,   1.0f, 1.0f, // top right, right side
+         0.8f,  -0.8f, 0.0f,   0.1f, 0.0f, 0.0f,   1.0f, 0.0f, // bottom right, right side
+         0.2f,  -0.8f, 0.0f,   0.1f, 0.0f, 0.0f,   0.5f, 0.0f, // bottom left, right side
+         0.2f,  0.8f, 0.0f,   0.1f, 0.0f, 0.0f,   0.5f, 1.0f,  // top left, right side
+    };
+#else    
+/*
+// normal boy
+      float vertices[] = {
+        // positions          // colors           // texture coords
+         0.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.5f, 1.0f, // top right, left side
+         0.0f,  -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.5f, 0.0f, // bottom right, left side
+        -1.0f,  -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 0.0f, // bottom left, left side
         -1.0f,  1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 1.0f, // top left, left side
 
          1.0f,  1.0f, 0.0f,   0.1f, 0.0f, 0.0f,   1.0f, 1.0f, // top right, right side
-         1.0f,  0.0f, 0.0f,   0.1f, 0.0f, 0.0f,   1.0f, 0.0f, // bottom right, right side
-         0.0f,  0.0f, 0.0f,   0.1f, 0.0f, 0.0f,   0.0f, 0.0f, // bottom left, right side
-         0.0f,  1.0f, 0.0f,   0.1f, 0.0f, 0.0f,   0.0f, 1.0f,  // top left, right side
-
-        // positions          // colors           // texture coords
-         0.0f,  0.0f, 0.0f,   0.2f, 0.0f, 0.0f,   1.0f, 1.0f, // top right, left side
-         0.0f, -1.0f, 0.0f,   0.2f, 0.0f, 0.0f,   1.0f, 0.0f, // bottom right, left side
-        -1.0f, -1.0f, 0.0f,   0.2f, 0.0f, 0.0f,   0.0f, 0.0f, // bottom left, left side
-        -1.0f,  0.0f, 0.0f,   0.2f, 0.0f, 0.0f,   0.0f, 1.0f, // top left, left side
-
-         1.0f,  0.0f, 0.0f,   0.3f, 0.0f, 0.0f,   1.0f, 1.0f, // top right, right side
-         1.0f, -1.0f, 0.0f,   0.3f, 0.0f, 0.0f,   1.0f, 0.0f, // bottom right, right side
-         0.0f, -1.0f, 0.0f,   0.3f, 0.0f, 0.0f,   0.0f, 0.0f, // bottom left, right side
-         0.0f,  0.0f, 0.0f,   0.3f, 0.0f, 0.0f,   0.0f, 1.0f  // top left, right side
+         1.0f,  -1.0f, 0.0f,   0.1f, 0.0f, 0.0f,   1.0f, 0.0f, // bottom right, right side
+         0.0f,  -1.0f, 0.0f,   0.1f, 0.0f, 0.0f,   0.5f, 0.0f, // bottom left, right side
+         0.0f,  1.0f, 0.0f,   0.1f, 0.0f, 0.0f,   0.5f, 1.0f,  // top left, right side
     };
+// 2k screen, full size
+      float vertices[] = {
+        // positions          // colors           // texture coords
+         1.0f,  0.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.5f, 1.0f, // top right, left side
+         -1.0f,  0.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.5f, 0.0f, // bottom right, left side
+        -1.0f,  -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 0.0f, // bottom left, left side
+        1.0f,  -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 1.0f, // top left, left side
+
+         1.0f,  1.0f, 0.0f,   0.1f, 0.0f, 0.0f,   1.0f, 1.0f, // top right, right side
+         -1.0f,  1.0f, 0.0f,   0.1f, 0.0f, 0.0f,   1.0f, 0.0f, // bottom right, right side
+         -1.0f,  0.0f, 0.0f,   0.1f, 0.0f, 0.0f,   0.5f, 0.0f, // bottom left, right side
+         1.0f,  0.0f, 0.0f,   0.1f, 0.0f, 0.0f,   0.5f, 1.0f,  // top left, right side
+    };
+    */
+// 2k screen, 1080p output
+      float vertices[] = {
+        // positions          // colors           // texture coords
+         0.75f,  0.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.5f, 1.0f, // top right, left side
+         -0.75f,  0.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.5f, 0.0f, // bottom right, left side
+        -0.75f,  -0.75f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 0.0f, // bottom left, left side
+        0.75f,  -0.75f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 1.0f, // top left, left side
+
+         0.75f,  0.75f, 0.0f,   0.1f, 0.0f, 0.0f,   1.0f, 1.0f, // top right, right side
+         -0.75f,  0.75f, 0.0f,   0.1f, 0.0f, 0.0f,   1.0f, 0.0f, // bottom right, right side
+         -0.75f,  0.0f, 0.0f,   0.1f, 0.0f, 0.0f,   0.5f, 0.0f, // bottom left, right side
+         0.75f,  0.0f, 0.0f,   0.1f, 0.0f, 0.0f,   0.5f, 1.0f,  // top left, right side
+    };
+#endif
+       /*
+// 2k screen, double
+      float vertices[] = {
+        // positions          // colors           // texture coords
+         1.0f,  0.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.5f, 1.0f, // top right, left side
+         -1.0f,  0.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.5f, 0.0f, // bottom right, left side
+        -1.0f,  -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 0.0f, // bottom left, left side
+        1.0f,  -1.0f, 0.0f,   0.0f, 0.0f, 0.0f,   0.0f, 1.0f, // top left, left side
+
+         1.0f,  1.0f, 0.0f,   0.1f, 0.0f, 0.0f,   0.5f, 1.0f, // top right, right side
+         -1.0f,  1.0f, 0.0f,   0.1f, 0.0f, 0.0f,   0.5f, 0.0f, // bottom right, right side
+         -1.0f,  0.0f, 0.0f,   0.1f, 0.0f, 0.0f,   0.0f, 0.0f, // bottom left, right side
+         1.0f,  0.0f, 0.0f,   0.1f, 0.0f, 0.0f,   0.0f, 1.0f,  // top left, right side
+    };
+    
+       */
     unsigned int indices[] = {  
         0, 1, 3, // first triangle, left side
         1, 2, 3, // second triangle, left side
         4, 5, 7,
         5, 6, 7,
-        8, 9, 11,
-        9, 10, 11,
-        12, 13, 15,
-        13, 14, 15
     };
     unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
@@ -403,12 +463,12 @@ void GlesHandler::Run(std::stop_token st) {
     if (egl_buffer.fd == -1) {
     	makeBuffer(data->_fd, data->_span.size(), data->_info, egl_buffer);
     }
-		glClearColor(0, 0, 0, 0);
+		glClearColor(0, 0, 0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glBindTexture(GL_TEXTURE_EXTERNAL_OES, egl_buffer.texture);
     glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 24, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
 		EGLBoolean success [[maybe_unused]] = eglSwapBuffers(egl_display, egl_surface);
   }
   

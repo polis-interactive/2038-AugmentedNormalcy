@@ -64,11 +64,11 @@ void CameraTest::configureViewfinder() {
   }
 
   /* bin viewfinder */
-  Size size(1920, 1080);
-  auto area = camera_->properties().get(properties::PixelArrayActiveAreas);
-  size = (*area)[0].size() / 2;
-  size = size.boundedToAspectRatio(Size(1920, 1080));
-  size.alignDownTo(2, 2); // YUV420 will want to be even
+  Size size(1536, 864);
+  // auto area = camera_->properties().get(properties::PixelArrayActiveAreas);
+  // size = (*area)[0].size() / 2;
+  // size = size.boundedToAspectRatio(Size(1536, 864));
+  // size.alignDownTo(2, 2); // YUV420 will want to be even
   std::cout << "Viewfinder size chosen is " << size.toString() << std::endl;
 
   /* configure stream */

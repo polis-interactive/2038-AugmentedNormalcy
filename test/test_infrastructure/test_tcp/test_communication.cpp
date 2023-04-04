@@ -17,20 +17,20 @@ typedef std::chrono::high_resolution_clock Clock;
 #include "infrastructure/tcp/tcp_server.hpp"
 
 
-TEST_CASE("Server bring up and tear down") {
+TEST_CASE("INFRASTRUCTURE_TCP_SERVER-Start-and-stop") {
     TestServerConfig conf(3, 6969);
     auto ctx = infrastructure::TcpContext::Create(conf);
     ctx->Start();
     auto manager = std::make_shared<NoSessionManager>();
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
-    srv.Start();
+    auto srv = infrastructure::TcpServer::Create(conf, ctx->GetContext(), srv_manager);
+    srv->Start();
     std::this_thread::sleep_for(1s);
-    srv.Stop();
+    srv->Stop();
     ctx->Stop();
 }
 
-TEST_CASE("Client bring up and tear down, camera client") {
+TEST_CASE("INFRASTRUCTURE_TCP_CLIENT-Camera-Start-and-stop") {
     TestClientServerConfig conf(2, 6969, "127.0.0.1", true);
     auto ctx = infrastructure::TcpContext::Create(conf);
     ctx->Start();
@@ -43,7 +43,7 @@ TEST_CASE("Client bring up and tear down, camera client") {
     ctx->Stop();
 }
 
-TEST_CASE("Client bring up and tear down, headset client") {
+TEST_CASE("INFRASTRUCTURE_TCP_CLIENT-Headset-Start-and-stop") {
     TestClientServerConfig conf(2, 6969, "127.0.0.1", false);
     auto ctx = infrastructure::TcpContext::Create(conf);
     ctx->Start();
@@ -57,7 +57,7 @@ TEST_CASE("Client bring up and tear down, headset client") {
 }
 
 
-TEST_CASE("Push from camera client to server") {
+TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
     TestClientServerConfig conf(3, 6969, "127.0.0.1", true);
     auto ctx = infrastructure::TcpContext::Create(conf);
     ctx->Start();
@@ -67,16 +67,16 @@ TEST_CASE("Push from camera client to server") {
     std::vector<std::string> samples { "hello", "world", "bar__", "baz__", "foo__", "bax__" };
     sort(samples.begin(), samples.end());
     std::vector<std::string> output {};
-    auto on_receive = [&output](std::shared_ptr<SizedBuffer> &&buffer) {
-        auto fake_buffer = std::static_pointer_cast<FakeSizedBuffer>(buffer);
+    auto on_receive = [&output](std::shared_ptr<SizedBufferPool> &&buffer) {
+        auto fake_buffer = std::static_pointer_cast<FakePlaneBuffer>(buffer);
         std::string s;
-        s.assign(fake_buffer->_buffer, fake_buffer->_buffer_size);
+        s.assign(fake_buffer->_buffer->_buffer, fake_buffer->_buffer->GetSize());
         std::cout << "received buffer: " << s << std::endl;
         output.push_back(s);
         buffer.reset();
     };
     // 5 buffers total means one needs to be reused
-    auto pool = std::make_shared<FakeBufferPool>(on_receive, 5, 5);
+    auto pool = std::make_shared<FakePlaneBufferPool>(5, 5, on_receive);
 
     auto manager = std::make_shared<TcpCameraClientServerManager>(pool);
 
@@ -85,8 +85,8 @@ TEST_CASE("Push from camera client to server") {
     auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
     client->Start();
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
-    srv.Start();
+    auto srv = infrastructure::TcpServer::Create(conf, ctx->GetContext(), srv_manager);
+    srv->Start();
     std::this_thread::sleep_for(3s);
     REQUIRE(manager->ClientIsConnected());
 
@@ -94,7 +94,7 @@ TEST_CASE("Push from camera client to server") {
     for (auto &sample : samples) {
         std::cout << "Writing buffer: " << sample << std::endl;
         auto buffer = std::make_shared<FakeSizedBuffer>(sample);
-        manager->_write_call(std::move(buffer));
+        client->Post(buffer);
         std::this_thread::sleep_for(1ms);
     }
     std::this_thread::sleep_for(10ms);
@@ -107,11 +107,11 @@ TEST_CASE("Push from camera client to server") {
     REQUIRE_EQ(pool->AvailableBuffers(), 5 - 1);
 
     client->Stop();
-    srv.Stop();
+    srv->Stop();
     ctx->Stop();
 }
 
-TEST_CASE("Push from camera client to server, little stressy-er") {
+TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
     TestClientServerConfig conf(3, 6969, "127.0.0.1", true);
     auto ctx = infrastructure::TcpContext::Create(conf);
     ctx->Start();
@@ -120,18 +120,18 @@ TEST_CASE("Push from camera client to server, little stressy-er") {
 
     std::atomic_int send_count = 0;
     std::atomic_int receive_count = 0;
-    auto on_receive = [&receive_count, &t2](std::shared_ptr<SizedBuffer> &&buffer) {
+    auto on_receive = [&receive_count, &t2](std::shared_ptr<SizedBufferPool> &&buffer) {
         receive_count += 1;
         t2 = Clock::now();
         buffer.reset();
     };
-    auto pool = std::make_shared<FakeBufferPool>(on_receive, 10, 5);
+    auto pool = std::make_shared<FakePlaneBufferPool>(10, 5, on_receive);
 
     auto manager = std::make_shared<TcpCameraClientServerManager>(pool);
 
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
-    srv.Start();
+    auto srv = infrastructure::TcpServer::Create(conf, ctx->GetContext(), srv_manager);
+    srv->Start();
 
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
     auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
@@ -147,7 +147,7 @@ TEST_CASE("Push from camera client to server, little stressy-er") {
             s.insert(s.begin(), 10 - s.size(), '0');
         }
         auto buffer = std::make_shared<FakeSizedBuffer>(s);
-        manager->_write_call(std::move(buffer));
+        client->Post(std::move(buffer));
         send_count += 1;
     }
     std::this_thread::sleep_for(2s);
@@ -161,11 +161,11 @@ TEST_CASE("Push from camera client to server, little stressy-er") {
         d1.count() << "ms" << std::endl;
 
     client->Stop();
-    srv.Stop();
+    srv->Stop();
     ctx->Stop();
 }
 
-TEST_CASE("Pull headset from server to client") {
+TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset")  {
     /* this looks really similar, but all the buffers are pushed from server to client in this case */
     TestClientServerConfig conf(3, 6969, "127.0.0.1", false);
     auto ctx = infrastructure::TcpContext::Create(conf);
@@ -186,9 +186,9 @@ TEST_CASE("Pull headset from server to client") {
     };
 
     // 5 buffers total means one needs to be reused
-    auto pool = std::make_shared<FakeBufferPool>(on_receive, 5, 5);
+    auto pool = std::make_shared<FakeSizedBufferPool>(5, 5);
 
-    auto manager = std::make_shared<TcpHeadsetClientServerManager>(pool);
+    auto manager = std::make_shared<TcpHeadsetClientServerManager>(pool, on_receive);
 
     // just to be cheeky, we are going to start up the client first
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
@@ -196,8 +196,8 @@ TEST_CASE("Pull headset from server to client") {
     client->Start();
 
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
-    srv.Start();
+    auto srv = infrastructure::TcpServer::Create(conf, ctx->GetContext(), srv_manager);
+    srv->Start();
     std::this_thread::sleep_for(3s);
     REQUIRE(manager->ClientIsConnected());
 
@@ -205,7 +205,7 @@ TEST_CASE("Pull headset from server to client") {
     for (auto &sample : samples) {
         std::cout << "Writing buffer: " << sample << std::endl;
         auto buffer = std::make_shared<FakeSizedBuffer>(sample);
-        manager->_write_call(std::move(buffer));
+        manager->_session->Write(std::move(buffer));
         std::this_thread::sleep_for(1ms);
     }
     std::this_thread::sleep_for(10ms);
@@ -218,11 +218,11 @@ TEST_CASE("Pull headset from server to client") {
     REQUIRE_EQ(pool->AvailableBuffers(), 5 - 1);
 
     client->Stop();
-    srv.Stop();
+    srv->Stop();
     ctx->Stop();
 }
 
-TEST_CASE("Pull headset from server to client, little stressy-er") {
+TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset-Stress"){
     /* again, looks really similar, but all the buffers are pushed from server to client in this case */
     TestClientServerConfig conf(3, 6969, "127.0.0.1", false);
     auto ctx = infrastructure::TcpContext::Create(conf);
@@ -237,13 +237,13 @@ TEST_CASE("Pull headset from server to client, little stressy-er") {
         t2 = Clock::now();
         buffer.reset();
     };
-    auto pool = std::make_shared<FakeBufferPool>(on_receive, 10, 5);
+    auto pool = std::make_shared<FakeSizedBufferPool>(10, 5);
 
-    auto manager = std::make_shared<TcpHeadsetClientServerManager>(pool);
+    auto manager = std::make_shared<TcpHeadsetClientServerManager>(pool, on_receive);
 
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
-    srv.Start();
+    auto srv = infrastructure::TcpServer::Create(conf, ctx->GetContext(), srv_manager);
+    srv->Start();
 
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
     auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
@@ -259,7 +259,7 @@ TEST_CASE("Pull headset from server to client, little stressy-er") {
             s.insert(s.begin(), 10 - s.size(), '0');
         }
         auto buffer = std::make_shared<FakeSizedBuffer>(s);
-        manager->_write_call(std::move(buffer));
+        manager->_session->Write(std::move(buffer));
         send_count += 1;
     }
     std::this_thread::sleep_for(2s);
@@ -273,6 +273,6 @@ TEST_CASE("Pull headset from server to client, little stressy-er") {
               d1.count() << "ms" << std::endl;
 
     client->Stop();
-    srv.Stop();
+    srv->Stop();
     ctx->Stop();
 }

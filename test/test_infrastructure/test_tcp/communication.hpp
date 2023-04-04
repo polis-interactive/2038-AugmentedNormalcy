@@ -22,7 +22,7 @@ public:
         _buffer(new char[str.size()]),
         _buffer_size(str.size())
     {
-        str.copy(_buffer, 5);
+        str.copy(_buffer, _buffer_size);
     }
     [[nodiscard]] void *GetMemory() override {
         return _buffer;
@@ -34,14 +34,11 @@ public:
     const unsigned int _buffer_size;
 };
 
-class FakeBufferPool: public PushingBufferPool {
+class FakeSizedBufferPool: public SizedBufferPool {
 public:
-    explicit FakeBufferPool(
-        std::function<void(std::shared_ptr<SizedBuffer> &&buffer)> callback,
-        unsigned int buffer_size, unsigned int buffer_count
-    ):
-        _callback(std::move(callback))
-    {
+    explicit FakeSizedBufferPool(
+            unsigned int buffer_size, unsigned int buffer_count
+    ){
         for (int i = 0; i < buffer_count; i++) {
             _buffers.push_back(new FakeSizedBuffer(buffer_size));
         }
@@ -51,15 +48,12 @@ public:
         auto fake_buffer = _buffers.front();
         _buffers.pop_front();
         auto buffer = std::shared_ptr<SizedBuffer>(
-            (SizedBuffer *) fake_buffer, [this, fake_buffer](SizedBuffer *) mutable {
-                std::unique_lock<std::mutex> lock(_buffer_mutex);
-                _buffers.push_back(fake_buffer);
-            }
+                (SizedBuffer *) fake_buffer, [this, fake_buffer](SizedBuffer *) mutable {
+                    std::unique_lock<std::mutex> lock(_buffer_mutex);
+                    _buffers.push_back(fake_buffer);
+                }
         );
         return std::move(buffer);
-    }
-    void SendSizedBuffer(std::shared_ptr<SizedBuffer> &&buffer) override {
-        _callback(std::move(buffer));
     }
     std::size_t AvailableBuffers() {
         std::unique_lock<std::mutex> lock(_buffer_mutex);
@@ -67,7 +61,59 @@ public:
     }
     std::deque<FakeSizedBuffer *> _buffers;
     std::mutex _buffer_mutex;
-    std::function<void(std::shared_ptr<SizedBuffer> &&buffer)> _callback;
+};
+
+class FakePlaneBuffer: public SizedBufferPool {
+public:
+    explicit FakePlaneBuffer(unsigned int buffer_size) {
+        _buffer = std::make_shared<FakeSizedBuffer>(buffer_size);
+    }
+    [[nodiscard]] std::shared_ptr<SizedBuffer> GetSizedBuffer() override {
+        if (_has_sent) {
+            _has_sent = !_has_sent;
+            return nullptr;
+        } else {
+            _has_sent = !_has_sent;
+            return _buffer;
+        }
+    }
+    bool _has_sent = false;
+    std::shared_ptr<FakeSizedBuffer> _buffer;
+};
+
+class FakePlaneBufferPool: public SizedPlaneBufferPool {
+public:
+    explicit FakePlaneBufferPool(
+        unsigned int buffer_size, unsigned int buffer_count, SizedBufferPoolCallback callback
+    ):
+        _callback(std::move(callback))
+    {
+        for (int i = 0; i < buffer_count; i++) {
+            _buffers.push_back(new FakePlaneBuffer(buffer_size));
+        }
+    }
+    std::shared_ptr<SizedBufferPool> GetSizedBufferPool() override {
+        std::unique_lock<std::mutex> lock(_buffer_mutex);
+        auto fake_buffer = _buffers.front();
+        _buffers.pop_front();
+        auto buffer = std::shared_ptr<SizedBufferPool>(
+            (SizedBufferPool *) fake_buffer, [this, fake_buffer](SizedBufferPool *) mutable {
+                std::unique_lock<std::mutex> lock(_buffer_mutex);
+                _buffers.push_back(fake_buffer);
+            }
+        );
+        return std::move(buffer);
+    }
+    void PostSizedBufferPool(std::shared_ptr<SizedBufferPool> &&buffer) override {
+        _callback(std::move(buffer));
+    }
+    std::size_t AvailableBuffers() {
+        std::unique_lock<std::mutex> lock(_buffer_mutex);
+        return _buffers.size();
+    }
+    std::deque<FakePlaneBuffer *> _buffers;
+    std::mutex _buffer_mutex;
+    SizedBufferPoolCallback _callback;
 };
 
 

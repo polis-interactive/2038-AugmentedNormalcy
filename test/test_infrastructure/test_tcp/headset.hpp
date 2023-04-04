@@ -13,14 +13,22 @@ class TcpHeadsetClientServerManager:
         public infrastructure::TcpServerManager
 {
 public:
-    explicit TcpHeadsetClientServerManager(std::shared_ptr<PushingBufferPool> buffer_pool)
-            : _buffer_pool(std::move(buffer_pool))
+    explicit TcpHeadsetClientServerManager(
+        std::shared_ptr<SizedBufferPool> buffer_pool,
+        std::function<void(std::shared_ptr<SizedBuffer> &&)> callback
+    ) :
+        _buffer_pool(std::move(buffer_pool)),
+        _callback(std::move(callback))
     {}
 
     /* headset client */
-    std::shared_ptr<PushingBufferPool> CreateHeadsetClientConnection() override {
+    std::shared_ptr<SizedBufferPool> CreateHeadsetClientConnection() override {
         client_is_connected = true;
         return _buffer_pool;
+    };
+
+    void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) override {
+        _callback(std::move(buffer));
     };
     void DestroyHeadsetClientConnection() override {
         client_is_connected = false;
@@ -29,33 +37,36 @@ public:
         return client_is_connected;
     }
     std::atomic_bool client_is_connected = false;
-    std::shared_ptr<PushingBufferPool> _buffer_pool;
+    std::shared_ptr<SizedBufferPool> _buffer_pool;
+    std::function<void(std::shared_ptr<SizedBuffer> &&)> _callback;
 
     /* headset server */
     [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp::endpoint endpoint) override {
         return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
     }
     [[nodiscard]] unsigned long CreateHeadsetServerConnection(
-            tcp::endpoint endpoint, SizedBufferCallback write_call
+        std::shared_ptr<infrastructure::WritableTcpSession> session
     ) override {
-        _write_call = std::move(write_call);
+        _session = std::move(session);
         return 0;
     }
-    void DestroyHeadsetServerConnection(tcp::endpoint endpoint, unsigned long session_id) override {
-        _write_call = nullptr;
+    void DestroyHeadsetServerConnection(std::shared_ptr<infrastructure::WritableTcpSession> session) override {
+        _session = nullptr;
     }
-    SizedBufferCallback _write_call;
+    std::shared_ptr<infrastructure::WritableTcpSession> _session;
 
 
     /* dummy for camera client */
-    void CreateCameraClientConnection(SizedBufferCallback write_call) override {};
+    void CreateCameraClientConnection() override {};
     void DestroyCameraClientConnection() override {};
 
     /* dummy for camera server */
-    [[nodiscard]]  infrastructure::CameraConnectionPayload CreateCameraServerConnection(tcp::endpoint endpoint) override {
+    [[nodiscard]]  infrastructure::CameraConnectionPayload CreateCameraServerConnection(
+        std::shared_ptr<infrastructure::TcpSession> session
+    ) override {
         return { 0, nullptr };
     };
-    void DestroyCameraServerConnection(tcp::endpoint endpoint, unsigned long session_id) override {}
+    void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> session) override {}
 };
 
 #endif //AUGMENTEDNORMALCY_TEST_TCP_HEADSET_HPP

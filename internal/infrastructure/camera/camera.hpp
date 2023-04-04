@@ -11,7 +11,7 @@
 
 namespace infrastructure {
 
-    enum class Type {
+    enum class CameraType {
         LIBCAMERA,
         FAKE,
     };
@@ -20,7 +20,7 @@ namespace infrastructure {
         [[nodiscard]] virtual std::pair<int, int> get_camera_width_height() const = 0;
         // as opposed to 30
         [[nodiscard]] virtual int get_fps() const = 0;
-        [[nodiscard]] virtual Type get_camera_type() const = 0;
+        [[nodiscard]] virtual CameraType get_camera_type() const = 0;
         [[nodiscard]] virtual int get_camera_buffer_count() const = 0;
     };
 

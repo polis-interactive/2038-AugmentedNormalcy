@@ -9,6 +9,7 @@ set(
         src/NvBufSurface.cpp
         src/NvElement.cpp
         src/NvElementProfiler.cpp
+        src/NvJpegEncoder.cpp
         src/NvLogging.cpp
         src/NvUtils.cpp
         src/NvV4l2Element.cpp
@@ -17,6 +18,8 @@ set(
         src/NvVideoEncoder.cpp
 )
 
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTEGRA_ACCELERATE")
 add_library(jetson_mm STATIC ${JETSON_MM_SOURCES})
-target_link_libraries(jetson_mm PRIVATE cuda cudart v4l2 nvbufsurface nvbufsurftransform nvosd)
+target_link_libraries(jetson_mm PUBLIC nvjpeg nvbufsurface nvbufsurftransform)
 target_include_directories(jetson_mm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
