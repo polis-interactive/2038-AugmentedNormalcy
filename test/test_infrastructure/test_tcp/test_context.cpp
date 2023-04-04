@@ -23,7 +23,7 @@ struct TestContextConfig:
 };
 
 
-TEST_CASE("Graceful context startup and teardown with some timing") {
+TEST_CASE("INFRASTRUCTURE_TCP_CONTEXT-Start-and-stop") {
     TestContextConfig conf(3);
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4;
     {

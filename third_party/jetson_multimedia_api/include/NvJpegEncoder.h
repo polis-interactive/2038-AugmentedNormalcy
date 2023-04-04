@@ -57,7 +57,7 @@
 #endif
 
 #include <stdio.h>
-#include "jpeglib.h"
+#include "libjpeg-8b/jpeglib.h"
 #include "NvElement.h"
 #include "NvBuffer.h"
 

@@ -17,6 +17,7 @@ else()
         OR AN_PLATFORM STREQUAL JETSON_CC
     )
         set(AN_PLATFORM_NUM 30)
+        set(AN_PLATFORM_TYPE JETSON)
     elseif (
         AN_PLATFORM STREQUAL RPI_CAMERA
         OR AN_PLATFORM STREQUAL RPI_CAMERA_CC
@@ -24,8 +25,10 @@ else()
         OR AN_PLATFORM STREQUAL RPI_HEADSET_CC
     )
         set(AN_PLATFORM_NUM 20)
+        set(AN_PLATFORM_TYPE RPI)
     else()
         set(AN_PLATFORM_NUM 10)
+        set(AN_PLATFORM_TYPE LINUX)
     endif()
 
     message("Using host: ${AN_PLATFORM}")

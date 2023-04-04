@@ -15,11 +15,12 @@ struct SizedBuffer {
 
 using SizedBufferCallback = std::function<void(std::shared_ptr<SizedBuffer>&&)>;
 
-class PushingBufferPool {
+class SizedBufferPool {
 public:
     [[nodiscard]] virtual std::shared_ptr<SizedBuffer> GetSizedBuffer() = 0;
-    virtual void SendSizedBuffer(std::shared_ptr<SizedBuffer> &&buffer) = 0;
 };
+
+// nowhere better to put this at the moment
 
 struct CameraBuffer: public SizedBuffer {
     CameraBuffer(

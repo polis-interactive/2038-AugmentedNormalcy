@@ -33,4 +33,14 @@ if (AN_PLATFORM STREQUAL JETSON_CC)
     set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
     set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 
+elseif (AN_PLATFORM STREQUAL JETSON)
+
+    set(
+        CMAKE_CXX_FLAGS "\
+            ${CMAKE_CXX_FLAGS} \
+	        -L/usr/local/cuda/lib64 \
+	        -L/usr/lib/aarch64-linux-gnu \
+	        -L/usr/lib/aarch64-linux-gnu/tegra \
+    ")
+
 endif()

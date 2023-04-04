@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 3.18)
 
 set(SOURCES camera.cpp fake_camera.cpp)
 set(TARGET_LIBS)
@@ -16,6 +15,5 @@ if (LIBCAMERA_AVAILABLE)
 endif()
 
 
-
 add_library(camera STATIC ${SOURCES})
-target_link_libraries(camera ${TARGET_LIBS})
+target_link_libraries(camera PRIVATE ${TARGET_LIBS})

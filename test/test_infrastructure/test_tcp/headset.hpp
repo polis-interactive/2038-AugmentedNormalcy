@@ -13,14 +13,22 @@ class TcpHeadsetClientServerManager:
         public infrastructure::TcpServerManager
 {
 public:
-    explicit TcpHeadsetClientServerManager(std::shared_ptr<PushingBufferPool> buffer_pool)
-            : _buffer_pool(std::move(buffer_pool))
+    explicit TcpHeadsetClientServerManager(
+        std::shared_ptr<SizedBufferPool> buffer_pool,
+        std::function<void(std::shared_ptr<SizedBuffer> &&)> callback
+    ) :
+        _buffer_pool(std::move(buffer_pool)),
+        _callback(std::move(callback))
     {}
 
     /* headset client */
-    std::shared_ptr<PushingBufferPool> CreateHeadsetClientConnection() override {
+    std::shared_ptr<SizedBufferPool> CreateHeadsetClientConnection() override {
         client_is_connected = true;
         return _buffer_pool;
+    };
+
+    void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) override {
+        _callback(std::move(buffer));
     };
     void DestroyHeadsetClientConnection() override {
         client_is_connected = false;
@@ -29,7 +37,8 @@ public:
         return client_is_connected;
     }
     std::atomic_bool client_is_connected = false;
-    std::shared_ptr<PushingBufferPool> _buffer_pool;
+    std::shared_ptr<SizedBufferPool> _buffer_pool;
+    std::function<void(std::shared_ptr<SizedBuffer> &&)> _callback;
 
     /* headset server */
     [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp::endpoint endpoint) override {
@@ -48,13 +57,14 @@ public:
 
 
     /* dummy for camera client */
-    void CreateCameraClientConnection(SizedBufferCallback write_call) override {};
+    void CreateCameraClientConnection() override {};
     void DestroyCameraClientConnection() override {};
 
     /* dummy for camera server */
     [[nodiscard]]  infrastructure::CameraConnectionPayload CreateCameraServerConnection(tcp::endpoint endpoint) override {
         return { 0, nullptr };
     };
+    void PostCameraServerBuffer(std::shared_ptr<SizedBuffer> &&buffer) override {};
     void DestroyCameraServerConnection(tcp::endpoint endpoint, unsigned long session_id) override {}
 };
 

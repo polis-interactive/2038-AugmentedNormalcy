@@ -7,6 +7,7 @@
 
 #include <utility>
 #include <string>
+#include <memory>
 
 #include "utils/buffers.hpp"
 #include "tcp_context.hpp"
@@ -26,34 +27,35 @@ namespace infrastructure {
     class TcpClientManager {
     public:
         // camera session
-        virtual void CreateCameraClientConnection(SizedBufferCallback write_call) = 0;
+        virtual void CreateCameraClientConnection() = 0;
         virtual void DestroyCameraClientConnection() = 0;
 
         // headset session
-        virtual std::shared_ptr<PushingBufferPool> CreateHeadsetClientConnection() = 0;
+        virtual std::shared_ptr<SizedBufferPool> CreateHeadsetClientConnection() = 0;
+        virtual void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) = 0;
         virtual void DestroyHeadsetClientConnection() = 0;
     };
 
     class TcpClient: public std::enable_shared_from_this<TcpClient> {
     public:
         static std::shared_ptr<TcpClient> Create(
-            const TcpClientConfig &config, net::io_context &context, std::shared_ptr<TcpClientManager> &manager
+            const TcpClientConfig &config, net::io_context &context, std::shared_ptr<TcpClientManager> manager
         ) {
-            return std::make_shared<TcpClient>(config, context, manager);
+            return std::make_shared<TcpClient>(config, context, std::move(manager));
         }
         TcpClient() = delete;
         TcpClient (const TcpClient&) = delete;
         TcpClient& operator= (const TcpClient&) = delete;
         ~TcpClient() { Stop(); }
         TcpClient (
-            const TcpClientConfig &config, net::io_context &context, std::shared_ptr<TcpClientManager> &manager
+            const TcpClientConfig &config, net::io_context &context, std::shared_ptr<TcpClientManager> manager
         );
         void Start();
         void Stop();
+        void Post(std::shared_ptr<SizedBuffer> &&buffer);
     private:
         void startConnection(bool is_initial_connection);
         void startWrite();
-        void write(std::shared_ptr<SizedBuffer> &&buffer);
         void startRead();
         void read();
         void disconnect(error_code ec);
@@ -64,8 +66,8 @@ namespace infrastructure {
         net::io_context &_context;
         tcp::endpoint _remote_endpoint;
         tcp::socket _socket;
-        std::shared_ptr<TcpClientManager> &_manager;
-        std::shared_ptr<PushingBufferPool> _buffer_pool = nullptr;
+        std::shared_ptr<TcpClientManager> _manager;
+        std::shared_ptr<SizedBufferPool> _buffer_pool = nullptr;
     };
 
 }
