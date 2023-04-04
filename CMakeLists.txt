@@ -57,6 +57,3 @@ add_subdirectory(${internal_dir}/service)
 
 add_subdirectory(test)
 
-if (JETSON_BUFFER_AVAILABLE)
-    add_subdirectory(tmp)
-endif()
