@@ -177,16 +177,10 @@ namespace infrastructure {
             char_buffer = _output_buffers.front();
             _output_buffers.pop();
         }
-        void *ptr = char_buffer->GetMemory();
-        auto sz = char_buffer->GetSize();
         // do the encode
         auto ret = _jpeg_encoder->encodeFromFd(
-            buffer->GetFd(), JCS_YCbCr, char_buffer->GetMemoryForWrite(), char_buffer->GetSizeForWrite(), 75
+            buffer->GetFd(), JCS_YCbCr, char_buffer->GetMemoryForWrite(), char_buffer->GetSizeForWrite(), 65
         );
-        std::cout << ptr << ", " << sz << std::endl;
-        std::cout << char_buffer->GetMemory() << ", " << char_buffer->GetSize() << std::endl;
-        // soonest we can release the jetson buffer
-        buffer.reset();
         // if the encode was successful, push it downstream with a lambda to requeue it
         if (ret >= 0) {
             auto self(shared_from_this());
