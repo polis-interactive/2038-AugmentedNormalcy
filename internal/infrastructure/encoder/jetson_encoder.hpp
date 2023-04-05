@@ -74,9 +74,6 @@ namespace infrastructure {
         void ResetSize() {
             _used_size = _max_buffer_size;
         }
-        [[nodiscard]] unsigned char **GetMemoryForWrite() {
-            return &_buffer;
-        }
         std::size_t &GetSizeForWrite() {
             return _used_size;
         }

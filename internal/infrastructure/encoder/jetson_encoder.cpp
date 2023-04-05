@@ -177,15 +177,15 @@ namespace infrastructure {
             char_buffer = _output_buffers.front();
             _output_buffers.pop();
         }
-        void * ptr = char_buffer->GetMemory();
+        auto ptr = (unsigned char *) char_buffer->GetMemory();
         auto sz = char_buffer->GetSizeForWrite();
 
         // do the encode
         auto ret = _jpeg_encoder->encodeFromFd(
-            buffer->GetFd(), JCS_YCbCr, char_buffer->GetMemoryForWrite(), char_buffer->GetSizeForWrite(), 75
+            buffer->GetFd(), JCS_YCbCr, &ptr, char_buffer->GetSizeForWrite(), 75
         );
         std::cout << sz << ", " << char_buffer->GetSizeForWrite() << "," << char_buffer->GetSize() << "?" << std::endl;
-        std::cout << ptr << ", " << *char_buffer->GetMemoryForWrite() << ", " << char_buffer->GetMemory() << "?" << std::endl;
+        std::cout << ptr << ", " << char_buffer->GetMemory() << "?" << std::endl;
         // if the encode was successful, push it downstream with a lambda to requeue it
         if (ret >= 0) {
             auto self(shared_from_this());
