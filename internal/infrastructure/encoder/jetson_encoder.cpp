@@ -147,6 +147,7 @@ namespace infrastructure {
 
     void Encoder::run() {
         while(!_work_stop) {
+            std::cout << "running" << std::endl;
             std::shared_ptr<JetsonBuffer> buffer;
             {
                 std::unique_lock<std::mutex> lock(_work_mutex);
