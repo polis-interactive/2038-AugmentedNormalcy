@@ -3,6 +3,8 @@
 //
 
 #include <doctest.h>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <chrono>
 using namespace std::literals;
@@ -39,4 +41,42 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Start_and_Stop") {
     std::cout << "test_infrastructure/encoder/jetson_encoder startup and teardown: " <<
               d1.count() << ", " << d2.count() << ", " << d3.count() << ", " <<
               d4.count() << std::endl;
+}
+
+TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
+    TestJetsonEncoderConfig conf;
+
+    std::filesystem::path this_dir = TEST_DIR;
+    auto in_frame = this_dir;
+    in_frame /= "in.yuv";
+
+    auto out_frame = this_dir;
+    out_frame /= "out_user.jpeg";
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
+
+    SizedBufferCallback callback = [&out_frame, &out_time](std::shared_ptr<SizedBuffer> &&ptr) {
+        out_time = Clock::now();
+        std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+        test_file_out.write(reinterpret_cast<char*>(ptr->GetMemory()), ptr->GetSize());
+        test_file_out.flush();
+        test_file_out.close();
+    };
+
+    {
+        auto encoder = infrastructure::Encoder::Create(conf, callback);
+        encoder->Start();
+        auto buffer = encoder->GetSizedBuffer();
+        std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
+        test_file_in.read((char *)buffer->GetMemory(), 1990656);
+        encoder->PostSizedBuffer(std::move(buffer));
+        in_time = Clock::now();
+        std::this_thread::sleep_for(500ms);
+        encoder->Stop();
+    }
+
+    REQUIRE(std::filesystem::exists(out_frame));
+
+    auto d1 = std::chrono::duration_cast<std::chrono::microseconds>(out_time - in_time);
+    std::cout << "Time to encode: " << d1.count() << std::endl;
 }
