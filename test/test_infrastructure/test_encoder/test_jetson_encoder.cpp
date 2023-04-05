@@ -56,6 +56,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
     std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
 
     SizedBufferCallback callback = [&out_frame, &out_time](std::shared_ptr<SizedBuffer> &&ptr) mutable {
+        std::cout << &ptr << std::endl;
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
         test_file_out.write(reinterpret_cast<char*>(ptr->GetMemory()), ptr->GetSize());

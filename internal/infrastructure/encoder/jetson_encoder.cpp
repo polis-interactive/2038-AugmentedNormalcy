@@ -196,7 +196,7 @@ namespace infrastructure {
                         _output_buffers.push(char_buffer);
                     }
             );
-            _output_callback(std::move(buffer));
+            _output_callback(std::move(output_buffer));
         }
     }
 
