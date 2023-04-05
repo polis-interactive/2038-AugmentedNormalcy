@@ -67,7 +67,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
     SizedBufferCallback callback = [&out_frame, &out_time](std::shared_ptr<SizedBuffer> &&ptr) mutable {
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-        test_file_out.write(reinterpret_cast<unsigned char*>(ptr->GetMemory()), ptr->GetSize());
+        test_file_out.write((char *)(ptr->GetMemory()), ptr->GetSize());
         test_file_out.flush();
         test_file_out.close();
     };
@@ -76,7 +76,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
         auto encoder = infrastructure::Encoder::Create(conf, std::move(callback));
         encoder->Start();
         auto buffer = encoder->GetSizedBuffer();
-        test_file_in.read(buffer->GetMemory(), buffer->GetSize());
+        test_file_in.read((char *)buffer->GetMemory(), buffer->GetSize());
         encoder->PostSizedBuffer(std::move(buffer));
         in_time = Clock::now();
         std::this_thread::sleep_for(100ms);
