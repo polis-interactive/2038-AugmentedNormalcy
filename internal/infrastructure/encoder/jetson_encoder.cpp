@@ -34,6 +34,7 @@ namespace infrastructure {
         _size = _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0];
         _size_1 = _nvbuf_surf->surfaceList->planeParams.height[1] * _nvbuf_surf->surfaceList->planeParams.pitch[1];
         _size_2 = _nvbuf_surf->surfaceList->planeParams.height[2] * _nvbuf_surf->surfaceList->planeParams.pitch[2];
+        std::cout << _size << ", " << _size_1 << ", " << _size_2 << std::endl;
 
         // just going to mmap it myself
         _memory = mmap(
