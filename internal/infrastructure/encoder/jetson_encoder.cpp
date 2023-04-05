@@ -12,8 +12,8 @@ namespace infrastructure {
         NvBufSurf::NvCommonAllocateParams params;
         /* Create PitchLinear output buffer for transform. */
         params.memType = NVBUF_MEM_SURFACE_ARRAY;
-        params.width = 1536;
-        params.height = 864;
+        params.width = width_height_tuple.first;
+        params.height = width_height_tuple.second;
         params.layout = NVBUF_LAYOUT_PITCH;
         params.colorFormat = NVBUF_COLOR_FORMAT_YUV420;
 
@@ -34,6 +34,8 @@ namespace infrastructure {
         _size = _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0];
         _size_1 = _nvbuf_surf->surfaceList->planeParams.height[1] * _nvbuf_surf->surfaceList->planeParams.pitch[1];
         _size_2 = _nvbuf_surf->surfaceList->planeParams.height[2] * _nvbuf_surf->surfaceList->planeParams.pitch[2];
+
+        std::cout << "should be " << 1990656 << ": " << GetSize() << std::endl;
 
         // just going to mmap it myself
         _memory = mmap(
