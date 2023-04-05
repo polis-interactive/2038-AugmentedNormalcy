@@ -108,6 +108,7 @@ namespace infrastructure {
         auto self(shared_from_this());
         auto buffer = std::shared_ptr<SizedBuffer>(
                 (SizedBuffer *) jetson_buffer, [this, s = std::move(self), jetson_buffer](SizedBuffer *) mutable {
+                    std::cout << "i need 1" << std::endl;
                     std::unique_lock<std::mutex> lock(_input_buffers_mutex);
                     _input_buffers.push(jetson_buffer);
                 }
@@ -142,7 +143,7 @@ namespace infrastructure {
     void Encoder::run() {
         auto encoder_name = getUniqueJpegEncoderName();
         _jpeg_encoder = std::shared_ptr<NvJPEGEncoder>(
-                NvJPEGEncoder::createJPEGEncoder("jpegenc"),
+                NvJPEGEncoder::createJPEGEncoder(encoder_name.c_str()),
                 [](NvJPEGEncoder *encoder) {
                     delete encoder;
                 }
