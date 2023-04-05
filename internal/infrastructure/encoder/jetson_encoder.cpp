@@ -35,8 +35,6 @@ namespace infrastructure {
         _size_1 = _nvbuf_surf->surfaceList->planeParams.height[1] * _nvbuf_surf->surfaceList->planeParams.pitch[1];
         _size_2 = _nvbuf_surf->surfaceList->planeParams.height[2] * _nvbuf_surf->surfaceList->planeParams.pitch[2];
 
-        std::cout << "should be " << 1990656 << ": " << GetSize() << std::endl;
-
         // just going to mmap it myself
         _memory = mmap(
                 NULL,
@@ -181,7 +179,7 @@ namespace infrastructure {
         }
         // do the encode
         auto ret = _jpeg_encoder->encodeFromFd(
-            buffer->GetFd(), JCS_YCbCr, char_buffer->GetMemoryForWrite(), char_buffer->GetSizeForWrite(), 65
+            buffer->GetFd(), JCS_YCbCr, char_buffer->GetMemoryForWrite(), char_buffer->GetSizeForWrite(), 75
         );
         // if the encode was successful, push it downstream with a lambda to requeue it
         if (ret >= 0) {

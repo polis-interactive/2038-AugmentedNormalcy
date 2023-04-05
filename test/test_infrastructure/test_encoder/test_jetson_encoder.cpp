@@ -71,8 +71,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
         encoder->Start();
         auto buffer = encoder->GetSizedBuffer();
         std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
-        std::cout << buffer->GetSize() << ", " << 1990656 << "? " << std::endl;
-        test_file_in.read((char *)buffer->GetMemory(), 1990656);
+        test_file_in.read((char *)buffer->GetMemory(), buffer->GetSize());
         encoder->PostSizedBuffer(std::move(buffer));
         in_time = Clock::now();
         std::this_thread::sleep_for(50ms);

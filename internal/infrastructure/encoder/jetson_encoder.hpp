@@ -105,8 +105,8 @@ namespace infrastructure {
 
         static int getMaxJpegSize(const std::pair<int, int> &width_height_tuple) {
             auto [width, height] = width_height_tuple;
-            // 8.25 bits per pixel at 100% / 8 bits per byte
-            return std::ceil(width * height * 8.25 / 8);
+            // given by nvidia
+            return std::ceil(width * height * 3 / 2);
         }
         static std::string getUniqueJpegEncoderName() {
             auto this_encoder_number = ++_last_encoder_number;
