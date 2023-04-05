@@ -80,3 +80,53 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
     std::cout << "Time to encode: " << d1.count() << std::endl;
 }
+
+TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
+    // going to run this at 40 hz just for lawls
+
+    TestJetsonEncoderConfig conf;
+
+    std::filesystem::path this_dir = TEST_DIR;
+    auto in_frame = this_dir;
+    in_frame /= "in.yuv";
+
+    auto out_frame = this_dir;
+    out_frame /= "out_user.jpeg";
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
+
+    std::atomic<int> counter = { 0 };
+    std::atomic<bool> is_done = { false };
+
+    SizedBufferCallback callback = [&out_frame, &out_time, &counter, &is_done](
+            std::shared_ptr<SizedBuffer> &&ptr
+    ) mutable {
+        if (++counter >= 400 && !is_done) {
+            out_time = Clock::now();
+            is_done = true;
+        }
+    };
+
+
+    std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
+    std::array<char, 1990656> in_buf = {};
+    test_file_in.read(in_buf.data(), 1990656);
+
+    {
+        auto encoder = infrastructure::Encoder::Create(conf, std::move(callback));
+        encoder->Start();
+        in_time = Clock::now();
+
+        for (int i = 0; i < 500; i++) {
+            auto buffer = encoder->GetSizedBuffer();
+            memcpy(buffer->GetMemory(), (void *) in_buf.data(), buffer->GetSize());
+            encoder->PostSizedBuffer(std::move(buffer));
+            std::this_thread::sleep_for(25ms);
+        }
+        std::this_thread::sleep_for(100ms);
+        encoder->Stop();
+    }
+
+    auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
+    std::cout << "Time to encode 10s of data at 40fps: " << d1.count() << std::endl;
+}
