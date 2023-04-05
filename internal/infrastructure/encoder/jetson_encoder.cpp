@@ -179,20 +179,20 @@ namespace infrastructure {
             _output_buffers.pop();
         }
         auto ptr = (unsigned char *) char_buffer->GetMemory();
-        auto sz = char_buffer->GetSizeForWrite();
+        auto sz = char_buffer->GetMaxSize();
 
         // do the encode
         auto ret = _jpeg_encoder->encodeFromFd(
-            buffer->GetFd(), JCS_YCbCr, &ptr, char_buffer->GetSizeForWrite(), 75
+            buffer->GetFd(), JCS_YCbCr, char_buffer->GetMemoryForWrite(), sz, 75
         );
-        std::cout << sz << ", " << char_buffer->GetSizeForWrite() << "," << char_buffer->GetSize() << "?" << std::endl;
+        char_buffer->SetCurrentSize(sz);
+        std::cout << sz << ", " << char_buffer->GetMaxSize() << "," << char_buffer->GetSize() << "?" << std::endl;
         std::cout << ptr << ", " << char_buffer->GetMemory() << "?" << std::endl;
         // if the encode was successful, push it downstream with a lambda to requeue it
         if (ret >= 0) {
             auto self(shared_from_this());
             auto output_buffer = std::shared_ptr<SizedBuffer>(
                     (SizedBuffer *) char_buffer, [this, s = std::move(self), char_buffer](SizedBuffer *) mutable {
-                        char_buffer->ResetSize();
                         std::unique_lock<std::mutex> lock(_output_buffers_mutex);
                         _output_buffers.push(char_buffer);
                     }

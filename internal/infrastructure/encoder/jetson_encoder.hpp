@@ -60,7 +60,6 @@ namespace infrastructure {
     class CharBuffer: public SizedBuffer {
     public:
         explicit CharBuffer(const std::size_t buffer_size):
-            _used_size(buffer_size),
             _max_buffer_size(buffer_size)
         {
             _buffer = new unsigned char[buffer_size];
@@ -71,18 +70,21 @@ namespace infrastructure {
         [[nodiscard]] std::size_t GetSize() override {
             return _used_size;
         };
-        void ResetSize() {
-            _used_size = _max_buffer_size;
+        [[nodiscard]] std::size_t GetMaxSize() const {
+            return _max_buffer_size;
+        };
+        [[nodiscard]] unsigned char ** GetMemoryForWrite() {
+            return &_buffer;
         }
-        std::size_t &GetSizeForWrite() {
-            return _used_size;
+        void SetCurrentSize(const std::size_t &sz) {
+            _used_size = sz;
         }
         ~CharBuffer() {
             delete[] _buffer;
         }
     private:
         unsigned char *_buffer;
-        std::size_t _used_size;
+        std::size_t _used_size = 0;
         const std::size_t _max_buffer_size;
     };
 
