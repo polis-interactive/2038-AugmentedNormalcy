@@ -177,6 +177,7 @@ namespace infrastructure {
             char_buffer = _output_buffers.front();
             _output_buffers.pop();
         }
+        void * ptr = char_buffer->GetMemory();
         auto sz = char_buffer->GetSizeForWrite();
 
         // do the encode
@@ -184,11 +185,13 @@ namespace infrastructure {
             buffer->GetFd(), JCS_YCbCr, char_buffer->GetMemoryForWrite(), char_buffer->GetSizeForWrite(), 75
         );
         std::cout << sz << ", " << char_buffer->GetSizeForWrite() << "?" << std::endl;
+        std::cout << ptr << ", " << char_buffer->GetMemory() << "?" << std::endl;
         // if the encode was successful, push it downstream with a lambda to requeue it
         if (ret >= 0) {
             auto self(shared_from_this());
             auto output_buffer = std::shared_ptr<SizedBuffer>(
                     (SizedBuffer *) char_buffer, [this, s = std::move(self), char_buffer](SizedBuffer *) mutable {
+                        char_buffer->ResetSize();
                         std::unique_lock<std::mutex> lock(_output_buffers_mutex);
                         _output_buffers.push(char_buffer);
                     }
