@@ -60,6 +60,7 @@ namespace infrastructure {
     class CharBuffer: public SizedBuffer {
     public:
         explicit CharBuffer(const std::size_t buffer_size):
+            _buffer_size(buffer_size),
             _max_buffer_size(buffer_size)
         {
             _buffer = new unsigned char[buffer_size];
