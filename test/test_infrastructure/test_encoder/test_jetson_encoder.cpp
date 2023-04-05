@@ -56,6 +56,12 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
     auto out_frame = this_dir;
     out_frame /= "out_user.jpeg";
 
+    if(std::filesystem::remove(out_frame)) {
+        std::cout << "Removed output file" << std::endl;
+    } else {
+        std::cout << "No output file to remove" << std::endl;
+    }
+
     std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
 
     SizedBufferCallback callback = [&out_frame, &out_time](std::shared_ptr<SizedBuffer> &&ptr) mutable {

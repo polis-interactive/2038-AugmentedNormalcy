@@ -184,8 +184,8 @@ namespace infrastructure {
         auto ret = _jpeg_encoder->encodeFromFd(
             buffer->GetFd(), JCS_YCbCr, char_buffer->GetMemoryForWrite(), char_buffer->GetSizeForWrite(), 75
         );
-        std::cout << sz << ", " << char_buffer->GetSizeForWrite() << "?" << std::endl;
-        std::cout << ptr << ", " << char_buffer->GetMemory() << "?" << std::endl;
+        std::cout << sz << ", " << char_buffer->GetSizeForWrite() << "," << char_buffer->GetSize() << "?" << std::endl;
+        std::cout << ptr << ", " << *char_buffer->GetMemoryForWrite() << ", " << char_buffer->GetMemory() << "?" << std::endl;
         // if the encode was successful, push it downstream with a lambda to requeue it
         if (ret >= 0) {
             auto self(shared_from_this());
