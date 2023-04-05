@@ -192,7 +192,9 @@ namespace infrastructure {
                         _output_buffers.push(char_buffer);
                     }
             );
+            std::cout << "so this is where" << std::endl;
             _output_callback(std::move(buffer));
+            std::cout << "I segfault" << std::endl;
         }
     }
 

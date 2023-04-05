@@ -68,7 +68,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
     };
 
     {
-        auto encoder = infrastructure::Encoder::Create(conf, callback);
+        auto encoder = infrastructure::Encoder::Create(conf, std::move(callback));
         encoder->Start();
         auto buffer = encoder->GetSizedBuffer();
         std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
