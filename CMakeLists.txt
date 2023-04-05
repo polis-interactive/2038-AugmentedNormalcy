@@ -52,6 +52,7 @@ if (FEATURE_CAMERA)
 endif()
 if (FEATURE_ENCODER)
     add_subdirectory(${internal_dir}/infrastructure/encoder)
+    add_subdirectory(scratch/nv_jpeg_dma)
 endif()
 add_subdirectory(${internal_dir}/service)
 

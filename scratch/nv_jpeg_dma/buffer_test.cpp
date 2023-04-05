@@ -314,5 +314,4 @@ void thread_test() {
 
 int main(int argc, char *argv[]) {
     mmap_buffer();
-    thread_test();
 }
