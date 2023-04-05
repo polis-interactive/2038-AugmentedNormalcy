@@ -1,0 +1,247 @@
+//
+// Created by brucegoose on 4/4/23.
+//
+
+#include <sys/mman.h>
+
+#include "jetson_encoder.hpp"
+
+namespace infrastructure {
+
+    JetsonBuffer::JetsonBuffer(const std::pair<int, int> &width_height_tuple) {
+        NvBufSurf::NvCommonAllocateParams params;
+        /* Create PitchLinear output buffer for transform. */
+        params.memType = NVBUF_MEM_SURFACE_ARRAY;
+        params.width = 1536;
+        params.height = 864;
+        params.layout = NVBUF_LAYOUT_PITCH;
+        params.colorFormat = NVBUF_COLOR_FORMAT_YUV420;
+
+        params.memtag = NvBufSurfaceTag_CAMERA;
+
+        auto ret = NvBufSurf::NvAllocate(&params, 1, &fd);
+        if (ret < 0) {
+            std::cout << "Error allocating buffer: " << ret << std::endl;
+        }
+
+
+        ret = NvBufSurfaceFromFd(fd, (void**)(&_nvbuf_surf));
+        if (ret != 0)
+        {
+            std::cout << "failed to get surface from fd" << std::endl;
+        }
+
+        // just going to mmap it myself
+        _memory = mmap(
+                NULL,
+                _nvbuf_surf->surfaceList->planeParams.psize[0],
+                PROT_READ | PROT_WRITE, MAP_SHARED, fd,
+                _nvbuf_surf->surfaceList->planeParams.offset[0]
+        );
+        if (_memory == MAP_FAILED) {
+            std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
+        }
+        _memory_1 = mmap(
+                (uint8_t *) _memory + _nvbuf_surf->surfaceList->planeParams.psize[0],
+                _nvbuf_surf->surfaceList->planeParams.psize[1],
+                PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
+                _nvbuf_surf->surfaceList->planeParams.offset[1]
+        );
+        if (_memory_1 == MAP_FAILED) {
+            std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
+        }
+        _memory_2 = mmap(
+                (uint8_t *) _memory_1 + _nvbuf_surf->surfaceList->planeParams.psize[1],
+                _nvbuf_surf->surfaceList->planeParams.psize[2],
+                PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
+                _nvbuf_surf->surfaceList->planeParams.offset[2]
+        );
+        if (_memory_2 == MAP_FAILED) {
+            std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
+        }
+
+        _size = _nvbuf_surf->surfaceList->planeParams.psize[0];
+        _size_1 = _nvbuf_surf->surfaceList->planeParams.psize[1];
+        _size_2 = _nvbuf_surf->surfaceList->planeParams.psize[2];
+    }
+
+    JetsonBuffer::~JetsonBuffer() {
+        if (_memory != nullptr) {
+            munmap(_memory, _size);
+        }
+        if (_memory_1 != nullptr) {
+            munmap(_memory, _size_1);
+
+        }
+        if (_memory_2 != nullptr) {
+            munmap(_memory, _size_2);
+
+        }
+        if (fd != -1) {
+            NvBufSurf::NvDestroy(fd);
+            fd = -1;
+        }
+    }
+
+    std::atomic<int> Encoder::_last_encoder_number = { -1 };
+
+    Encoder::Encoder(const EncoderConfig &config, SizedBufferCallback output_callback):
+        _output_callback(std::move(output_callback))
+    {
+        // create buffers
+        auto width_height = config.get_encoder_width_height();
+        for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
+            _input_buffers.push(new JetsonBuffer(width_height));
+        }
+        // create encoder
+        auto encoder_name = getUniqueJpegEncoderName();
+        _jpeg_encoder = std::shared_ptr<NvJPEGEncoder>(
+            NvJPEGEncoder::createJPEGEncoder(encoder_name.c_str()),
+            [](NvJPEGEncoder *encoder) {
+                delete encoder;
+            }
+        );
+        // create downstream buffers
+        auto downstream_max_size = getMaxJpegSize(width_height);
+        for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
+            _output_buffers.push(new CharBuffer(downstream_max_size));
+        }
+    }
+
+    std::shared_ptr<SizedBuffer> Encoder::GetSizedBuffer() {
+        std::unique_lock<std::mutex> lock(_input_buffers_mutex);
+        auto jetson_buffer = _input_buffers.front();
+        _input_buffers.pop();
+        auto self(shared_from_this());
+        auto buffer = std::shared_ptr<SizedBuffer>(
+                (SizedBuffer *) jetson_buffer, [this, s = std::move(self), jetson_buffer](SizedBuffer *) mutable {
+                    std::unique_lock<std::mutex> lock(_input_buffers_mutex);
+                    _input_buffers.push(jetson_buffer);
+                }
+        );
+        return std::move(buffer);
+    }
+
+    void Encoder::PostSizedBuffer(std::shared_ptr<SizedBuffer> &&buffer) {
+        if (_work_stop) {
+            return;
+        }
+        auto jetson_buffer = std::static_pointer_cast<JetsonBuffer>(buffer);
+        std::unique_lock<std::mutex> lock(_work_mutex);
+        _work_queue.push(std::move(jetson_buffer));
+        _work_cv.notify_one();
+    }
+
+    void Encoder::Start() {
+        {
+            std::unique_lock<std::mutex> lock(_work_mutex);
+            _work_queue = {};
+        }
+        if (!_work_thread) {
+            auto self(shared_from_this());
+            _work_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
+                run();
+            });
+        }
+    }
+
+    void Encoder::run() {
+        while(!_work_stop) {
+            std::shared_ptr<JetsonBuffer> buffer;
+            {
+                std::unique_lock<std::mutex> lock(_work_mutex);
+                _work_cv.wait(lock, [this]() {
+                    return !_work_queue.empty() || _work_stop;
+                });
+                if (_work_stop) {
+                    return;
+                } else if (_work_queue.empty()) {
+                    continue;
+                }
+                buffer = std::move(_work_queue.front());
+                _work_queue.pop();
+            }
+            encodeBuffer(std::move(buffer));
+        }
+    }
+
+    void Encoder::encodeBuffer(std::shared_ptr<JetsonBuffer> &&buffer) {
+        if (_work_stop) {
+            return;
+        }
+        // get output buffer
+        CharBuffer *char_buffer;
+        {
+            std::unique_lock<std::mutex> lock(_output_buffers_mutex);
+            char_buffer = _output_buffers.front();
+            _output_buffers.pop();
+        }
+        // do the encode
+        auto ret = _jpeg_encoder->encodeFromFd(
+            buffer->GetFd(), JCS_YCbCr, char_buffer->GetMemoryForWrite(), char_buffer->GetSizeForWrite(), 75
+        );
+        // soonest we can release the jetson buffer
+        buffer.reset();
+        // if the encode was successful, push it downstream with a lambda to requeue it
+        if (ret >= 0) {
+            auto self(shared_from_this());
+            auto output_buffer = std::shared_ptr<SizedBuffer>(
+                    (SizedBuffer *) char_buffer, [this, s = std::move(self), char_buffer](SizedBuffer *) mutable {
+                        std::unique_lock<std::mutex> lock(_output_buffers_mutex);
+                        _output_buffers.push(char_buffer);
+                    }
+            );
+            _output_callback(std::move(buffer));
+        }
+    }
+
+    void Encoder::Stop() {
+        if (_work_thread) {
+            if (_work_thread->joinable()) {
+                {
+                    std::unique_lock<std::mutex> lock(_work_mutex);
+                    _work_stop = true;
+                    _work_cv.notify_one();
+                }
+                _work_thread->join();
+            }
+            _work_thread.reset();
+        }
+    }
+
+    Encoder::~Encoder() {
+        Stop();
+        _jpeg_encoder.reset();
+        /*
+         * empty work queue, to get here it should be empty though as those pointers
+         * have a reference to shared_from_this...
+         */
+        {
+            std::unique_lock<std::mutex> lock(_work_mutex);
+            _work_queue = {};
+        }
+        /*
+         * destroy jetson buffers; this will unmap them and clean up the dma file
+         */
+        {
+            std::unique_lock<std::mutex> lock(_input_buffers_mutex);
+            while (!_input_buffers.empty()) {
+                auto jetson_buffer = _input_buffers.front();
+                _input_buffers.pop();
+                delete jetson_buffer;
+            }
+        }
+        /*
+         * destroy the char buffers
+         */
+        {
+            std::unique_lock<std::mutex> lock(_output_buffers_mutex);
+            while (!_output_buffers.empty()) {
+                auto char_buffer = _output_buffers.front();
+                _output_buffers.pop();
+                delete char_buffer;
+            }
+        }
+    }
+
+}

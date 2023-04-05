@@ -25,6 +25,11 @@ if (FEATURE_CAMERA)
     set(tests_link_libraries ${tests_link_libraries} camera service)
 endif()
 
+if (FEATURE_ENCODER)
+    set(tests ${tests} test_infrastructure/test_encoder/test_jetson_encoder.cpp)
+    set(tests_link_libraries ${tests_link_libraries} encoder)
+endif()
+
 add_definitions(-DTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_executable(tests ${tests})
 

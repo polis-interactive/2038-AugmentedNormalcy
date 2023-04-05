@@ -33,7 +33,7 @@ project (
 # post-project cmake files
 include(cmake/boost.cmake)
 include(cmake/camera.cmake)
-include(cmake/buffer.cmake)
+include(cmake/encoder.cmake)
 
 set(root_dir ${CMAKE_CURRENT_LIST_DIR})
 set(internal_dir ${root_dir}/internal)
@@ -50,8 +50,8 @@ add_subdirectory(${internal_dir}/infrastructure/tcp)
 if (FEATURE_CAMERA)
     add_subdirectory(${internal_dir}/infrastructure/camera)
 endif()
-if (FEATURE_BUFFER)
-    add_subdirectory(${internal_dir}/infrastructure/buffer)
+if (FEATURE_ENCODER)
+    add_subdirectory(${internal_dir}/infrastructure/encoder)
 endif()
 add_subdirectory(${internal_dir}/service)
 

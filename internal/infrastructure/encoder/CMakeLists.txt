@@ -1,11 +1,11 @@
 
-project(AugmentedNormalcy_JetsonEncoder LANGUAGES CXX)
 
-set(
-    SOURCES
-        video_encode_csvparser.cpp
-        video_encode_main.cpp
-)
+if (JETSON_ENCODER_AVAILABLE)
 
-add_executable(jetson_encoder ${SOURCES})
-target_link_libraries(jetson_encoder jetson_mm pthread)
+    set(SOURCES jetson_encoder.cpp)
+    set(TARGET_LIBS jetson_mm pthread)
+
+    add_library(encoder STATIC ${SOURCES})
+    target_link_libraries(encoder PRIVATE ${TARGET_LIBS})
+
+endif()
