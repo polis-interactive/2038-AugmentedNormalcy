@@ -202,6 +202,7 @@ void mmap_buffer() {
 
     std::cout << buffer.get_size() << ", " << 1990656 << "?" << std::endl;
 
+
     test_in_file.read(buffer.get_memory(), 1990656);
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
