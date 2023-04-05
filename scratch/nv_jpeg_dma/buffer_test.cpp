@@ -115,17 +115,17 @@ public:
             std::cout << "failed to get surface from fd" << std::endl;
         }
 
-        std::cout << _nvbuf_surf->surfaceList->planeParams.height[0] << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->planeParams.pitch[0] << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->planeParams.width[0] << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->planeParams.bytesPerPix[0] << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->planeParams.psize[0] << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->planeParams.offset[0] << std::endl;
+        std::cout << _nvbuf_surf->surfaceList->planeParams.height[1] << std::endl;
+        std::cout << _nvbuf_surf->surfaceList->planeParams.pitch[1] << std::endl;
+        std::cout << _nvbuf_surf->surfaceList->planeParams.width[1] << std::endl;
+        std::cout << _nvbuf_surf->surfaceList->planeParams.bytesPerPix[1] << std::endl;
+        std::cout << _nvbuf_surf->surfaceList->planeParams.psize[1] << std::endl;
+        std::cout << _nvbuf_surf->surfaceList->planeParams.offset[1] << std::endl;
 
         // just going to mmap it myself
         _memory = mmap(
                 NULL,
-                _nvbuf_surf->surfaceList->planeParams.psize[0],
+                _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0],
                 PROT_READ | PROT_WRITE, MAP_SHARED, fd,
                 _nvbuf_surf->surfaceList->planeParams.offset[0]
         );
