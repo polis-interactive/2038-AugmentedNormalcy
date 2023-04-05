@@ -115,10 +115,14 @@ public:
             std::cout << "failed to get surface from fd" << std::endl;
         }
 
+        _size = _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0];
+        _size_1 = _nvbuf_surf->surfaceList->planeParams.height[1] * _nvbuf_surf->surfaceList->planeParams.pitch[1];
+        _size_2 = _nvbuf_surf->surfaceList->planeParams.height[2] * _nvbuf_surf->surfaceList->planeParams.pitch[2];
+
         // just going to mmap it myself
         _memory = mmap(
                 NULL,
-                _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0],
+                _size,
                 PROT_READ | PROT_WRITE, MAP_SHARED, fd,
                 _nvbuf_surf->surfaceList->planeParams.offset[0]
         );
@@ -126,8 +130,8 @@ public:
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
         _memory_1 = mmap(
-            (uint8_t *) _memory + _nvbuf_surf->surfaceList->planeParams.psize[0],
-            _nvbuf_surf->surfaceList->planeParams.height[1] * _nvbuf_surf->surfaceList->planeParams.pitch[1],
+            (uint8_t *) _memory + _size,
+            _size_1,
             PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
             _nvbuf_surf->surfaceList->planeParams.offset[1]
         );
@@ -135,18 +139,14 @@ public:
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
         _memory_2 = mmap(
-            (uint8_t *) _memory_1 + _nvbuf_surf->surfaceList->planeParams.psize[1],
-            _nvbuf_surf->surfaceList->planeParams.height[2] * _nvbuf_surf->surfaceList->planeParams.pitch[2],
+            (uint8_t *) _memory_1 + _size_1,
+            _size_2,
             PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
             _nvbuf_surf->surfaceList->planeParams.offset[2]
         );
         if (_memory_2 == MAP_FAILED) {
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
-
-        _size = _nvbuf_surf->surfaceList->planeParams.psize[0];
-        _size_1 = _nvbuf_surf->surfaceList->planeParams.psize[1];
-        _size_2 = _nvbuf_surf->surfaceList->planeParams.psize[2];
 
     }
     char * get_memory() {
