@@ -130,6 +130,7 @@ namespace infrastructure {
             _work_queue = {};
         }
         if (!_work_thread) {
+            _work_stop = false;
             auto self(shared_from_this());
             _work_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
                 run();
@@ -162,6 +163,7 @@ namespace infrastructure {
             }
             encodeBuffer(std::move(buffer));
         }
+        _jpeg_encoder.reset();
     }
 
     void Encoder::encodeBuffer(std::shared_ptr<JetsonBuffer> &&buffer) {
@@ -210,7 +212,6 @@ namespace infrastructure {
 
     Encoder::~Encoder() {
         Stop();
-        _jpeg_encoder.reset();
         /*
          * empty work queue, to get here it should be empty though as those pointers
          * have a reference to shared_from_this...
