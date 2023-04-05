@@ -36,7 +36,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Start_and_Stop") {
     auto d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2);
     auto d3 = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3);
     auto d4 = std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4);
-    std::cout << "test_infrastructure/udp/context startup and teardown: " <<
+    std::cout << "test_infrastructure/encoder/jetson_encoder startup and teardown: " <<
               d1.count() << ", " << d2.count() << ", " << d3.count() << ", " <<
               d4.count() << std::endl;
 }
