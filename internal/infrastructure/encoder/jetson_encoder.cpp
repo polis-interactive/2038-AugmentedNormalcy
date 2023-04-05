@@ -93,14 +93,6 @@ namespace infrastructure {
         for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
             _input_buffers.push(new JetsonBuffer(width_height));
         }
-        // create encoder
-        auto encoder_name = getUniqueJpegEncoderName();
-        _jpeg_encoder = std::shared_ptr<NvJPEGEncoder>(
-            NvJPEGEncoder::createJPEGEncoder(encoder_name.c_str()),
-            [](NvJPEGEncoder *encoder) {
-                delete encoder;
-            }
-        );
         // create downstream buffers
         auto downstream_max_size = getMaxJpegSize(width_height);
         for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
@@ -146,8 +138,14 @@ namespace infrastructure {
     }
 
     void Encoder::run() {
+        auto encoder_name = getUniqueJpegEncoderName();
+        _jpeg_encoder = std::shared_ptr<NvJPEGEncoder>(
+                NvJPEGEncoder::createJPEGEncoder(encoder_name.c_str()),
+                [](NvJPEGEncoder *encoder) {
+                    delete encoder;
+                }
+        );
         while(!_work_stop) {
-            std::cout << "running" << std::endl;
             std::shared_ptr<JetsonBuffer> buffer;
             {
                 std::unique_lock<std::mutex> lock(_work_mutex);
