@@ -141,7 +141,7 @@ namespace infrastructure {
     void Encoder::run() {
         auto encoder_name = getUniqueJpegEncoderName();
         _jpeg_encoder = std::shared_ptr<NvJPEGEncoder>(
-                NvJPEGEncoder::createJPEGEncoder(encoder_name.c_str()),
+                NvJPEGEncoder::createJPEGEncoder("jpegenc"),
                 [](NvJPEGEncoder *encoder) {
                     delete encoder;
                 }

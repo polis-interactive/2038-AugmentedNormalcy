@@ -67,20 +67,19 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
     SizedBufferCallback callback = [&out_frame, &out_time](std::shared_ptr<SizedBuffer> &&ptr) mutable {
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-        test_file_out.write(reinterpret_cast<char*>(ptr->GetMemory()), ptr->GetSize());
+        test_file_out.write(reinterpret_cast<unsigned char*>(ptr->GetMemory()), ptr->GetSize());
         test_file_out.flush();
         test_file_out.close();
     };
-
+    std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
     {
         auto encoder = infrastructure::Encoder::Create(conf, std::move(callback));
         encoder->Start();
         auto buffer = encoder->GetSizedBuffer();
-        std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
-        test_file_in.read((char *)buffer->GetMemory(), buffer->GetSize());
+        test_file_in.read(buffer->GetMemory(), buffer->GetSize());
         encoder->PostSizedBuffer(std::move(buffer));
         in_time = Clock::now();
-        std::this_thread::sleep_for(50ms);
+        std::this_thread::sleep_for(100ms);
         encoder->Stop();
     }
 
@@ -127,7 +126,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
 
         for (int i = 0; i < 500; i++) {
             auto buffer = encoder->GetSizedBuffer();
-            memcpy(buffer->GetMemory(), (void *) in_buf.data(), 1990656);
+            memcpy((char *)buffer->GetMemory(), in_buf.data(), buffer->GetSize());
             encoder->PostSizedBuffer(std::move(buffer));
             std::this_thread::sleep_for(33ms);
         }
