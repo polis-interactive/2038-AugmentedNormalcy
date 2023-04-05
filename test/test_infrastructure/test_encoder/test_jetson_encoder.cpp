@@ -94,6 +94,9 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
     TestJetsonEncoderConfig conf;
 
     std::filesystem::path this_dir = TEST_DIR;
+    this_dir /= "test_infrastructure";
+    this_dir /= "test_encoder";
+
     auto in_frame = this_dir;
     in_frame /= "in.yuv";
 

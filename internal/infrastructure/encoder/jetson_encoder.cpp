@@ -67,6 +67,7 @@ namespace infrastructure {
     }
 
     JetsonBuffer::~JetsonBuffer() {
+        std::cout << "am I called early?" << std::endl;
         if (_memory != nullptr) {
             munmap(_memory, _size);
         }
@@ -103,7 +104,7 @@ namespace infrastructure {
 
     std::shared_ptr<SizedBuffer> Encoder::GetSizedBuffer() {
         std::unique_lock<std::mutex> lock(_input_buffers_mutex);
-        auto jetson_buffer = _input_buffers.front();
+        auto jetson_buffer = std::move(_input_buffers.front());
         _input_buffers.pop();
         auto self(shared_from_this());
         auto buffer = std::shared_ptr<SizedBuffer>(
