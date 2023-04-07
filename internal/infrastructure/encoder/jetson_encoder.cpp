@@ -53,7 +53,7 @@ namespace infrastructure {
                 _nvbuf_surf->surfaceList->planeParams.offset[0]
         );
         _nvbuf_surf->surfaceList->mappedAddr.addr[0] = _memory;
-        // NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 0);
+        NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 0);
         /*
         NvBufSurfaceMap(_nvbuf_surf, 0, 1, NVBUF_MAP_READ_WRITE);
         NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 1);
