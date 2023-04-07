@@ -14,7 +14,7 @@ namespace infrastructure {
         params.memType = NVBUF_MEM_SURFACE_ARRAY;
         params.width = width_height_tuple.first;
         params.height = width_height_tuple.second;
-        params.layout = NVBUF_LAYOUT_PITCH;
+        params.layout = NVBUF_LAYOUT_BLOCK_LINEAR;
         params.colorFormat = NVBUF_COLOR_FORMAT_YUV420;
 
         params.memtag = NvBufSurfaceTag_CAMERA;
@@ -65,11 +65,9 @@ namespace infrastructure {
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
         PrintOffsets();
-        NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, -1);
     }
 
     JetsonBuffer::~JetsonBuffer() {
-        PrintOffsets();
         if (_memory != nullptr) {
             munmap(_memory, _size);
         }
