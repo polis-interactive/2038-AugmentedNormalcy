@@ -42,6 +42,10 @@ namespace infrastructure {
         NvBufSurfaceMap(_nvbuf_surf, 0, 2, NVBUF_MAP_READ_WRITE);
         NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 2);
 
+        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[0] << std::endl;
+        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[1] << std::endl;
+        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[2] << std::endl;
+
         // just going to mmap it myself
         _memory = mmap(
                 NULL,
