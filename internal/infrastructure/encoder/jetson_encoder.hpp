@@ -98,7 +98,9 @@ namespace infrastructure {
         [[nodiscard]] static std::shared_ptr<Encoder> Create(
             const EncoderConfig &config, SizedBufferCallback output_callback
         ) {
-            return std::make_shared<Encoder>(config, std::move(output_callback));
+            auto encoder = std::make_shared<Encoder>(config, std::move(output_callback));
+            encoder->Start();
+            return std::move(encoder);
         }
         [[nodiscard]] std::shared_ptr<SizedBuffer> GetSizedBuffer();
         void PostSizedBuffer(std::shared_ptr<SizedBuffer> &&buffer);
@@ -135,6 +137,8 @@ namespace infrastructure {
         SizedBufferCallback _output_callback;
         std::queue<CharBuffer *> _output_buffers;
         std::mutex _output_buffers_mutex;
+
+        const std::pair<int, int> _width_height;
     };
 }
 

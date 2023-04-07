@@ -40,7 +40,7 @@ namespace infrastructure {
         _memory = mmap(
                 NULL,
                 _size,
-                PROT_READ | PROT_WRITE, MAP_PRIVATE, fd,
+                PROT_READ | PROT_WRITE, MAP_SHARED, fd,
                 _nvbuf_surf->surfaceList->planeParams.offset[0]
         );
         if (_memory == MAP_FAILED) {
@@ -49,7 +49,7 @@ namespace infrastructure {
         _memory_1 = mmap(
                 (uint8_t *) _memory + _size,
                 _size_1,
-                PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fd,
+                PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
                 _nvbuf_surf->surfaceList->planeParams.offset[1]
         );
         if (_memory_1 == MAP_FAILED) {
@@ -58,7 +58,7 @@ namespace infrastructure {
         _memory_2 = mmap(
                 (uint8_t *) _memory_1 + _size_1,
                 _size_2,
-                PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fd,
+                PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
                 _nvbuf_surf->surfaceList->planeParams.offset[2]
         );
         if (_memory_2 == MAP_FAILED) {
@@ -89,15 +89,11 @@ namespace infrastructure {
     std::atomic<int> Encoder::_last_encoder_number = { -1 };
 
     Encoder::Encoder(const EncoderConfig &config, SizedBufferCallback output_callback):
-        _output_callback(std::move(output_callback))
+        _output_callback(std::move(output_callback)),
+        _width_height(config.get_encoder_width_height())
     {
-        // create buffers
-        auto width_height = config.get_encoder_width_height();
-        for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
-            _input_buffers.push(new JetsonBuffer(width_height));
-        }
         // create downstream buffers
-        auto downstream_max_size = getMaxJpegSize(width_height);
+        auto downstream_max_size = getMaxJpegSize(_width_height);
         for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
             _output_buffers.push(new CharBuffer(downstream_max_size));
         }
@@ -142,6 +138,9 @@ namespace infrastructure {
     }
 
     void Encoder::run() {
+        for (int i = 0; i < _output_buffers.size(); i++) {
+            _input_buffers.push(new JetsonBuffer(_width_height));
+        }
         auto encoder_name = getUniqueJpegEncoderName();
         _jpeg_encoder = std::shared_ptr<NvJPEGEncoder>(
                 NvJPEGEncoder::createJPEGEncoder(encoder_name.c_str()),
