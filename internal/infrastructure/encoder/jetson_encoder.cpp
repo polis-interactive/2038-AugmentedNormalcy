@@ -56,6 +56,7 @@ namespace infrastructure {
         std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[1] << std::endl;
         std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[2] << std::endl;
         */
+        std::cout << _nvbuf_surf->numFilled << std::endl;
 
         // just going to mmap it myself
         _memory = mmap(
