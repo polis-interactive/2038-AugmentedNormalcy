@@ -40,7 +40,7 @@ namespace infrastructure {
         _memory = mmap(
                 NULL,
                 _size,
-                PROT_READ | PROT_WRITE, MAP_SHARED, fd,
+                PROT_READ | PROT_WRITE, MAP_PRIVATE, fd,
                 _nvbuf_surf->surfaceList->planeParams.offset[0]
         );
         if (_memory == MAP_FAILED) {
@@ -49,7 +49,7 @@ namespace infrastructure {
         _memory_1 = mmap(
                 (uint8_t *) _memory + _size,
                 _size_1,
-                PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
+                PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fd,
                 _nvbuf_surf->surfaceList->planeParams.offset[1]
         );
         if (_memory_1 == MAP_FAILED) {
@@ -58,7 +58,7 @@ namespace infrastructure {
         _memory_2 = mmap(
                 (uint8_t *) _memory_1 + _size_1,
                 _size_2,
-                PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
+                PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fd,
                 _nvbuf_surf->surfaceList->planeParams.offset[2]
         );
         if (_memory_2 == MAP_FAILED) {
