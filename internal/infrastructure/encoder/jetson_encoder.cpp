@@ -64,11 +64,10 @@ namespace infrastructure {
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
 
-        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[0] << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[1] << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[2] << std::endl;
-
+        _nvbuf_surf->surfaceList->mappedAddr.addr[0] = _memory;
+        _nvbuf_surf->surfaceList->mappedAddr.addr[1] = _memory_1;
+        _nvbuf_surf->surfaceList->mappedAddr.addr[2] = _memory_2;
+        NvBufSurfaceSyncForCpu (_nvbuf_surf, 0, -1);
     }
 
     JetsonBuffer::~JetsonBuffer() {
