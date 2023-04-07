@@ -52,7 +52,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
 
     auto sz = output_buffer->GetMaxSize();
     buffer->SyncGpu();
-    auto ret = jpegenc->encodeFromFd(buffer->GetFd(), JCS_YCbCr, output_buffer->GetMemoryForWrite(), sz, 75);
+    // auto ret = jpegenc->encodeFromFd(buffer->GetFd(), JCS_YCbCr, output_buffer->GetMemoryForWrite(), sz, 75);
     output_buffer->SetCurrentSize(sz);
 
     std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);

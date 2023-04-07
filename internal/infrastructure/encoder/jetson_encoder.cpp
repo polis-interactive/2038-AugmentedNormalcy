@@ -54,41 +54,41 @@ namespace infrastructure {
         NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 1);
         NvBufSurfaceMap(_nvbuf_surf, 0, 2, NVBUF_MAP_READ_WRITE);
         NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 2);
-
-
-        // just going to mmap it myself
-        _memory = mmap(
-                NULL,
-                _size,
-                PROT_READ | PROT_WRITE, MAP_SHARED, fd,
-                _nvbuf_surf->surfaceList->planeParams.offset[0]
-        );
-        if (_memory == MAP_FAILED) {
-            std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
-        }
-        _memory_1 = mmap(
-                (uint8_t *) _memory + _size,
-                _size_1,
-                PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
-                _nvbuf_surf->surfaceList->planeParams.offset[1]
-        );
-        if (_memory_1 == MAP_FAILED) {
-            std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
-        }
-        _memory_2 = mmap(
-                (uint8_t *) _memory_1 + _size_1,
-                _size_2,
-                PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
-                _nvbuf_surf->surfaceList->planeParams.offset[2]
-        );
-        if (_memory_2 == MAP_FAILED) {
-            std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
-        }
         /*
-        _nvbuf_surf->surfaceList->mappedAddr.addr[0] = _memory;
-        _nvbuf_surf->surfaceList->mappedAddr.addr[1] = _memory_1;
-        _nvbuf_surf->surfaceList->mappedAddr.addr[2] = _memory_2;
-         */
+
+         // just going to mmap it myself
+         _memory = mmap(
+                 NULL,
+                 _size,
+                 PROT_READ | PROT_WRITE, MAP_SHARED, fd,
+                 _nvbuf_surf->surfaceList->planeParams.offset[0]
+         );
+         if (_memory == MAP_FAILED) {
+             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
+         }
+         _memory_1 = mmap(
+                 (uint8_t *) _memory + _size,
+                 _size_1,
+                 PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
+                 _nvbuf_surf->surfaceList->planeParams.offset[1]
+         );
+         if (_memory_1 == MAP_FAILED) {
+             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
+         }
+         _memory_2 = mmap(
+                 (uint8_t *) _memory_1 + _size_1,
+                 _size_2,
+                 PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
+                 _nvbuf_surf->surfaceList->planeParams.offset[2]
+         );
+         if (_memory_2 == MAP_FAILED) {
+             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
+         }
+
+         _nvbuf_surf->surfaceList->mappedAddr.addr[0] = _memory;
+         _nvbuf_surf->surfaceList->mappedAddr.addr[1] = _memory_1;
+         _nvbuf_surf->surfaceList->mappedAddr.addr[2] = _memory_2;
+          */
     }
 
     JetsonBuffer::~JetsonBuffer() {
