@@ -315,6 +315,121 @@ void thread_test() {
     std::cout << "roughly took " << d1.count() << " milliseconds to run" << std::endl;
 }
 
+class NvBufferCapn {
+public:
+    NvBufferCapn() {
+
+        NvBufSurf::NvCommonAllocateParams params;
+        /* Create PitchLinear output buffer for transform. */
+        params.memType = NVBUF_MEM_SURFACE_ARRAY;
+        params.width = 1536;
+        params.height = 864;
+        params.layout = NVBUF_LAYOUT_PITCH;
+        params.colorFormat = NVBUF_COLOR_FORMAT_YUV420;
+
+        params.memtag = NvBufSurfaceTag_CAMERA;
+
+        auto ret = NvBufSurf::NvAllocate(&params, 1, &fd);
+        if (ret < 0) {
+            std::cout << "Error allocating buffer: " << ret << std::endl;
+        }
+
+
+        ret = NvBufSurfaceFromFd(fd, (void**)(&_nvbuf_surf));
+        if (ret != 0)
+        {
+            std::cout << "failed to get surface from fd" << std::endl;
+        }
+
+        NvBufSurfaceMap(_nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
+        NvBufSurfaceMap(_nvbuf_surf, 0, 1, NVBUF_MAP_READ_WRITE);
+        NvBufSurfaceMap(_nvbuf_surf, 0, 2, NVBUF_MAP_READ_WRITE);
+
+    }
+    char * get_plane_0() {
+        return (char *)  _nvbuf_surf->surfaceList->mappedAddr.addr[0];
+    }
+    std::size_t get_size_0() {
+        return _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0];
+    }
+    char * get_plane_1() {
+        return (char *)  _nvbuf_surf->surfaceList->mappedAddr.addr[1];
+    }
+    std::size_t get_size_1() {
+        return _nvbuf_surf->surfaceList->planeParams.height[1] * _nvbuf_surf->surfaceList->planeParams.pitch[1];
+    }
+    char * get_plane_2() {
+        return (char *)  _nvbuf_surf->surfaceList->mappedAddr.addr[2];
+    }
+    std::size_t get_size_2() {
+        return _nvbuf_surf->surfaceList->planeParams.height[2] * _nvbuf_surf->surfaceList->planeParams.pitch[2];
+    }
+    void sync_for_cpu() {
+        NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 0);
+        NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 1);
+        NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 2);
+    }
+    void sync_for_gpu() {
+        NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 0);
+        NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 1);
+        NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 2);
+    }
+    [[nodiscard]] int get_fd() const {
+        return fd;
+    }
+    ~NvBuffer() {
+        NvBufSurfaceUnMap(_nvbuf_surf, 0, 0);
+        NvBufSurfaceUnMap(_nvbuf_surf, 0, 1);
+        NvBufSurfaceUnMap(_nvbuf_surf, 0, 2);
+        if (fd != -1) {
+            NvBufSurf::NvDestroy(fd);
+            fd = -1;
+        }
+    }
+private:
+    int fd = -1;
+    void * _memory = nullptr;
+    void * _memory_1 = nullptr;
+    void * _memory_2 = nullptr;
+    NvBufSurface *_nvbuf_surf = 0;
+    std::size_t _size = 0;
+    std::size_t _size_1 = 0;
+    std::size_t _size_2 = 0;
+};
+
+void nv_buffer_test() {
+    NvBufferCapn buffer;
+
+    auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
+    unsigned long out_buf_size = 1536 * 864 * 3 / 2;
+    auto *out_buf = new unsigned char[out_buf_size];
+
+    std::filesystem::path this_dir = TMP_DIR;
+
+    auto in_frame = this_dir;
+    in_frame /= "in.yuv";
+
+    auto out_frame = this_dir;
+    out_frame /= "out_mmap.jpeg";
+
+    std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
+
+    buffer.sync_for_cpu();
+    test_in_file.read(buffer.get_plane_0(), buffer.get_size_0());
+    test_in_file.read(buffer.get_plane_1(), buffer.get_size_1());
+    test_in_file.read(buffer.get_plane_2(), buffer.get_size_2());
+    buffer.sync_for_gpu();
+
+    auto ret = jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &out_buf, out_buf_size, 75);
+
+    std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+
+    test_file_out.write((char *) out_buf, out_buf_size);
+
+    delete[] out_buf;
+    delete jpegenc;
+}
+
 int main(int argc, char *argv[]) {
-    mmap_buffer();
+    nv_buffer_test();
 }
