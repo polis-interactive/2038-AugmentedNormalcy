@@ -48,7 +48,14 @@ namespace infrastructure {
         std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[2] << std::endl;
 
 
-        NvBufSurfaceMap(_nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
+        // NvBufSurfaceMap(_nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
+        _memory = mmap(
+                NULL,
+                _size,
+                PROT_READ | PROT_WRITE, MAP_SHARED, fd,
+                _nvbuf_surf->surfaceList->planeParams.offset[0]
+        );
+        _nvbuf_surf->surfaceList->mappedAddr.addr[0] = _memory;
         NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 0);
         NvBufSurfaceMap(_nvbuf_surf, 0, 1, NVBUF_MAP_READ_WRITE);
         NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 1);
@@ -57,12 +64,6 @@ namespace infrastructure {
         /*
 
          // just going to mmap it myself
-         _memory = mmap(
-                 NULL,
-                 _size,
-                 PROT_READ | PROT_WRITE, MAP_SHARED, fd,
-                 _nvbuf_surf->surfaceList->planeParams.offset[0]
-         );
          if (_memory == MAP_FAILED) {
              std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
          }
