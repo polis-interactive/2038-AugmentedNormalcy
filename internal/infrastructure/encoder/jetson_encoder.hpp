@@ -46,17 +46,17 @@ namespace infrastructure {
             return fd;
         }
         void SyncCpu() {
-            NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 0);
+            // NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 0);
             NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 1);
             NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 2);
 
 
-            NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 0);
+            // NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 0);
             NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 1);
             NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 2);
 
 
-            NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 0);
+            // NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 0);
             NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 1);
             NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 2);
         }
