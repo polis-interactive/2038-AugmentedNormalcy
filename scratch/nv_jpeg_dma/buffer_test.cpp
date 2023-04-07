@@ -398,8 +398,8 @@ private:
 };
 
 void nv_buffer_test() {
-    NvBufferCapn buffer;
-    NvBufferCapn buffer_2;
+    auto buffer = new NvBufferCapn();
+    auto buffer_1 = new NvBufferCapn();
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
     unsigned long out_buf_size = 1536 * 864 * 3 / 2;
@@ -415,19 +415,21 @@ void nv_buffer_test() {
 
     std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
 
-    buffer.sync_for_cpu();
-    test_in_file.read(buffer.get_plane_0(), buffer.get_size_0());
-    test_in_file.read(buffer.get_plane_1(), buffer.get_size_1());
-    test_in_file.read(buffer.get_plane_2(), buffer.get_size_2());
-    buffer.sync_for_gpu();
+    buffer->sync_for_cpu();
+    test_in_file.read(buffer->get_plane_0(), buffer->get_size_0());
+    test_in_file.read(buffer->get_plane_1(), buffer->get_size_1());
+    test_in_file.read(buffer->get_plane_2(), buffer->get_size_2());
+    buffer->sync_for_gpu();
 
-    auto ret = jpegenc->encodeFromFd(buffer.get_fd(), JCS_YCbCr, &out_buf, out_buf_size, 75);
+    auto ret = jpegenc->encodeFromFd(buffer->get_fd(), JCS_YCbCr, &out_buf, out_buf_size, 75);
 
     std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
 
     test_file_out.write((char *) out_buf, out_buf_size);
 
     delete[] out_buf;
+    delete buffer;
+    delete buffer_1;
     delete jpegenc;
 }
 
