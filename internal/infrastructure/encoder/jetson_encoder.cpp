@@ -130,7 +130,6 @@ namespace infrastructure {
         }
         if (!_work_thread) {
             _work_stop = false;
-            _started = false;
             auto self(shared_from_this());
             _work_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
                 run();
