@@ -42,6 +42,8 @@ namespace infrastructure {
 
 */
         NvBufSurfaceMap(_nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
+        NvBufSurfaceMap(_nvbuf_surf, 0, 1, NVBUF_MAP_READ_WRITE);
+        NvBufSurfaceMap(_nvbuf_surf, 0, 2, NVBUF_MAP_READ_WRITE);
 
         std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[0] << std::endl;
         std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[1] << std::endl;
