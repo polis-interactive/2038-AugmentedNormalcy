@@ -11,10 +11,10 @@ namespace infrastructure {
     JetsonBuffer::JetsonBuffer(const std::pair<int, int> &width_height_tuple) {
         NvBufSurf::NvCommonAllocateParams params;
         /* Create PitchLinear output buffer for transform. */
-        params.memType = NVBUF_MEM_SURFACE_ARRAY;
+        params.memType = NVBUF_MEM_HANDLE;
         params.width = width_height_tuple.first;
         params.height = width_height_tuple.second;
-        params.layout = NVBUF_LAYOUT_BLOCK_LINEAR;
+        params.layout = NVBUF_LAYOUT_PITCH;
         params.colorFormat = NVBUF_COLOR_FORMAT_YUV420;
 
         params.memtag = NvBufSurfaceTag_CAMERA;
@@ -68,6 +68,7 @@ namespace infrastructure {
     }
 
     JetsonBuffer::~JetsonBuffer() {
+        PrintOffsets();
         if (_memory != nullptr) {
             munmap(_memory, _size);
         }
