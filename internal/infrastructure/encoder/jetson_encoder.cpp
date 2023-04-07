@@ -64,9 +64,11 @@ namespace infrastructure {
         if (_memory_2 == MAP_FAILED) {
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
+        PrintOffsets();
     }
 
     JetsonBuffer::~JetsonBuffer() {
+        PrintOffsets();
         if (_memory != nullptr) {
             munmap(_memory, _size);
         }

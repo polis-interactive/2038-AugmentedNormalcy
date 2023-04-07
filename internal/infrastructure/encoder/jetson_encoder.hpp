@@ -45,6 +45,11 @@ namespace infrastructure {
         [[nodiscard]] int GetFd() const {
             return fd;
         }
+        void PrintOffsets() {
+            std::cout << _nvbuf_surf->surfaceList->planeParams.offset[0] << std::endl;
+            std::cout << _nvbuf_surf->surfaceList->planeParams.offset[1] << std::endl;
+            std::cout << _nvbuf_surf->surfaceList->planeParams.offset[2] << std::endl;
+        }
         ~JetsonBuffer();
     private:
         int fd = -1;
