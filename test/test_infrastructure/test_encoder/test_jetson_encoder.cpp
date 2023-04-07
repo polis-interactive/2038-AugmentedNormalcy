@@ -14,7 +14,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 class TestJetsonEncoderConfig : public infrastructure::EncoderConfig {
     [[nodiscard]] unsigned int get_encoder_buffer_count() const override {
-        return 4;
+        return 1;
     };
     [[nodiscard]] std::pair<int, int> get_encoder_width_height() const override {
         return { 1536, 864 };
