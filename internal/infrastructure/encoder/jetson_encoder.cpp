@@ -31,6 +31,10 @@ namespace infrastructure {
             std::cout << "failed to get surface from fd" << std::endl;
         }
 
+        _size = _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0];
+        _size_1 = _nvbuf_surf->surfaceList->planeParams.height[1] * _nvbuf_surf->surfaceList->planeParams.pitch[1];
+        _size_2 = _nvbuf_surf->surfaceList->planeParams.height[2] * _nvbuf_surf->surfaceList->planeParams.pitch[2];
+
         // just going to mmap it myself
         _memory = mmap(
                 NULL,
@@ -59,10 +63,12 @@ namespace infrastructure {
         if (_memory_2 == MAP_FAILED) {
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
+
         std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr << std::endl;
         std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[0] << std::endl;
         std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[1] << std::endl;
         std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[2] << std::endl;
+
     }
 
     JetsonBuffer::~JetsonBuffer() {
