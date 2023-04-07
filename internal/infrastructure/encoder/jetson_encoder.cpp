@@ -11,7 +11,7 @@ namespace infrastructure {
     JetsonBuffer::JetsonBuffer(const std::pair<int, int> &width_height_tuple) {
         NvBufSurf::NvCommonAllocateParams params;
         /* Create PitchLinear output buffer for transform. */
-        params.memType = NVBUF_MEM_HANDLE;
+        params.memType = NVBUF_MEM_SURFACE_ARRAY;
         params.width = width_height_tuple.first;
         params.height = width_height_tuple.second;
         params.layout = NVBUF_LAYOUT_PITCH;
