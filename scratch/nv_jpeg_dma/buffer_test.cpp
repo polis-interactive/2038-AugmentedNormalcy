@@ -377,7 +377,7 @@ public:
     [[nodiscard]] int get_fd() const {
         return fd;
     }
-    ~NvBuffer() {
+    ~NvBufferCapn() {
         NvBufSurfaceUnMap(_nvbuf_surf, 0, 0);
         NvBufSurfaceUnMap(_nvbuf_surf, 0, 1);
         NvBufSurfaceUnMap(_nvbuf_surf, 0, 2);
