@@ -44,18 +44,16 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
     }
 
     std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
-    std::cout << buffer->GetSize() << ", " << 1990656 << "?" << std::endl;
-    test_in_file.read((char *)buffer->GetMemory(), 1990656);
+    test_in_file.read((char *)buffer->GetMemory(), buffer->GetSize());
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
 
     auto sz = output_buffer->GetMaxSize();
     auto ret = jpegenc->encodeFromFd(buffer->GetFd(), JCS_YCbCr, output_buffer->GetMemoryForWrite(), sz, 75);
-
-    std::cout << sz << ", " << output_buffer->GetMaxSize() << "? " << std::endl;
+    output_buffer->SetCurrentSize(sz);
 
     std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-    test_file_out.write((char *) output_buffer->GetMemory(), sz);
+    test_file_out.write((char *) output_buffer->GetMemory(), output_buffer->GetSize());
     test_file_out.flush();
     test_file_out.close();
 
@@ -89,7 +87,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Start_and_Stop") {
               d1.count() << ", " << d2.count() << ", " << d3.count() << ", " <<
               d4.count() << std::endl;
 }
-/*
+
 TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
     TestJetsonEncoderConfig conf;
 
@@ -101,7 +99,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
     in_frame /= "in.yuv";
 
     auto out_frame = this_dir;
-    out_frame /= "out_user.jpeg";
+    out_frame /= "out_single.jpeg";
 
     if(std::filesystem::remove(out_frame)) {
         std::cout << "Removed output file" << std::endl;
@@ -118,15 +116,13 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
         test_file_out.flush();
         test_file_out.close();
     };
-    std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
-    std::array<char, 1990656> in_buf = {};
-    test_file_in.read(in_buf.data(), 1990656);
 
     {
         auto encoder = infrastructure::Encoder::Create(conf, std::move(callback));
         encoder->Start();
         auto buffer = encoder->GetSizedBuffer();
-        memcpy((char *)buffer->GetMemory(), in_buf.data(), buffer->GetSize());
+        std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
+        test_in_file.read((char *)buffer->GetMemory(), buffer->GetSize());
         encoder->PostSizedBuffer(std::move(buffer));
         in_time = Clock::now();
         std::this_thread::sleep_for(100ms);
@@ -139,6 +135,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
     std::cout << "Time to encode: " << d1.count() << std::endl;
 }
 
+/*
 TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
 
     TestJetsonEncoderConfig conf;

@@ -187,7 +187,6 @@ namespace infrastructure {
         );
         char_buffer->SetCurrentSize(sz);
         std::cout << sz << ", " << char_buffer->GetMaxSize() << "," << char_buffer->GetSize() << "?" << std::endl;
-        std::cout << ptr << ", " << char_buffer->GetMemory() << "?" << std::endl;
         // if the encode was successful, push it downstream with a lambda to requeue it
         if (ret >= 0) {
             auto self(shared_from_this());
