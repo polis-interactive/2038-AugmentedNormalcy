@@ -45,11 +45,13 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
     }
 
     std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
+    buffer->SyncCpu();
     test_in_file.read((char *)buffer->GetMemory(), buffer->GetSize());
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
 
     auto sz = output_buffer->GetMaxSize();
+    buffer->SyncGpu();
     auto ret = jpegenc->encodeFromFd(buffer->GetFd(), JCS_YCbCr, output_buffer->GetMemoryForWrite(), sz, 75);
     output_buffer->SetCurrentSize(sz);
 

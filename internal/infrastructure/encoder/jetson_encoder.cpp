@@ -35,12 +35,6 @@ namespace infrastructure {
         _size_1 = _nvbuf_surf->surfaceList->planeParams.height[1] * _nvbuf_surf->surfaceList->planeParams.pitch[1];
         _size_2 = _nvbuf_surf->surfaceList->planeParams.height[2] * _nvbuf_surf->surfaceList->planeParams.pitch[2];
 
-        NvBufSurfaceMap(_nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
-        NvBufSurfaceSyncForCpu (_nvbuf_surf, 0, 0);
-
-        std::cout << _nvbuf_surf->surfaceList->paramex->startofvaliddata << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->paramex->sizeofvaliddatainbytes << std::endl;
-
         // just going to mmap it myself
         _memory = mmap(
                 NULL,
@@ -73,7 +67,6 @@ namespace infrastructure {
         _nvbuf_surf->surfaceList->mappedAddr.addr[0] = _memory;
         _nvbuf_surf->surfaceList->mappedAddr.addr[1] = _memory_1;
         _nvbuf_surf->surfaceList->mappedAddr.addr[2] = _memory_2;
-        NvBufSurfaceSyncForCpu (_nvbuf_surf, 0, -1);
     }
 
     JetsonBuffer::~JetsonBuffer() {
