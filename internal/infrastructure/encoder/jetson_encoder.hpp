@@ -46,14 +46,8 @@ namespace infrastructure {
             return fd;
         }
         void SyncCpu() {
-            NvBufSurfaceMap(_nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
-            NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 0);
             NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 0);
-            NvBufSurfaceMap(_nvbuf_surf, 0, 1, NVBUF_MAP_READ_WRITE);
-            NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 1);
             NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 1);
-            NvBufSurfaceMap(_nvbuf_surf, 0, 2, NVBUF_MAP_READ_WRITE);
-            NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 2);
             NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 2);
 
 
