@@ -399,6 +399,7 @@ private:
 
 void nv_buffer_test() {
     NvBufferCapn buffer;
+    NvBufferCapn buffer_2;
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
     unsigned long out_buf_size = 1536 * 864 * 3 / 2;
