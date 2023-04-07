@@ -103,12 +103,11 @@ namespace infrastructure {
 
     std::shared_ptr<SizedBuffer> Encoder::GetSizedBuffer() {
         std::unique_lock<std::mutex> lock(_input_buffers_mutex);
-        auto jetson_buffer = std::move(_input_buffers.front());
+        auto jetson_buffer = _input_buffers.front();
         _input_buffers.pop();
         auto self(shared_from_this());
         auto buffer = std::shared_ptr<SizedBuffer>(
                 (SizedBuffer *) jetson_buffer, [this, s = std::move(self), jetson_buffer](SizedBuffer *) mutable {
-                    std::cout << "i need 1" << std::endl;
                     std::unique_lock<std::mutex> lock(_input_buffers_mutex);
                     _input_buffers.push(jetson_buffer);
                 }

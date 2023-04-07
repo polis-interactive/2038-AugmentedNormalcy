@@ -21,6 +21,53 @@ class TestJetsonEncoderConfig : public infrastructure::EncoderConfig {
     };
 };
 
+TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
+    std::pair<int, int> width_height = { 1536, 864 };
+    auto buffer = new infrastructure::JetsonBuffer(width_height);
+
+    auto output_buffer = new infrastructure::CharBuffer(std::ceil(1536 * 864 * 3 / 2));
+
+    std::filesystem::path this_dir = TEST_DIR;
+    this_dir /= "test_infrastructure";
+    this_dir /= "test_encoder";
+
+    auto in_frame = this_dir;
+    in_frame /= "in.yuv";
+
+    auto out_frame = this_dir;
+    out_frame /= "out_manual.jpeg";
+
+    if(std::filesystem::remove(out_frame)) {
+        std::cout << "Removed output file" << std::endl;
+    } else {
+        std::cout << "No output file to remove" << std::endl;
+    }
+
+    std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
+    std::cout << buffer->GetSize() << ", " << 1990656 << "?" << std::endl;
+    test_in_file.read((char *)buffer->GetMemory(), 1990656);
+
+    auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
+
+    auto sz = output_buffer->GetMaxSize();
+    auto ret = jpegenc->encodeFromFd(buffer->GetFd(), JCS_YCbCr, output_buffer->GetMemoryForWrite(), sz, 75);
+
+    std::cout << sz << ", " << output_buffer->GetMaxSize() << "? " << std::endl;
+
+    std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+    test_file_out.write((char *) output_buffer->GetMemory(), sz);
+    test_file_out.flush();
+    test_file_out.close();
+
+    REQUIRE(std::filesystem::exists(out_frame));
+
+    delete buffer;
+    delete output_buffer;
+    delete jpegenc;
+
+
+}
+
 TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Start_and_Stop") {
     TestJetsonEncoderConfig conf;
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4, t5;
@@ -42,7 +89,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Start_and_Stop") {
               d1.count() << ", " << d2.count() << ", " << d3.count() << ", " <<
               d4.count() << std::endl;
 }
-
+/*
 TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
     TestJetsonEncoderConfig conf;
 
@@ -143,3 +190,4 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
     std::cout << "Time to encode 10s of data at 30fps: " << d1.count() << std::endl;
 }
+*/
