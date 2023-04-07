@@ -43,12 +43,8 @@ namespace infrastructure {
 */
 
 
-        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[0] << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[1] << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[2] << std::endl;
-
-
         // NvBufSurfaceMap(_nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
+        _nvbuf_surf->surfaceList->planeParams.psize[0] = _size;
         _memory = mmap(
                 NULL,
                 _size,
