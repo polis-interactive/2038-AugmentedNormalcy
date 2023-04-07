@@ -24,7 +24,7 @@ class TestJetsonEncoderConfig : public infrastructure::EncoderConfig {
 TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
     std::pair<int, int> width_height = { 1536, 864 };
     auto buffer = new infrastructure::JetsonBuffer(width_height);
-    // auto buffer_2 = new infrastructure::JetsonBuffer(width_height);
+    auto buffer_2 = new infrastructure::JetsonBuffer(width_height);
 
     auto output_buffer = new infrastructure::CharBuffer(std::ceil(1536 * 864 * 3 / 2));
 
@@ -46,7 +46,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
 
     std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
     buffer->SyncCpu();
-    test_in_file.read((char *)buffer->GetMemory(), buffer->GetSize());
+    // test_in_file.read((char *)buffer->GetMemory(), buffer->GetSize());
 
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
 
@@ -63,7 +63,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
     REQUIRE(std::filesystem::exists(out_frame));
 
     delete buffer;
-    // delete buffer_2;
+    delete buffer_2;
     delete output_buffer;
     delete jpegenc;
 
