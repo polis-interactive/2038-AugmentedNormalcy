@@ -35,12 +35,18 @@ namespace infrastructure {
         _size_1 = _nvbuf_surf->surfaceList->planeParams.height[1] * _nvbuf_surf->surfaceList->planeParams.pitch[1];
         _size_2 = _nvbuf_surf->surfaceList->planeParams.height[2] * _nvbuf_surf->surfaceList->planeParams.pitch[2];
 
+        _nvbuf_surf->surfaceList->dataSize = GetSize();
+        _nvbuf_surf->surfaceList->planeParams.psize[0] = _size;
+        _nvbuf_surf->surfaceList->planeParams.psize[1] = _size_1;
+        _nvbuf_surf->surfaceList->planeParams.psize[2] = _size_2;
+
         std::cout << _nvbuf_surf->surfaceList->dataSize <<  ", " << GetSize() << std::endl;
         std::cout << _nvbuf_surf->surfaceList->planeParams.psize[0] << ", " << _size << std::endl;
 
         std::cout << _nvbuf_surf->surfaceList->planeParams.psize[1] << ", " << _size_1 << std::endl;
         std::cout << _nvbuf_surf->surfaceList->planeParams.psize[2] << ", " << _size_2 << std::endl;
 
+        /*
         NvBufSurfaceMap(_nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
         NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 0);
         NvBufSurfaceMap(_nvbuf_surf, 0, 1, NVBUF_MAP_READ_WRITE);
@@ -51,6 +57,7 @@ namespace infrastructure {
         std::cout << _nvbuf_surf->surfaceList->dataSize << std::endl;
         std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[1] << std::endl;
         std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[2] << std::endl;
+        */
 
         // just going to mmap it myself
         _memory = mmap(
