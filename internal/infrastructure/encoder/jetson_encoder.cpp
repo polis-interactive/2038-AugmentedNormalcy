@@ -106,6 +106,7 @@ namespace infrastructure {
         auto self(shared_from_this());
         auto buffer = std::shared_ptr<SizedBuffer>(
                 (SizedBuffer *) jetson_buffer, [this, s = std::move(self), jetson_buffer](SizedBuffer *) mutable {
+                    std::cout << "Do I get called multiple times?" << std::endl;
                     std::unique_lock<std::mutex> lock(_input_buffers_mutex);
                     _input_buffers.push(jetson_buffer);
                 }
