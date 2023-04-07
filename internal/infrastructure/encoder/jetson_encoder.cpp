@@ -34,17 +34,17 @@ namespace infrastructure {
         _size = _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0];
         _size_1 = _nvbuf_surf->surfaceList->planeParams.height[1] * _nvbuf_surf->surfaceList->planeParams.pitch[1];
         _size_2 = _nvbuf_surf->surfaceList->planeParams.height[2] * _nvbuf_surf->surfaceList->planeParams.pitch[2];
-
+/*
         _nvbuf_surf->surfaceList->dataSize = GetSize();
         _nvbuf_surf->surfaceList->planeParams.psize[0] = _size;
         _nvbuf_surf->surfaceList->planeParams.psize[1] = _size_1;
         _nvbuf_surf->surfaceList->planeParams.psize[2] = _size_2;
 
-/*
+*/
         NvBufSurfaceMap(_nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
         NvBufSurfaceMap(_nvbuf_surf, 0, 1, NVBUF_MAP_READ_WRITE);
         NvBufSurfaceMap(_nvbuf_surf, 0, 2, NVBUF_MAP_READ_WRITE);
-*/
+
 
         // just going to mmap it myself
         _memory = mmap(
@@ -74,9 +74,11 @@ namespace infrastructure {
         if (_memory_2 == MAP_FAILED) {
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
+        /*
         _nvbuf_surf->surfaceList->mappedAddr.addr[0] = _memory;
         _nvbuf_surf->surfaceList->mappedAddr.addr[1] = _memory_1;
         _nvbuf_surf->surfaceList->mappedAddr.addr[2] = _memory_2;
+         */
     }
 
     JetsonBuffer::~JetsonBuffer() {
