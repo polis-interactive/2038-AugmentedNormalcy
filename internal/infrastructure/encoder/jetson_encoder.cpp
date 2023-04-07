@@ -65,6 +65,7 @@ namespace infrastructure {
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
         PrintOffsets();
+        NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, -1);
     }
 
     JetsonBuffer::~JetsonBuffer() {
