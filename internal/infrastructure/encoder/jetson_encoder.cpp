@@ -83,12 +83,11 @@ namespace infrastructure {
         if (_memory_2 == MAP_FAILED) {
             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
         }
-        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[0] << "," << _memory << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[1] << "," << _memory_1 << std::endl;
-        std::cout << _nvbuf_surf->surfaceList->mappedAddr.addr[2] << "," << _memory_2 << std::endl;
+        /*
         _nvbuf_surf->surfaceList->mappedAddr.addr[0] = _memory;
         _nvbuf_surf->surfaceList->mappedAddr.addr[1] = _memory_1;
         _nvbuf_surf->surfaceList->mappedAddr.addr[2] = _memory_2;
+        */
     }
 
     JetsonBuffer::~JetsonBuffer() {
