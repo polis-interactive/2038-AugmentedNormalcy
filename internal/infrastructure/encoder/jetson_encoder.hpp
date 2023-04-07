@@ -46,6 +46,7 @@ namespace infrastructure {
             return fd;
         }
         void SyncCpu() {
+            /*
             // NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 0);
             NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 1);
             NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 2);
@@ -59,6 +60,7 @@ namespace infrastructure {
             // NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 0);
             NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 1);
             NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 2);
+            */
         }
         void SyncGpu() {
         }
