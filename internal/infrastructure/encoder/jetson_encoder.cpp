@@ -101,7 +101,6 @@ namespace infrastructure {
             }
         }
         if (!jetson_plane_buffer) {
-            std::cout << "give em da leak" << std::endl;
             return std::make_shared<LeakyPlaneBuffer>(_leaky_upstream_buffer);
         }
         jetson_plane_buffer->SyncCpu();
