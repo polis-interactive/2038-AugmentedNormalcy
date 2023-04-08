@@ -202,7 +202,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
             sz += buffer->GetSize();
             buffer = pool->GetSizedBuffer();
             memcpy((char *)buffer->GetMemory(), in_buf.data() + sz, buffer->GetSize());
-            encoder->PostSizedBuffer(std::move(pool));
+            encoder->PostSizedBufferPool(std::move(pool));
             std::this_thread::sleep_for(33ms);
         }
         std::this_thread::sleep_for(100ms);
