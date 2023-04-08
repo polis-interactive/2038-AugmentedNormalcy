@@ -22,7 +22,7 @@ public:
         _buffer(new char[str.size()]),
         _buffer_size(str.size())
     {
-        str.copy(_buffer, 5);
+        str.copy(_buffer, _buffer_size);
     }
     [[nodiscard]] void *GetMemory() override {
         return _buffer;

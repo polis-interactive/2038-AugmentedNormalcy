@@ -131,21 +131,28 @@ namespace infrastructure {
         auto plane_buffer = _plane_buffer_pool->GetSizedBufferPool();
         auto plane = plane_buffer->GetSizedBuffer();
         auto self(shared_from_this());
+        std::cout << "where are we segfaulting...?" << std::endl;
         _socket.async_receive(
             boost::asio::buffer(plane->GetMemory(), plane->GetSize()),
             [this, s = std::move(self), camera_pool = std::move(plane_buffer), camera_buffer = std::move(plane)]
             (error_code ec, std::size_t bytes_written) mutable {
+                std::cout << "1" << std::endl;
                 if (!ec && bytes_written == camera_buffer->GetSize()) {
+                    std::cout << "2" << std::endl;
                     auto next_plane = camera_pool->GetSizedBuffer();
                     if (next_plane) {
+                        std::cout << "3" << std::endl;
                         readStreamPlane(std::move(camera_pool), std::move(next_plane));
                     } else {
+                        std::cout << "4" << std::endl;
                         _plane_buffer_pool->PostSizedBufferPool(std::move(camera_pool));
                         readStream();
                     }
                 } else if (!ec) {
+                    std::cout << "5" << std::endl;
                     continueReadPlane(std::move(camera_pool), std::move(camera_buffer), bytes_written);
                 } else {
+                    std::cout << "6" << std::endl;
                     TryClose();
                 }
             }
