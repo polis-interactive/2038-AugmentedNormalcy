@@ -6,6 +6,7 @@
 #define AUGMENTEDNORMALCY_SERVICE_SERVER_ENCODER_HPP
 
 #include <boost/asio/ip/tcp.hpp>
+#include <utility>
 
 #include "infrastructure/tcp/tcp_context.hpp"
 #include "infrastructure/tcp/tcp_server.hpp"
@@ -55,7 +56,7 @@ namespace service {
     {
     public:
         static std::shared_ptr<ServerEncoder> Create(const ServerEncoderConfig &config);
-        ServerEncoder(): _is_started(false) {}
+        explicit ServerEncoder(ServerEncoderConfig config): _is_started(false), _conf(std::move(config)) {}
         void Start() {
             if (_is_started) {
                 return;
@@ -73,26 +74,31 @@ namespace service {
             _is_started = false;
         }
         // tcp server
-        [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp::endpoint endpoint);
+        [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp::endpoint endpoint) override;
         // camera session
-        [[nodiscard]]  infrastructure::CameraConnectionPayload CreateCameraServerConnection(tcp::endpoint endpoint);
-        void DestroyCameraServerConnection(tcp::endpoint endpoint, unsigned long session_id);
+        [[nodiscard]]  infrastructure::CameraConnectionPayload CreateCameraServerConnection(
+            std::shared_ptr<infrastructure::TcpSession> camera_session
+        ) override;
+        void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> camera_session) override;
 
         // headset session
         [[nodiscard]] unsigned long CreateHeadsetServerConnection(
-            tcp::endpoint endpoint,
-            std::shared_ptr<infrastructure::WritableTcpSession> session
-        );
-        void DestroyHeadsetServerConnection(tcp::endpoint endpoint, unsigned long session_id);
+            std::shared_ptr<infrastructure::WritableTcpSession> headset_session
+        ) override;
+        void DestroyHeadsetServerConnection(
+            std::shared_ptr<infrastructure::WritableTcpSession> headset_session
+        ) override;
     private:
-        void initialize(const ServerEncoderConfig &config);
+        void initialize();
+        ServerEncoderConfig _conf;
         std::atomic_bool _is_started = false;
         std::shared_ptr<infrastructure::TcpContext> _tcp_context = nullptr;
         std::shared_ptr<infrastructure::TcpServer> _tcp_server = nullptr;
         std::shared_ptr<infrastructure::TcpSession> _camera_session = nullptr;
         std::mutex _camera_mutex;
         std::shared_ptr<infrastructure::WritableTcpSession> _headset_session = nullptr;
-        std::mutex _headset_mute;
+        std::mutex _headset_mutex;
+        std::atomic<unsigned long> _last_session_number = { 0 };
     };
 }
 
