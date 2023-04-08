@@ -40,12 +40,12 @@ namespace infrastructure {
             _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0]
         );
         _u_plane = std::make_shared<JetsonBuffer>(
-            _nvbuf_surf->surfaceList->mappedAddr.addr[0],
-            _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0]
+            _nvbuf_surf->surfaceList->mappedAddr.addr[1],
+            _nvbuf_surf->surfaceList->planeParams.height[1] * _nvbuf_surf->surfaceList->planeParams.pitch[1]
         );
         _v_plane = std::make_shared<JetsonBuffer>(
-            _nvbuf_surf->surfaceList->mappedAddr.addr[0],
-            _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0]
+            _nvbuf_surf->surfaceList->mappedAddr.addr[2],
+            _nvbuf_surf->surfaceList->planeParams.height[2] * _nvbuf_surf->surfaceList->planeParams.pitch[2]
         );
     }
 
