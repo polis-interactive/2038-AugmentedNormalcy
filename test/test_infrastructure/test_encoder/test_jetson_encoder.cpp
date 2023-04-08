@@ -63,6 +63,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
     );
     out_time = Clock::now();
 
+    auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
     std::cout << "Time to encode: " << d1.count() << std::endl;
 
     std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
