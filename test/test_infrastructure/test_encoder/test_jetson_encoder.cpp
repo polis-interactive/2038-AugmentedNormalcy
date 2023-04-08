@@ -14,7 +14,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 class TestJetsonEncoderConfig : public infrastructure::EncoderConfig {
     [[nodiscard]] unsigned int get_encoder_buffer_count() const override {
-        return 4;
+        return 6;
     };
     [[nodiscard]] std::pair<int, int> get_encoder_width_height() const override {
         return { 1536, 864 };
@@ -216,6 +216,8 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
 
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
     std::cout << "Time to encode 10s of data at 30fps: " << d1.count() << std::endl;
+
+    std::cout << "Used frames: " << counter << std::endl;
 }
 
 
@@ -269,6 +271,8 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-TreadTest") {
 
         auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
         std::cout << "Time to encode 10s of data at 30fps: " << d1.count() << std::endl;
+
+        std::cout << "Used frames: " << counter << std::endl;
 
     };
 

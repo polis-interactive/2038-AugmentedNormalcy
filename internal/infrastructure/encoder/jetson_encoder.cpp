@@ -69,6 +69,8 @@ namespace infrastructure {
         }
     }
 
+    std::shared_ptr<CharBuffer> LeakyPlaneBuffer::_buffer;
+
     std::atomic<int> Encoder::_last_encoder_number = { -1 };
 
     Encoder::Encoder(const EncoderConfig &config, SizedBufferCallback output_callback):
@@ -79,6 +81,9 @@ namespace infrastructure {
         for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
             _input_buffers.push(new JetsonPlaneBuffer(_width_height));
         }
+        // create leaky buffer
+        LeakyPlaneBuffer::initialize(_width_height);
+        _leaky_upstream_buffer = std::make_shared<LeakyPlaneBuffer>();
         // create downstream buffers
         auto downstream_max_size = getMaxJpegSize(_width_height);
         for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
@@ -96,10 +101,8 @@ namespace infrastructure {
             }
         }
         if (!jetson_plane_buffer) {
-            std::this_thread::sleep_for(33ms);
-            return GetSizedBufferPool();
+            return _leaky_upstream_buffer;
         }
-
         jetson_plane_buffer->SyncCpu();
         auto self(shared_from_this());
         auto buffer = std::shared_ptr<SizedBufferPool>(
@@ -116,7 +119,11 @@ namespace infrastructure {
         if (_work_stop) {
             return;
         }
-        auto jetson_buffer = std::static_pointer_cast<JetsonPlaneBuffer>(buffer);
+        auto plane_buffer = std::static_pointer_cast<PlaneBuffer>(buffer);
+        if (plane_buffer->IsLeakyBuffer()) {
+            return;
+        }
+        auto jetson_buffer = std::static_pointer_cast<JetsonPlaneBuffer>(plane_buffer);
         std::unique_lock<std::mutex> lock(_work_mutex);
         _work_queue.push(std::move(jetson_buffer));
         _work_cv.notify_one();

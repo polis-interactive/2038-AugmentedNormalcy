@@ -47,7 +47,12 @@ namespace infrastructure {
         const std::size_t _size;
     };
 
-    class JetsonPlaneBuffer: public SizedBufferPool {
+    class PlaneBuffer: public SizedBufferPool {
+    public:
+        [[nodiscard]] virtual bool IsLeakyBuffer() = 0;
+    };
+
+    class JetsonPlaneBuffer: public PlaneBuffer {
     public:
         explicit JetsonPlaneBuffer(const std::pair<int, int> &width_height_tuple);
         [[nodiscard]] int GetFd() const {
@@ -65,6 +70,7 @@ namespace infrastructure {
                     return nullptr;
             }
         }
+        [[nodiscard]] bool IsLeakyBuffer() final { return false; }
         void SyncCpu() {
             NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 0);
             NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 1);
@@ -115,6 +121,20 @@ namespace infrastructure {
         const std::size_t _max_buffer_size;
     };
 
+    class LeakyPlaneBuffer: public PlaneBuffer {
+    public:
+        static void initialize(const std::pair<int, int> &width_height_tuple) {
+            auto [width, height] = width_height_tuple;
+            _buffer = std::make_shared<CharBuffer>(width * height * 3 / 2);
+        }
+        [[nodiscard]] std::shared_ptr<SizedBuffer> GetSizedBuffer() final {
+            return _buffer;
+        }
+        [[nodiscard]] bool IsLeakyBuffer() final { return true; }
+    private:
+        static std::shared_ptr<CharBuffer> _buffer;
+    };
+
     class Encoder: public std::enable_shared_from_this<Encoder>, public SizedPlaneBufferPool {
     public:
         [[nodiscard]] static std::shared_ptr<Encoder> Create(
@@ -146,6 +166,7 @@ namespace infrastructure {
 
         std::queue<JetsonPlaneBuffer *> _input_buffers;
         std::mutex _input_buffers_mutex;
+        std::shared_ptr<LeakyPlaneBuffer> _leaky_upstream_buffer;
 
         std::unique_ptr<std::thread> _work_thread;
         std::atomic<bool> _work_stop = { true };
