@@ -50,7 +50,6 @@ namespace infrastructure {
     }
 
     JetsonPlaneBuffer::~JetsonPlaneBuffer() {
-        std::cout << "Shouldn't get called till end" << std::endl;
         if (_nvbuf_surf) {
             if (_nvbuf_surf->surfaceList->mappedAddr.addr[2]) {
                 NvBufSurfaceUnMap(_nvbuf_surf, 0, 2);
