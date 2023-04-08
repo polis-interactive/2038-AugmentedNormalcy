@@ -15,7 +15,7 @@ namespace infrastructure {
         throw std::runtime_error(ec.message());
     }
 
-    TcpServer::TcpServer(const TcpServerConfig &config, net::io_context &context, std::shared_ptr<TcpServerManager> &manager):
+    TcpServer::TcpServer(const TcpServerConfig &config, net::io_context &context, std::shared_ptr<TcpServerManager> manager):
         _context(context),
         _endpoint(tcp::v4(), config.get_tcp_server_port()),
         _acceptor(net::make_strand(context)),
@@ -63,18 +63,22 @@ namespace infrastructure {
     void TcpServer::Stop() {
         if (!_is_stopped) {
             _is_stopped = true;
+            auto self(shared_from_this());
             boost::asio::post(
                 net::make_strand(_context),
-                [&acceptor = _acceptor]() { acceptor.cancel(); }
+                [&acceptor = _acceptor, s = std::move(self)]() {
+                    acceptor.cancel();
+                }
             );
         }
     }
 
     void TcpServer::acceptConnections() {
         std::cout << "TcpServer: starting to accept connections" << std::endl;
+        auto self(shared_from_this());
         _acceptor.async_accept(
             net::make_strand(_context),
-            [this](error_code ec, tcp::socket socket) {
+            [this, s = std::move(self)](error_code ec, tcp::socket socket) {
                 std::cout << "TcpServer: attempting connection" << std::endl;
                 std::cout << ec << std::endl;
                 if (_is_stopped) {
@@ -88,7 +92,9 @@ namespace infrastructure {
                     if (connection_type == TcpConnectionType::CAMERA_CONNECTION) {
                         std::shared_ptr<TcpCameraSession>(new TcpCameraSession(std::move(socket), _manager))->Run();
                     } else if (connection_type == TcpConnectionType::HEADSET_CONNECTION) {
-                        std::shared_ptr<TcpHeadsetSession>(new TcpHeadsetSession(std::move(socket), _manager))->ConnectAndWait();
+                        std::shared_ptr<TcpHeadsetSession>(
+                                new TcpHeadsetSession(std::move(socket), _manager)
+                        )->ConnectAndWait();
                     } else {
                         std::cout << "TcpServer: Unknown connection, abort" << std::endl;
                         socket.shutdown(tcp::socket::shutdown_send, ec);
@@ -103,14 +109,14 @@ namespace infrastructure {
 
     TcpCameraSession::TcpCameraSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager):
         _socket(std::move(socket)), _manager(manager)
-    {
+    {}
+
+    void TcpCameraSession::Run() {
         std::cout << "TcpCameraSession: creating connection" << std::endl;
         auto [session_id, plane_buffer_pool] = _manager->CreateCameraServerConnection(_socket.remote_endpoint());
         _session_id = session_id;
         _plane_buffer_pool = plane_buffer_pool;
-    }
 
-    void TcpCameraSession::Run() {
         std::cout << "TcpCameraSession: running readStream" << std::endl;
         auto self(shared_from_this());
         net::dispatch(
@@ -225,14 +231,12 @@ namespace infrastructure {
     void TcpHeadsetSession::ConnectAndWait() {
         auto self(shared_from_this());
         _session_id = _manager->CreateHeadsetServerConnection(
-                _socket.remote_endpoint(),
-                [this, s = std::move(self)](std::shared_ptr<SizedBuffer> &&buffer) {
-                    write(std::move(buffer));
-                }
+            _socket.remote_endpoint(),
+            self
         );
     }
 
-    void TcpHeadsetSession::write(std::shared_ptr<SizedBuffer> &&buffer) {
+    void TcpHeadsetSession::Write(std::shared_ptr<SizedBuffer> &&buffer) {
         if (!_is_live) {
             return;
         }

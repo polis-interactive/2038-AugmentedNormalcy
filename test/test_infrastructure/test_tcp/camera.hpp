@@ -43,7 +43,7 @@ public:
 
     /* dummy for headset server */
     [[nodiscard]] unsigned long CreateHeadsetServerConnection(
-            tcp::endpoint endpoint, SizedBufferCallback writeCall
+            tcp::endpoint endpoint, std::shared_ptr<infrastructure::WritableTcpSession> session
     ) override {
         return 0;
     }

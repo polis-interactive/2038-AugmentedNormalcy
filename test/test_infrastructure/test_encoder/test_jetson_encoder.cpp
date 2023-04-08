@@ -13,7 +13,10 @@ typedef std::chrono::high_resolution_clock Clock;
 #include "infrastructure/encoder/jetson_encoder.hpp"
 
 class TestJetsonEncoderConfig : public infrastructure::EncoderConfig {
-    [[nodiscard]] unsigned int get_encoder_buffer_count() const override {
+    [[nodiscard]] unsigned int get_encoder_upstream_buffer_count() const override {
+        return 6;
+    };
+    [[nodiscard]] unsigned int get_encoder_downstream_buffer_count() const override {
         return 6;
     };
     [[nodiscard]] std::pair<int, int> get_encoder_width_height() const override {

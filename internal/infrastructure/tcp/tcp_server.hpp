@@ -24,6 +24,16 @@ namespace infrastructure {
 
     typedef std::pair<unsigned long, std::shared_ptr<SizedPlaneBufferPool>> CameraConnectionPayload;
 
+    class TcpSession {
+    public:
+        virtual void TryClose() = 0;
+    };
+
+    class WritableTcpSession: public TcpSession {
+    public:
+        virtual void Write(std::shared_ptr<SizedBuffer> &&send_buffer) = 0;
+    };
+
     class TcpServerManager {
     public:
         // tcp server
@@ -35,20 +45,20 @@ namespace infrastructure {
         // headset session
         [[nodiscard]]  virtual unsigned long CreateHeadsetServerConnection(
             tcp::endpoint endpoint,
-            SizedBufferCallback writeCall
+            std::shared_ptr<WritableTcpSession> session
         ) = 0;
         virtual void DestroyHeadsetServerConnection(tcp::endpoint endpoint, unsigned long session_id) = 0;
     };
 
 
     class TcpServer;
-    class TcpCameraSession : public std::enable_shared_from_this<TcpCameraSession> {
+    class TcpCameraSession : public std::enable_shared_from_this<TcpCameraSession>, public TcpSession {
     public:
         TcpCameraSession() = delete;
         TcpCameraSession (const TcpCameraSession&) = delete;
         TcpCameraSession& operator= (const TcpCameraSession&) = delete;
         // TODO: don't know a better way of doing this. Essentially, TcpServerManager needs to be able to call this
-        void TryClose();
+        void TryClose() override;
     protected:
         friend class TcpServer;
         TcpCameraSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &_manager);
@@ -64,40 +74,45 @@ namespace infrastructure {
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
         std::shared_ptr<TcpServerManager> &_manager;
         std::shared_ptr<SizedPlaneBufferPool> _plane_buffer_pool = nullptr;
-        unsigned long _session_id;
+        unsigned long _session_id= -1;
     };
 
-    class TcpHeadsetSession : public std::enable_shared_from_this<TcpHeadsetSession> {
+    class TcpHeadsetSession : public std::enable_shared_from_this<TcpHeadsetSession>, public WritableTcpSession {
     public:
         TcpHeadsetSession() = delete;
         TcpHeadsetSession (const TcpHeadsetSession&) = delete;
         TcpHeadsetSession& operator= (const TcpHeadsetSession&) = delete;
         // TODO: don't know a better way of doing this. Essentially, TcpServerManager needs to be able to call this
-        void TryClose();
+        void TryClose() override;
+        void Write(std::shared_ptr<SizedBuffer> &&send_buffer) override;
     protected:
         friend class TcpServer;
         TcpHeadsetSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager);
         void ConnectAndWait();
     private:
-        void write(std::shared_ptr<SizedBuffer> &&send_buffer);
         tcp::socket _socket;
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
         std::shared_ptr<TcpServerManager> &_manager;
         std::atomic<bool> _is_live;
-        unsigned long _session_id;
+        unsigned long _session_id = -1;
     };
 
     struct TcpServerConfig {
         [[nodiscard]] virtual int get_tcp_server_port() const = 0;
     };
 
-    class TcpServer {
+    class TcpServer: public std::enable_shared_from_this<TcpServer>{
     public:
+        static std::shared_ptr<TcpServer> Create(
+            const TcpServerConfig &config, net::io_context &context, std::shared_ptr<TcpServerManager> manager
+        ) {
+            return std::make_shared<TcpServer>(config, context, std::move(manager));
+        }
         TcpServer() = delete;
         TcpServer (const TcpServer&) = delete;
         TcpServer& operator= (const TcpServer&) = delete;
         TcpServer(
-            const TcpServerConfig &config, net::io_context &context, std::shared_ptr<TcpServerManager> &manager
+            const TcpServerConfig &config, net::io_context &context, std::shared_ptr<TcpServerManager> manager
         );
         void Start();
         void Stop();
@@ -107,7 +122,7 @@ namespace infrastructure {
         net::io_context &_context;
         tcp::acceptor _acceptor;
         tcp::endpoint _endpoint;
-        std::shared_ptr<TcpServerManager> &_manager;
+        std::shared_ptr<TcpServerManager> _manager;
     };
 }
 

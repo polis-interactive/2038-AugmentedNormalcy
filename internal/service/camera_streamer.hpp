@@ -2,6 +2,9 @@
 // Created by brucegoose on 3/20/23.
 //
 
+#ifndef AUGMENTEDNORMALCY_SERVICE_CAMERA_STREAMER_HPP
+#define AUGMENTEDNORMALCY_SERVICE_CAMERA_STREAMER_HPP
+
 #include <utility>
 
 #include "infrastructure/tcp/tcp_context.hpp"
@@ -94,3 +97,5 @@ namespace service {
         std::shared_ptr<infrastructure::TcpClient> _tcp_client = nullptr;
     };
 }
+
+#endif //AUGMENTEDNORMALCY_SERVICE_CAMERA_STREAMER_HPP

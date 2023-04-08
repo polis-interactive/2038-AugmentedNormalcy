@@ -205,7 +205,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset")  {
     for (auto &sample : samples) {
         std::cout << "Writing buffer: " << sample << std::endl;
         auto buffer = std::make_shared<FakeSizedBuffer>(sample);
-        manager->_write_call(std::move(buffer));
+        manager->_session->Write(std::move(buffer));
         std::this_thread::sleep_for(1ms);
     }
     std::this_thread::sleep_for(10ms);
@@ -259,7 +259,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset-Stress"){
             s.insert(s.begin(), 10 - s.size(), '0');
         }
         auto buffer = std::make_shared<FakeSizedBuffer>(s);
-        manager->_write_call(std::move(buffer));
+        manager->_session->Write(std::move(buffer));
         send_count += 1;
     }
     std::this_thread::sleep_for(2s);

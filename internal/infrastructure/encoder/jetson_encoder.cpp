@@ -76,13 +76,13 @@ namespace infrastructure {
         _width_height(config.get_encoder_width_height())
     {
         // create plane buffers
-        for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
+        for (int i = 0; i < config.get_encoder_upstream_buffer_count(); i++) {
             _input_buffers.push(new JetsonPlaneBuffer(_width_height));
         }
 
         // create downstream buffers
         auto downstream_max_size = getMaxJpegSize(_width_height);
-        for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
+        for (int i = 0; i < config.get_encoder_downstream_buffer_count(); i++) {
             _output_buffers.push(new CharBuffer(downstream_max_size));
         }
 

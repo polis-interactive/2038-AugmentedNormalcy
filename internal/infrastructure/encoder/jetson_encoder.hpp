@@ -29,7 +29,8 @@
 namespace infrastructure {
 
     struct EncoderConfig {
-        [[nodiscard]] virtual unsigned int get_encoder_buffer_count() const = 0;
+        [[nodiscard]] virtual unsigned int get_encoder_upstream_buffer_count() const = 0;
+        [[nodiscard]] virtual unsigned int get_encoder_downstream_buffer_count() const = 0;
         [[nodiscard]] virtual std::pair<int, int> get_encoder_width_height() const = 0;
     };
 

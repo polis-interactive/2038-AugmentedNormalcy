@@ -45,15 +45,15 @@ public:
         return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
     }
     [[nodiscard]] unsigned long CreateHeadsetServerConnection(
-            tcp::endpoint endpoint, SizedBufferCallback write_call
+            tcp::endpoint endpoint, std::shared_ptr<infrastructure::WritableTcpSession> session
     ) override {
-        _write_call = std::move(write_call);
+        _session = std::move(session);
         return 0;
     }
     void DestroyHeadsetServerConnection(tcp::endpoint endpoint, unsigned long session_id) override {
-        _write_call = nullptr;
+        _session = nullptr;
     }
-    SizedBufferCallback _write_call;
+    std::shared_ptr<infrastructure::WritableTcpSession> _session;
 
 
     /* dummy for camera client */
