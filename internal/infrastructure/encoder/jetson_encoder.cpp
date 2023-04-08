@@ -88,7 +88,7 @@ namespace infrastructure {
         std::unique_lock<std::mutex> lock(_input_buffers_mutex);
         auto jetson_plane_buffer = _input_buffers.front();
         _input_buffers.pop();
-        // jetson_plane_buffer->SyncCpu();
+        jetson_plane_buffer->SyncCpu();
         auto self(shared_from_this());
         auto buffer = std::shared_ptr<SizedBufferPool>(
                 (SizedBufferPool *) jetson_plane_buffer,
@@ -156,7 +156,7 @@ namespace infrastructure {
         if (_work_stop) {
             return;
         }
-        // buffer->SyncGpu();
+        buffer->SyncGpu();
         // get output buffer
         CharBuffer *char_buffer;
         {
