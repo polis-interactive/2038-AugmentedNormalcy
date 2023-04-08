@@ -69,8 +69,6 @@ namespace infrastructure {
         }
     }
 
-    std::shared_ptr<CharBuffer> LeakyPlaneBuffer::_buffer;
-
     std::atomic<int> Encoder::_last_encoder_number = { -1 };
 
     Encoder::Encoder(const EncoderConfig &config, SizedBufferCallback output_callback):
@@ -81,14 +79,16 @@ namespace infrastructure {
         for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
             _input_buffers.push(new JetsonPlaneBuffer(_width_height));
         }
-        // init leaky buffer
-        LeakyPlaneBuffer::initialize(_width_height);
 
         // create downstream buffers
         auto downstream_max_size = getMaxJpegSize(_width_height);
         for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
             _output_buffers.push(new CharBuffer(downstream_max_size));
         }
+
+        // leaky buffers
+        _leaky_upstream_buffer = std::make_shared<CharBuffer>(downstream_max_size);
+        _leaky_downstream_buffer = std::make_shared<CharBuffer>(downstream_max_size);
     }
 
     std::shared_ptr<SizedBufferPool> Encoder::GetSizedBufferPool() {
@@ -102,7 +102,7 @@ namespace infrastructure {
         }
         if (!jetson_plane_buffer) {
             std::cout << "give em da leak" << std::endl;
-            return std::make_shared<LeakyPlaneBuffer>();
+            return std::make_shared<LeakyPlaneBuffer>(_leaky_upstream_buffer);
         }
         jetson_plane_buffer->SyncCpu();
         auto self(shared_from_this());
@@ -182,7 +182,12 @@ namespace infrastructure {
         {
             std::unique_lock<std::mutex> lock(_output_buffers_mutex);
             char_buffer = _output_buffers.front();
-            _output_buffers.pop();
+            if (char_buffer) {
+                _output_buffers.pop();
+            }
+        }
+        if (!char_buffer) {
+            char_buffer = _leaky_downstream_buffer.get();
         }
 
         // do the encode
@@ -192,8 +197,8 @@ namespace infrastructure {
         // free the plane buffer asap
         buffer.reset();
 
-        // if the encode was successful, push it downstream with a lambda to requeue it
-        if (ret >= 0) {
+        // if the encode was successful and no backpressure, push it downstream with a lambda to requeue it
+        if (ret >= 0 && char_buffer != _leaky_downstream_buffer.get()) {
             auto self(shared_from_this());
             auto output_buffer = std::shared_ptr<SizedBuffer>(
                     (SizedBuffer *) char_buffer, [this, s = std::move(self), char_buffer](SizedBuffer *) mutable {

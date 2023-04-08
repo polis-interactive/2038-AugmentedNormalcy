@@ -123,10 +123,7 @@ namespace infrastructure {
 
     class LeakyPlaneBuffer: public PlaneBuffer {
     public:
-        static void initialize(const std::pair<int, int> &width_height_tuple) {
-            auto [width, height] = width_height_tuple;
-            _buffer = std::make_shared<CharBuffer>(width * height * 3 / 2);
-        }
+        explicit LeakyPlaneBuffer(std::shared_ptr<CharBuffer> buffer): _buffer(std::move(buffer)) {}
         [[nodiscard]] std::shared_ptr<SizedBuffer> GetSizedBuffer() final {
             if (is_used) {
                 return nullptr;
@@ -138,7 +135,7 @@ namespace infrastructure {
         [[nodiscard]] bool IsLeakyBuffer() final { return true; }
     private:
         bool is_used = false;
-        static std::shared_ptr<CharBuffer> _buffer;
+        std::shared_ptr<CharBuffer> _buffer;
     };
 
     class Encoder: public std::enable_shared_from_this<Encoder>, public SizedPlaneBufferPool {
@@ -172,6 +169,9 @@ namespace infrastructure {
 
         std::queue<JetsonPlaneBuffer *> _input_buffers;
         std::mutex _input_buffers_mutex;
+
+        std::shared_ptr<CharBuffer> _leaky_upstream_buffer;
+        std::shared_ptr<CharBuffer> _leaky_downstream_buffer;
 
         std::unique_ptr<std::thread> _work_thread;
         std::atomic<bool> _work_stop = { true };
