@@ -35,45 +35,55 @@ namespace infrastructure {
 
     class JetsonBuffer: public SizedBuffer {
     public:
-        explicit JetsonBuffer(const std::pair<int, int> &width_height_tuple);
-        [[nodiscard]] void *GetMemory() override {
+        JetsonBuffer(void *memory, std::size_t size): _memory(memory), _size(size) {}
+        [[nodiscard]] void * GetMemory() final {
             return _memory;
-        };
-        [[nodiscard]] std::size_t GetSize() override {
-            return _size + _size_1 + _size_2;
-        };
+        }
+        [[nodiscard]] std::size_t GetSize() final {
+            return _size;
+        }
+    private:
+        void *_memory;
+        const std::size_t _size;
+    };
+
+    class JetsonPlaneBuffer: public SizedBufferPool {
+    public:
+        explicit JetsonPlaneBuffer(const std::pair<int, int> &width_height_tuple);
         [[nodiscard]] int GetFd() const {
             return fd;
         }
+        [[nodiscard]] std::shared_ptr<SizedBuffer> GetSizedBuffer() final {
+            switch (++next_plane) {
+                case 0:
+                    return _y_plane;
+                case 1:
+                    return _u_plane;
+                case 2:
+                    return _v_plane;
+                default:
+                    return nullptr;
+            }
+        }
         void SyncCpu() {
-            /*
-            // NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 0);
-            NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 1);
-            NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 2);
-
-
-            // NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 0);
+            NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 0);
             NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 1);
             NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 2);
-
-
-            // NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 0);
-            NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 1);
-            NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 2);
-            */
+            next_plane = -1;
         }
         void SyncGpu() {
+            NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 0);
+            NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 1);
+            NvBufSurfaceSyncForDevice(_nvbuf_surf, 0, 2);
         }
-        ~JetsonBuffer();
+        ~JetsonPlaneBuffer();
     private:
         int fd = -1;
-        void * _memory = nullptr;
-        void * _memory_1 = nullptr;
-        void * _memory_2 = nullptr;
+        int next_plane = -1;
+        std::shared_ptr<JetsonBuffer> _y_plane = nullptr;
+        std::shared_ptr<JetsonBuffer> _u_plane = nullptr;
+        std::shared_ptr<JetsonBuffer> _v_plane = nullptr;
         NvBufSurface *_nvbuf_surf = nullptr;
-        std::size_t _size = 0;
-        std::size_t _size_1 = 0;
-        std::size_t _size_2 = 0;
     };
 
     class CharBuffer: public SizedBuffer {
@@ -89,14 +99,12 @@ namespace infrastructure {
         [[nodiscard]] std::size_t GetSize() override {
             return _used_size;
         };
-        [[nodiscard]] std::size_t GetMaxSize() const {
-            return _max_buffer_size;
-        };
         [[nodiscard]] unsigned char ** GetMemoryForWrite() {
             return &_buffer;
         }
-        void SetCurrentSize(const std::size_t &sz) {
-            _used_size = sz;
+        [[nodiscard]] std::size_t &GetSizeForWrite() {
+            _used_size = _max_buffer_size;
+            return _used_size;
         }
         ~CharBuffer() {
             delete[] _buffer;
@@ -107,7 +115,7 @@ namespace infrastructure {
         const std::size_t _max_buffer_size;
     };
 
-    class Encoder: public std::enable_shared_from_this<Encoder> {
+    class Encoder: public std::enable_shared_from_this<Encoder>, public SizedPlaneBufferPool {
     public:
         [[nodiscard]] static std::shared_ptr<Encoder> Create(
             const EncoderConfig &config, SizedBufferCallback output_callback
@@ -116,15 +124,15 @@ namespace infrastructure {
             encoder->Start();
             return std::move(encoder);
         }
-        [[nodiscard]] std::shared_ptr<SizedBuffer> GetSizedBuffer();
-        void PostSizedBuffer(std::shared_ptr<SizedBuffer> &&buffer);
+        [[nodiscard]] std::shared_ptr<SizedBufferPool> GetSizedBufferPool() override;
+        void PostSizedBufferPool(std::shared_ptr<SizedBufferPool> &&buffer) override;
         void Start();
         void Stop();
         Encoder(const EncoderConfig &config, SizedBufferCallback output_callback);
         ~Encoder();
     private:
         void run();
-        void encodeBuffer(std::shared_ptr<JetsonBuffer> &&buffer);
+        void encodeBuffer(std::shared_ptr<JetsonPlaneBuffer> &&buffer);
 
         static int getMaxJpegSize(const std::pair<int, int> &width_height_tuple) {
             auto [width, height] = width_height_tuple;
@@ -137,14 +145,14 @@ namespace infrastructure {
         }
         static std::atomic<int> _last_encoder_number;
 
-        std::queue<JetsonBuffer *> _input_buffers;
+        std::queue<JetsonPlaneBuffer *> _input_buffers;
         std::mutex _input_buffers_mutex;
 
         std::unique_ptr<std::thread> _work_thread;
         std::atomic<bool> _work_stop = { true };
         std::mutex _work_mutex;
         std::condition_variable _work_cv;
-        std::queue<std::shared_ptr<JetsonBuffer>> _work_queue;
+        std::queue<std::shared_ptr<JetsonPlaneBuffer>> _work_queue;
 
         std::shared_ptr<NvJPEGEncoder> _jpeg_encoder;
 

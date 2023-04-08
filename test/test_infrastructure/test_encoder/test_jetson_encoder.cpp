@@ -23,9 +23,9 @@ class TestJetsonEncoderConfig : public infrastructure::EncoderConfig {
 
 TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
     std::pair<int, int> width_height = { 1536, 864 };
-    auto buffer = new infrastructure::JetsonBuffer(width_height);
-    // auto buffer_2 = new infrastructure::JetsonBuffer(width_height);
-
+    auto buffer = new infrastructure::JetsonPlaneBuffer(width_height);
+    auto buffer_2 = new infrastructure::JetsonPlaneBuffer(width_height);
+    auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
     auto output_buffer = new infrastructure::CharBuffer(std::ceil(1536 * 864 * 3 / 2));
 
     std::filesystem::path this_dir = TEST_DIR;
@@ -46,14 +46,17 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
 
     std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
     buffer->SyncCpu();
-    // test_in_file.read((char *)buffer->GetMemory(), buffer->GetSize());
+    auto buf = buffer->GetSizedBuffer();
+    test_in_file.read((char *)buf->GetMemory(), buf->GetSize());
+    buf = buffer->GetSizedBuffer();
+    test_in_file.read((char *)buf->GetMemory(), buf->GetSize());
+    buf = buffer->GetSizedBuffer();
+    test_in_file.read((char *)buf->GetMemory(), buf->GetSize());
 
-    auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
-
-    auto sz = output_buffer->GetMaxSize();
     buffer->SyncGpu();
-    // auto ret = jpegenc->encodeFromFd(buffer->GetFd(), JCS_YCbCr, output_buffer->GetMemoryForWrite(), sz, 75);
-    output_buffer->SetCurrentSize(sz);
+    auto ret = jpegenc->encodeFromFd(
+        buffer->GetFd(), JCS_YCbCr, output_buffer->GetMemoryForWrite(), output_buffer->GetSizeForWrite(), 75
+    );
 
     std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
     test_file_out.write((char *) output_buffer->GetMemory(), output_buffer->GetSize());
@@ -63,7 +66,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
     REQUIRE(std::filesystem::exists(out_frame));
 
     delete buffer;
-    // delete buffer_2;
+    delete buffer_2;
     delete output_buffer;
     delete jpegenc;
 
@@ -119,11 +122,16 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
 
     {
         auto encoder = infrastructure::Encoder::Create(conf, std::move(callback));
-        std::this_thread::sleep_for(100ms);
-        auto buffer = encoder->GetSizedBuffer();
+        auto buffer = encoder->GetSizedBufferPool();
         std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
-        test_file_in.read((char *)buffer->GetMemory(), buffer->GetSize());
-        encoder->PostSizedBuffer(std::move(buffer));
+        auto sz_buf = buffer->GetSizedBuffer();
+        test_file_in.read((char *)sz_buf->GetMemory(), sz_buf->GetSize());
+        sz_buf = buffer->GetSizedBuffer();
+        test_file_in.read((char *)sz_buf->GetMemory(), sz_buf->GetSize());
+        sz_buf = buffer->GetSizedBuffer();
+        test_file_in.read((char *)sz_buf->GetMemory(), sz_buf->GetSize());
+        REQUIRE_EQ(buffer->GetSizedBuffer(), nullptr);
+        encoder->PostSizedBufferPool(std::move(buffer));
         in_time = Clock::now();
         std::this_thread::sleep_for(100ms);
         encoder->Stop();

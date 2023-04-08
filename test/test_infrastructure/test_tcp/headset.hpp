@@ -64,7 +64,6 @@ public:
     [[nodiscard]]  infrastructure::CameraConnectionPayload CreateCameraServerConnection(tcp::endpoint endpoint) override {
         return { 0, nullptr };
     };
-    void PostCameraServerBuffer(std::shared_ptr<SizedBuffer> &&buffer) override {};
     void DestroyCameraServerConnection(tcp::endpoint endpoint, unsigned long session_id) override {}
 };
 

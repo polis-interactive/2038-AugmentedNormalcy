@@ -105,9 +105,9 @@ namespace infrastructure {
         _socket(std::move(socket)), _manager(manager)
     {
         std::cout << "TcpCameraSession: creating connection" << std::endl;
-        auto [session_id, buffer_pool] = _manager->CreateCameraServerConnection(_socket.remote_endpoint());
+        auto [session_id, plane_buffer_pool] = _manager->CreateCameraServerConnection(_socket.remote_endpoint());
         _session_id = session_id;
-        _buffer_pool = buffer_pool;
+        _plane_buffer_pool = plane_buffer_pool;
     }
 
     void TcpCameraSession::Run() {
@@ -122,18 +122,23 @@ namespace infrastructure {
     }
 
     void TcpCameraSession::readStream() {
-        auto buffer = _buffer_pool->GetSizedBuffer();
-        auto buffer_memory = buffer->GetMemory();
-        auto buffer_size = buffer->GetSize();
+        auto plane_buffer = _plane_buffer_pool->GetSizedBufferPool();
+        auto plane = plane_buffer->GetSizedBuffer();
         auto self(shared_from_this());
         _socket.async_receive(
-            boost::asio::buffer(buffer_memory, buffer_size),
-            [this, s = std::move(self), camera_buffer = std::move(buffer)] (error_code ec, std::size_t bytes_written) mutable {
+            boost::asio::buffer(plane->GetMemory(), plane->GetSize()),
+            [this, s = std::move(self), camera_pool = std::move(plane_buffer), camera_buffer = std::move(plane)]
+            (error_code ec, std::size_t bytes_written) mutable {
                 if (!ec && bytes_written == camera_buffer->GetSize()) {
-                    _manager->PostCameraServerBuffer(std::move(camera_buffer));
-                    readStream();
+                    auto next_plane = camera_pool->GetSizedBuffer();
+                    if (next_plane) {
+                        readStreamPlane(std::move(camera_pool), std::move(next_plane));
+                    } else {
+                        _plane_buffer_pool->PostSizedBufferPool(std::move(camera_pool));
+                        readStream();
+                    }
                 } else if (!ec) {
-                    continueReadStream(std::move(camera_buffer), bytes_written);
+                    continueReadPlane(std::move(camera_pool), std::move(camera_buffer), bytes_written);
                 } else {
                     TryClose();
                 }
@@ -141,19 +146,57 @@ namespace infrastructure {
         );
     }
 
-    void TcpCameraSession::continueReadStream(std::shared_ptr<SizedBuffer> &&buffer, std::size_t bytes_written) {
+    void TcpCameraSession::readStreamPlane(
+        std::shared_ptr<SizedBufferPool> &&pool, std::shared_ptr<SizedBuffer> &&plane
+    ) {
+        auto self(shared_from_this());
+        _socket.async_receive(
+            boost::asio::buffer(plane->GetMemory(), plane->GetSize()),
+            [this, s = std::move(self), camera_pool = std::move(pool), camera_buffer = std::move(plane)]
+            (error_code ec, std::size_t bytes_written) mutable {
+                if (!ec && bytes_written == camera_buffer->GetSize()) {
+                    auto next_plane = camera_pool->GetSizedBuffer();
+                    if (next_plane) {
+                        readStreamPlane(std::move(camera_pool), std::move(next_plane));
+                    } else {
+                        _plane_buffer_pool->PostSizedBufferPool(std::move(camera_pool));
+                        readStream();
+                    }
+                } else if (!ec) {
+                    continueReadPlane(std::move(camera_pool), std::move(camera_buffer), bytes_written);
+                } else {
+                    TryClose();
+                }
+            }
+        );
+    }
+
+    void TcpCameraSession::continueReadPlane(
+        std::shared_ptr<SizedBufferPool> &&pool, std::shared_ptr<SizedBuffer> &&buffer,
+        std::size_t bytes_written
+    ) {
         auto buffer_memory = static_cast<uint8_t *>(buffer->GetMemory()) + bytes_written;
         auto buffer_size = buffer->GetSize() - bytes_written;
         auto self(shared_from_this());
         _socket.async_receive(
                 boost::asio::buffer(buffer_memory, buffer_size),
-                [this, s = std::move(self), camera_buffer = std::move(buffer), current_bytes = bytes_written]
+                [
+                    this, s = std::move(self), camera_pool = std::move(pool),
+                    camera_buffer = std::move(buffer), current_bytes = bytes_written
+                ]
                 (error_code ec, std::size_t bytes_written) mutable {
                     if (!ec && (bytes_written + current_bytes) == camera_buffer->GetSize()) {
-                        _manager->PostCameraServerBuffer(std::move(camera_buffer));
-                        readStream();
+                        auto next_plane = camera_pool->GetSizedBuffer();
+                        if (next_plane) {
+                            readStreamPlane(std::move(camera_pool), std::move(next_plane));
+                        } else {
+                            _plane_buffer_pool->PostSizedBufferPool(std::move(camera_pool));
+                            readStream();
+                        }
                     } else if (!ec) {
-                        continueReadStream(std::move(camera_buffer), bytes_written + current_bytes);
+                        continueReadPlane(
+                            std::move(camera_pool), std::move(camera_buffer), bytes_written + current_bytes
+                        );
                     } else {
                         TryClose();
                     }

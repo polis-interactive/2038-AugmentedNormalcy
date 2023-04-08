@@ -67,18 +67,18 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
     std::vector<std::string> samples { "hello", "world", "bar__", "baz__", "foo__", "bax__" };
     sort(samples.begin(), samples.end());
     std::vector<std::string> output {};
-    auto on_receive = [&output](std::shared_ptr<SizedBuffer> &&buffer) {
-        auto fake_buffer = std::static_pointer_cast<FakeSizedBuffer>(buffer);
+    auto on_receive = [&output](std::shared_ptr<SizedBufferPool> &&buffer) {
+        auto fake_buffer = std::static_pointer_cast<FakePlaneBuffer>(buffer);
         std::string s;
-        s.assign(fake_buffer->_buffer, fake_buffer->_buffer_size);
+        s.assign(fake_buffer->_buffer->_buffer, fake_buffer->_buffer->GetSize());
         std::cout << "received buffer: " << s << std::endl;
         output.push_back(s);
         buffer.reset();
     };
     // 5 buffers total means one needs to be reused
-    auto pool = std::make_shared<FakeBufferPool>(5, 5);
+    auto pool = std::make_shared<FakePlaneBufferPool>(5, 5, on_receive);
 
-    auto manager = std::make_shared<TcpCameraClientServerManager>(pool, on_receive);
+    auto manager = std::make_shared<TcpCameraClientServerManager>(pool);
 
     // just to be cheeky, we are going to start up the client first
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
@@ -120,14 +120,14 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
 
     std::atomic_int send_count = 0;
     std::atomic_int receive_count = 0;
-    auto on_receive = [&receive_count, &t2](std::shared_ptr<SizedBuffer> &&buffer) {
+    auto on_receive = [&receive_count, &t2](std::shared_ptr<SizedBufferPool> &&buffer) {
         receive_count += 1;
         t2 = Clock::now();
         buffer.reset();
     };
-    auto pool = std::make_shared<FakeBufferPool>(10, 5);
+    auto pool = std::make_shared<FakePlaneBufferPool>(10, 5, on_receive);
 
-    auto manager = std::make_shared<TcpCameraClientServerManager>(pool, on_receive);
+    auto manager = std::make_shared<TcpCameraClientServerManager>(pool);
 
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
     infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
@@ -186,7 +186,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset")  {
     };
 
     // 5 buffers total means one needs to be reused
-    auto pool = std::make_shared<FakeBufferPool>(5, 5);
+    auto pool = std::make_shared<FakeSizedBufferPool>(5, 5);
 
     auto manager = std::make_shared<TcpHeadsetClientServerManager>(pool, on_receive);
 
@@ -237,7 +237,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset-Stress"){
         t2 = Clock::now();
         buffer.reset();
     };
-    auto pool = std::make_shared<FakeBufferPool>(10, 5);
+    auto pool = std::make_shared<FakeSizedBufferPool>(10, 5);
 
     auto manager = std::make_shared<TcpHeadsetClientServerManager>(pool, on_receive);
 

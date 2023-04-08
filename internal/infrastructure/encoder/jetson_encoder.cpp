@@ -8,7 +8,7 @@
 
 namespace infrastructure {
 
-    JetsonBuffer::JetsonBuffer(const std::pair<int, int> &width_height_tuple) {
+    JetsonPlaneBuffer::JetsonPlaneBuffer(const std::pair<int, int> &width_height_tuple) {
         NvBufSurf::NvCommonAllocateParams params;
         /* Create PitchLinear output buffer for transform. */
         params.memType = NVBUF_MEM_SURFACE_ARRAY;
@@ -31,77 +31,35 @@ namespace infrastructure {
             std::cout << "failed to get surface from fd" << std::endl;
         }
 
-        _size = _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0];
-        _size_1 = _nvbuf_surf->surfaceList->planeParams.height[1] * _nvbuf_surf->surfaceList->planeParams.pitch[1];
-        _size_2 = _nvbuf_surf->surfaceList->planeParams.height[2] * _nvbuf_surf->surfaceList->planeParams.pitch[2];
-/*
-        _nvbuf_surf->surfaceList->dataSize = GetSize();
-        _nvbuf_surf->surfaceList->planeParams.psize[0] = _size;
-        _nvbuf_surf->surfaceList->planeParams.psize[1] = _size_1;
-        _nvbuf_surf->surfaceList->planeParams.psize[2] = _size_2;
-
-*/
-
-
-        // NvBufSurfaceMap(_nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
-        _nvbuf_surf->surfaceList->dataSize = GetSize();
-        _nvbuf_surf->surfaceList->planeParams.psize[0] = _size;
-        _memory = mmap(
-                NULL,
-                _size,
-                PROT_READ | PROT_WRITE, MAP_SHARED, fd,
-                _nvbuf_surf->surfaceList->planeParams.offset[0]
-        );
-        _nvbuf_surf->surfaceList->mappedAddr.addr[0] = _memory;
-        NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 0);
-        /*
+        NvBufSurfaceMap(_nvbuf_surf, 0, 0, NVBUF_MAP_READ_WRITE);
         NvBufSurfaceMap(_nvbuf_surf, 0, 1, NVBUF_MAP_READ_WRITE);
-        NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 1);
         NvBufSurfaceMap(_nvbuf_surf, 0, 2, NVBUF_MAP_READ_WRITE);
-        NvBufSurfaceSyncForCpu(_nvbuf_surf, 0, 2);
-        */
-         /*
 
-         // just going to mmap it myself
-         if (_memory == MAP_FAILED) {
-             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
-         }
-         _memory_1 = mmap(
-                 (uint8_t *) _memory + _size,
-                 _size_1,
-                 PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
-                 _nvbuf_surf->surfaceList->planeParams.offset[1]
-         );
-         if (_memory_1 == MAP_FAILED) {
-             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
-         }
-         _memory_2 = mmap(
-                 (uint8_t *) _memory_1 + _size_1,
-                 _size_2,
-                 PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd,
-                 _nvbuf_surf->surfaceList->planeParams.offset[2]
-         );
-         if (_memory_2 == MAP_FAILED) {
-             std::cout << "FAILED TO MMAP AT ADDRESS" << std::endl;
-         }
-
-         _nvbuf_surf->surfaceList->mappedAddr.addr[0] = _memory;
-         _nvbuf_surf->surfaceList->mappedAddr.addr[1] = _memory_1;
-         _nvbuf_surf->surfaceList->mappedAddr.addr[2] = _memory_2;
-          */
+        _y_plane = std::make_shared<JetsonBuffer>(
+            _nvbuf_surf->surfaceList->mappedAddr.addr[0],
+            _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0]
+        );
+        _u_plane = std::make_shared<JetsonBuffer>(
+            _nvbuf_surf->surfaceList->mappedAddr.addr[0],
+            _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0]
+        );
+        _v_plane = std::make_shared<JetsonBuffer>(
+            _nvbuf_surf->surfaceList->mappedAddr.addr[0],
+            _nvbuf_surf->surfaceList->planeParams.height[0] * _nvbuf_surf->surfaceList->planeParams.pitch[0]
+        );
     }
 
-    JetsonBuffer::~JetsonBuffer() {
-        if (_memory != nullptr) {
-            munmap(_memory, _size);
-        }
-        if (_memory_1 != nullptr) {
-            munmap(_memory, _size_1);
-
-        }
-        if (_memory_2 != nullptr) {
-            munmap(_memory, _size_2);
-
+    JetsonPlaneBuffer::~JetsonPlaneBuffer() {
+        if (_nvbuf_surf) {
+            if (_nvbuf_surf->surfaceList->mappedAddr.addr[2]) {
+                NvBufSurfaceUnMap(_nvbuf_surf, 0, 2);
+            }
+            if (_nvbuf_surf->surfaceList->mappedAddr.addr[1]) {
+                NvBufSurfaceUnMap(_nvbuf_surf, 0, 1);
+            }
+            if (_nvbuf_surf->surfaceList->mappedAddr.addr[0]) {
+                NvBufSurfaceUnMap(_nvbuf_surf, 0, 0);
+            }
         }
         if (fd != -1) {
             NvBufSurf::NvDestroy(fd);
@@ -115,6 +73,10 @@ namespace infrastructure {
         _output_callback(std::move(output_callback)),
         _width_height(config.get_encoder_width_height())
     {
+        // create plane buffers
+        for (int i = 0; i < _output_buffers.size(); i++) {
+            _input_buffers.push(new JetsonPlaneBuffer(_width_height));
+        }
         // create downstream buffers
         auto downstream_max_size = getMaxJpegSize(_width_height);
         for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
@@ -122,26 +84,27 @@ namespace infrastructure {
         }
     }
 
-    std::shared_ptr<SizedBuffer> Encoder::GetSizedBuffer() {
+    std::shared_ptr<SizedBufferPool> Encoder::GetSizedBufferPool() {
         std::unique_lock<std::mutex> lock(_input_buffers_mutex);
-        auto jetson_buffer = _input_buffers.front();
+        auto jetson_plane_buffer = _input_buffers.front();
         _input_buffers.pop();
+        jetson_plane_buffer->SyncCpu();
         auto self(shared_from_this());
-        auto buffer = std::shared_ptr<SizedBuffer>(
-                (SizedBuffer *) jetson_buffer, [this, s = std::move(self), jetson_buffer](SizedBuffer *) mutable {
-                    std::cout << "Do I get called multiple times?" << std::endl;
+        auto buffer = std::shared_ptr<SizedBufferPool>(
+                (SizedBufferPool *) jetson_plane_buffer,
+                [this, s = std::move(self), jetson_plane_buffer](SizedBufferPool *) mutable {
                     std::unique_lock<std::mutex> lock(_input_buffers_mutex);
-                    _input_buffers.push(jetson_buffer);
+                    _input_buffers.push(jetson_plane_buffer);
                 }
         );
         return std::move(buffer);
     }
 
-    void Encoder::PostSizedBuffer(std::shared_ptr<SizedBuffer> &&buffer) {
+    void Encoder::PostSizedBufferPool(std::shared_ptr<SizedBufferPool> &&buffer) {
         if (_work_stop) {
             return;
         }
-        auto jetson_buffer = std::static_pointer_cast<JetsonBuffer>(buffer);
+        auto jetson_buffer = std::static_pointer_cast<JetsonPlaneBuffer>(buffer);
         std::unique_lock<std::mutex> lock(_work_mutex);
         _work_queue.push(std::move(jetson_buffer));
         _work_cv.notify_one();
@@ -162,9 +125,6 @@ namespace infrastructure {
     }
 
     void Encoder::run() {
-        for (int i = 0; i < _output_buffers.size(); i++) {
-            _input_buffers.push(new JetsonBuffer(_width_height));
-        }
         auto encoder_name = getUniqueJpegEncoderName();
         _jpeg_encoder = std::shared_ptr<NvJPEGEncoder>(
                 NvJPEGEncoder::createJPEGEncoder(encoder_name.c_str()),
@@ -173,7 +133,7 @@ namespace infrastructure {
                 }
         );
         while(!_work_stop) {
-            std::shared_ptr<JetsonBuffer> buffer;
+            std::shared_ptr<JetsonPlaneBuffer> buffer;
             {
                 std::unique_lock<std::mutex> lock(_work_mutex);
                 _work_cv.wait(lock, [this]() {
@@ -192,10 +152,11 @@ namespace infrastructure {
         _jpeg_encoder.reset();
     }
 
-    void Encoder::encodeBuffer(std::shared_ptr<JetsonBuffer> &&buffer) {
+    void Encoder::encodeBuffer(std::shared_ptr<JetsonPlaneBuffer> &&buffer) {
         if (_work_stop) {
             return;
         }
+        buffer->SyncGpu();
         // get output buffer
         CharBuffer *char_buffer;
         {
@@ -203,15 +164,14 @@ namespace infrastructure {
             char_buffer = _output_buffers.front();
             _output_buffers.pop();
         }
-        auto ptr = (unsigned char *) char_buffer->GetMemory();
-        auto sz = char_buffer->GetMaxSize();
 
         // do the encode
         auto ret = _jpeg_encoder->encodeFromFd(
-            buffer->GetFd(), JCS_YCbCr, char_buffer->GetMemoryForWrite(), sz, 75
+            buffer->GetFd(), JCS_YCbCr, char_buffer->GetMemoryForWrite(), char_buffer->GetSizeForWrite(), 75
         );
-        char_buffer->SetCurrentSize(sz);
-        std::cout << sz << ", " << char_buffer->GetMaxSize() << "," << char_buffer->GetSize() << "?" << std::endl;
+        // free the plane buffer asap
+        buffer.reset();
+
         // if the encode was successful, push it downstream with a lambda to requeue it
         if (ret >= 0) {
             auto self(shared_from_this());
