@@ -124,17 +124,22 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
         test_file_out.close();
     };
 
+    std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
+    std::array<char, 1990656> in_buf = {};
+    test_file_in.read(in_buf.data(), 1990656);
+
     {
         auto encoder = infrastructure::Encoder::Create(conf, std::move(callback));
         encoder->Start();
         auto buffer = encoder->GetSizedBufferPool();
-        std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
         auto sz_buf = buffer->GetSizedBuffer();
-        test_file_in.read((char *)sz_buf->GetMemory(), sz_buf->GetSize());
+        memcpy((char *)sz_buf->GetMemory(), in_buf.data(), sz_buf->GetSize());
+        auto sz = sz_buf->GetSize();
         sz_buf = buffer->GetSizedBuffer();
-        test_file_in.read((char *)sz_buf->GetMemory(), sz_buf->GetSize());
+        memcpy((char *)sz_buf->GetMemory(), in_buf.data() + sz, sz_buf->GetSize());
+        sz += sz_buf->GetSize();
         sz_buf = buffer->GetSizedBuffer();
-        test_file_in.read((char *)sz_buf->GetMemory(), sz_buf->GetSize());
+        memcpy((char *)sz_buf->GetMemory(), in_buf.data() + sz, sz_buf->GetSize());
         REQUIRE_EQ(buffer->GetSizedBuffer(), nullptr);
         encoder->PostSizedBufferPool(std::move(buffer));
         in_time = Clock::now();
