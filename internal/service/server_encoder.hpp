@@ -69,6 +69,20 @@ namespace service {
             if (!_is_started) {
                 return;
             }
+            {
+                std::unique_lock<std::mutex> lock(_camera_mutex);
+                if (_camera_session) {
+                    _camera_session->TryClose();
+                    _camera_session.reset();
+                }
+            }
+            {
+                std::unique_lock<std::mutex> lock(_headset_mutex);
+                if (_headset_session) {
+                    _headset_session->TryClose();
+                    _headset_session.reset();
+                }
+            }
             _tcp_server->Stop();
             _tcp_context->Stop();
             _is_started = false;

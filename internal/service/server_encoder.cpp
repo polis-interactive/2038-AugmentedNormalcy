@@ -39,8 +39,8 @@ namespace service {
             std::unique_lock<std::mutex> lock(_camera_mutex);
             if (_camera_session) {
                 _camera_session->TryClose();
+                _camera_session.reset();
             }
-            _camera_session.reset();
             _camera_session = camera_session;
         }
         auto self(shared_from_this());
@@ -63,8 +63,8 @@ namespace service {
         std::unique_lock<std::mutex> lock(_camera_mutex);
         if (_camera_session && _camera_session->GetSessionId() == camera_session->GetSessionId()) {
             _camera_session->TryClose();
+            _camera_session.reset();
         }
-        _camera_session.reset();
     }
 
     unsigned long ServerEncoder::CreateHeadsetServerConnection(
@@ -74,8 +74,8 @@ namespace service {
             std::unique_lock<std::mutex> lock(_headset_mutex);
             if (_headset_session) {
                 _headset_session->TryClose();
+                _headset_session.reset();
             }
-            _headset_session.reset();
             _headset_session = headset_session;
         }
         return ++_last_session_number;
@@ -87,7 +87,7 @@ namespace service {
         std::unique_lock<std::mutex> lock(_headset_mutex);
         if (_headset_session && _headset_session->GetSessionId() == headset_session->GetSessionId()) {
             _headset_session->TryClose();
+            _headset_session.reset();
         }
-        _headset_session.reset();
     }
 }
