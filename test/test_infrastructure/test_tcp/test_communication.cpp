@@ -23,10 +23,10 @@ TEST_CASE("INFRASTRUCTURE_TCP_SERVER-Start-and-stop") {
     ctx->Start();
     auto manager = std::make_shared<NoSessionManager>();
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
-    srv.Start();
+    auto srv = infrastructure::TcpServer::Create(conf, ctx->GetContext(), srv_manager);
+    srv->Start();
     std::this_thread::sleep_for(1s);
-    srv.Stop();
+    srv->Stop();
     ctx->Stop();
 }
 
@@ -85,8 +85,8 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
     auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
     client->Start();
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
-    srv.Start();
+    auto srv = infrastructure::TcpServer::Create(conf, ctx->GetContext(), srv_manager);
+    srv->Start();
     std::this_thread::sleep_for(3s);
     REQUIRE(manager->ClientIsConnected());
 
@@ -107,7 +107,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
     REQUIRE_EQ(pool->AvailableBuffers(), 5 - 1);
 
     client->Stop();
-    srv.Stop();
+    srv->Stop();
     ctx->Stop();
 }
 
@@ -130,8 +130,8 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
     auto manager = std::make_shared<TcpCameraClientServerManager>(pool);
 
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
-    srv.Start();
+    auto srv = infrastructure::TcpServer::Create(conf, ctx->GetContext(), srv_manager);
+    srv->Start();
 
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
     auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
@@ -161,7 +161,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
         d1.count() << "ms" << std::endl;
 
     client->Stop();
-    srv.Stop();
+    srv->Stop();
     ctx->Stop();
 }
 
@@ -196,8 +196,8 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset")  {
     client->Start();
 
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
-    srv.Start();
+    auto srv = infrastructure::TcpServer::Create(conf, ctx->GetContext(), srv_manager);
+    srv->Start();
     std::this_thread::sleep_for(3s);
     REQUIRE(manager->ClientIsConnected());
 
@@ -218,7 +218,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset")  {
     REQUIRE_EQ(pool->AvailableBuffers(), 5 - 1);
 
     client->Stop();
-    srv.Stop();
+    srv->Stop();
     ctx->Stop();
 }
 
@@ -242,8 +242,8 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset-Stress"){
     auto manager = std::make_shared<TcpHeadsetClientServerManager>(pool, on_receive);
 
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
-    infrastructure::TcpServer srv(conf, ctx->GetContext(), srv_manager);
-    srv.Start();
+    auto srv = infrastructure::TcpServer::Create(conf, ctx->GetContext(), srv_manager);
+    srv->Start();
 
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
     auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
@@ -273,6 +273,6 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset-Stress"){
               d1.count() << "ms" << std::endl;
 
     client->Stop();
-    srv.Stop();
+    srv->Stop();
     ctx->Stop();
 }
