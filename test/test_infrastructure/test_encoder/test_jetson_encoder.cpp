@@ -28,6 +28,9 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
     auto jpegenc = NvJPEGEncoder::createJPEGEncoder("jpenenc");
     auto output_buffer = new infrastructure::CharBuffer(std::ceil(1536 * 864 * 3 / 2));
 
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
+
     std::filesystem::path this_dir = TEST_DIR;
     this_dir /= "test_infrastructure";
     this_dir /= "test_encoder";
@@ -54,9 +57,13 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_BUFFER-Manual_Encode") {
     test_in_file.read((char *)buf->GetMemory(), buf->GetSize());
 
     buffer->SyncGpu();
+    in_time = Clock::now();
     auto ret = jpegenc->encodeFromFd(
         buffer->GetFd(), JCS_YCbCr, output_buffer->GetMemoryForWrite(), output_buffer->GetSizeForWrite(), 75
     );
+    out_time = Clock::now();
+
+    std::cout << "Time to encode: " << d1.count() << std::endl;
 
     std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
     test_file_out.write((char *) output_buffer->GetMemory(), output_buffer->GetSize());
