@@ -81,7 +81,7 @@ namespace service {
         // headset session
         [[nodiscard]] unsigned long CreateHeadsetServerConnection(
             tcp::endpoint endpoint,
-            SizedBufferCallback writeCall
+            std::shared_ptr<infrastructure::WritableTcpSession> session
         );
         void DestroyHeadsetServerConnection(tcp::endpoint endpoint, unsigned long session_id);
     private:
@@ -89,6 +89,10 @@ namespace service {
         std::atomic_bool _is_started = false;
         std::shared_ptr<infrastructure::TcpContext> _tcp_context = nullptr;
         std::shared_ptr<infrastructure::TcpServer> _tcp_server = nullptr;
+        std::shared_ptr<infrastructure::TcpSession> _camera_session = nullptr;
+        std::mutex _camera_mutex;
+        std::shared_ptr<infrastructure::WritableTcpSession> _headset_session = nullptr;
+        std::mutex _headset_mute;
     };
 }
 

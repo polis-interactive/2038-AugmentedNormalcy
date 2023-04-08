@@ -53,7 +53,7 @@ endif()
 if (FEATURE_ENCODER)
     add_subdirectory(${internal_dir}/infrastructure/encoder)
 endif()
-# add_subdirectory(${internal_dir}/service)
+add_subdirectory(${internal_dir}/service)
 
 add_subdirectory(test)
 

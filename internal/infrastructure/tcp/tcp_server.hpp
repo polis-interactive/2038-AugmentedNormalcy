@@ -27,6 +27,8 @@ namespace infrastructure {
     class TcpSession {
     public:
         virtual void TryClose() = 0;
+        virtual tcp::endpoint GetEndpoint() = 0;
+        virtual unsigned long GetSessionId() = 0;
     };
 
     class WritableTcpSession: public TcpSession {
@@ -39,15 +41,16 @@ namespace infrastructure {
         // tcp server
         [[nodiscard]] virtual TcpConnectionType GetConnectionType(tcp::endpoint endpoint) = 0;
         // camera session
-        [[nodiscard]]  virtual CameraConnectionPayload CreateCameraServerConnection(tcp::endpoint endpoint) = 0;
-        virtual void DestroyCameraServerConnection(tcp::endpoint endpoint, unsigned long session_id) = 0;
+        [[nodiscard]]  virtual CameraConnectionPayload CreateCameraServerConnection(
+            std::shared_ptr<TcpSession> session
+        ) = 0;
+        virtual void DestroyCameraServerConnection(std::shared_ptr<TcpSession> session) = 0;
 
         // headset session
         [[nodiscard]]  virtual unsigned long CreateHeadsetServerConnection(
-            tcp::endpoint endpoint,
             std::shared_ptr<WritableTcpSession> session
         ) = 0;
-        virtual void DestroyHeadsetServerConnection(tcp::endpoint endpoint, unsigned long session_id) = 0;
+        virtual void DestroyHeadsetServerConnection(std::shared_ptr<WritableTcpSession> session) = 0;
     };
 
 
@@ -59,6 +62,12 @@ namespace infrastructure {
         TcpCameraSession& operator= (const TcpCameraSession&) = delete;
         // TODO: don't know a better way of doing this. Essentially, TcpServerManager needs to be able to call this
         void TryClose() override;
+        tcp::endpoint GetEndpoint() override {
+            return _socket.remote_endpoint();
+        };
+        unsigned long GetSessionId() override {
+            return _session_id;
+        }
     protected:
         friend class TcpServer;
         TcpCameraSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &_manager);
@@ -84,6 +93,12 @@ namespace infrastructure {
         TcpHeadsetSession& operator= (const TcpHeadsetSession&) = delete;
         // TODO: don't know a better way of doing this. Essentially, TcpServerManager needs to be able to call this
         void TryClose() override;
+        tcp::endpoint GetEndpoint() override {
+            return _socket.remote_endpoint();
+        };
+        unsigned long GetSessionId() override {
+            return _session_id;
+        }
         void Write(std::shared_ptr<SizedBuffer> &&send_buffer) override;
     protected:
         friend class TcpServer;

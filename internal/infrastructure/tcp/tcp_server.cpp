@@ -113,12 +113,12 @@ namespace infrastructure {
 
     void TcpCameraSession::Run() {
         std::cout << "TcpCameraSession: creating connection" << std::endl;
-        auto [session_id, plane_buffer_pool] = _manager->CreateCameraServerConnection(_socket.remote_endpoint());
+        auto self(shared_from_this());
+        auto [session_id, plane_buffer_pool] = _manager->CreateCameraServerConnection(self);
         _session_id = session_id;
         _plane_buffer_pool = plane_buffer_pool;
 
         std::cout << "TcpCameraSession: running readStream" << std::endl;
-        auto self(shared_from_this());
         net::dispatch(
             _socket.get_executor(),
             [this, s = std::move(self)]() {
@@ -215,9 +215,8 @@ namespace infrastructure {
             error_code ec;
             _socket.shutdown(tcp::socket::shutdown_send, ec);
         }
-        _manager->DestroyCameraServerConnection(
-                _socket.remote_endpoint(), _session_id
-        );
+        auto self(shared_from_this());
+        _manager->DestroyCameraServerConnection(self);
     }
 
     TcpHeadsetSession::TcpHeadsetSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager):
@@ -230,10 +229,7 @@ namespace infrastructure {
 
     void TcpHeadsetSession::ConnectAndWait() {
         auto self(shared_from_this());
-        _session_id = _manager->CreateHeadsetServerConnection(
-            _socket.remote_endpoint(),
-            self
-        );
+        _session_id = _manager->CreateHeadsetServerConnection(self);
     }
 
     void TcpHeadsetSession::Write(std::shared_ptr<SizedBuffer> &&buffer) {
@@ -260,6 +256,7 @@ namespace infrastructure {
             error_code ec;
             _socket.shutdown(tcp::socket::shutdown_send, ec);
         }
-        _manager->DestroyHeadsetServerConnection(_socket.remote_endpoint(), _session_id);
+        auto self(shared_from_this());
+        _manager->DestroyHeadsetServerConnection(self);
     }
 }
