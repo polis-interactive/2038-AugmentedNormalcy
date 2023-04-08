@@ -6,6 +6,8 @@
 
 #include "jetson_encoder.hpp"
 
+using namespace std::literals;
+
 namespace infrastructure {
 
     JetsonPlaneBuffer::JetsonPlaneBuffer(const std::pair<int, int> &width_height_tuple) {
@@ -85,9 +87,19 @@ namespace infrastructure {
     }
 
     std::shared_ptr<SizedBufferPool> Encoder::GetSizedBufferPool() {
-        std::unique_lock<std::mutex> lock(_input_buffers_mutex);
-        auto jetson_plane_buffer = _input_buffers.front();
-        _input_buffers.pop();
+        JetsonPlaneBuffer *jetson_plane_buffer;
+        {
+            std::unique_lock<std::mutex> lock(_input_buffers_mutex);
+            jetson_plane_buffer = _input_buffers.front();
+            if (jetson_plane_buffer) {
+                _input_buffers.pop();
+            }
+        }
+        if (!jetson_plane_buffer) {
+            std::this_thread::sleep_for(33ms);
+            return GetSizedBufferPool();
+        }
+
         jetson_plane_buffer->SyncCpu();
         auto self(shared_from_this());
         auto buffer = std::shared_ptr<SizedBufferPool>(
