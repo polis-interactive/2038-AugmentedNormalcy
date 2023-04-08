@@ -50,6 +50,7 @@ namespace infrastructure {
     }
 
     JetsonPlaneBuffer::~JetsonPlaneBuffer() {
+        std::cout << "Shouldn't get called till end" << std::endl;
         if (_nvbuf_surf) {
             if (_nvbuf_surf->surfaceList->mappedAddr.addr[2]) {
                 NvBufSurfaceUnMap(_nvbuf_surf, 0, 2);
@@ -93,6 +94,7 @@ namespace infrastructure {
         auto buffer = std::shared_ptr<SizedBufferPool>(
                 (SizedBufferPool *) jetson_plane_buffer,
                 [this, s = std::move(self), jetson_plane_buffer](SizedBufferPool *) mutable {
+                    std::cout << "I get called a healthy amount" << std::endl;
                     std::unique_lock<std::mutex> lock(_input_buffers_mutex);
                     _input_buffers.push(jetson_plane_buffer);
                 }
