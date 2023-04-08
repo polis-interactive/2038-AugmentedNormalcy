@@ -153,7 +153,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
     std::cout << "Time to encode: " << d1.count() << std::endl;
 }
 
-/*
+
 TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
 
     TestJetsonEncoderConfig conf;
@@ -193,9 +193,16 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
         in_time = Clock::now();
 
         for (int i = 0; i < 500; i++) {
-            auto buffer = encoder->GetSizedBuffer();
+            auto pool = encoder->GetSizedBufferPool();
+            auto buffer = pool->GetSizedBuffer();
             memcpy((char *)buffer->GetMemory(), in_buf.data(), buffer->GetSize());
-            encoder->PostSizedBuffer(std::move(buffer));
+            auto sz = buffer->GetSize();
+            buffer = pool->GetSizedBuffer();
+            memcpy((char *)buffer->GetMemory(), in_buf.data() + sz, buffer->GetSize());
+            sz += buffer->GetSize();
+            buffer = pool->GetSizedBuffer();
+            memcpy((char *)buffer->GetMemory(), in_buf.data() + sz, buffer->GetSize());
+            encoder->PostSizedBuffer(std::move(pool));
             std::this_thread::sleep_for(33ms);
         }
         std::this_thread::sleep_for(100ms);
@@ -205,4 +212,3 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
     std::cout << "Time to encode 10s of data at 30fps: " << d1.count() << std::endl;
 }
-*/
