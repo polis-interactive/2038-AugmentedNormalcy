@@ -128,10 +128,16 @@ namespace infrastructure {
             _buffer = std::make_shared<CharBuffer>(width * height * 3 / 2);
         }
         [[nodiscard]] std::shared_ptr<SizedBuffer> GetSizedBuffer() final {
-            return _buffer;
+            if (is_used) {
+                return nullptr;
+            } else {
+                is_used = true;
+                return _buffer;
+            }
         }
         [[nodiscard]] bool IsLeakyBuffer() final { return true; }
     private:
+        bool is_used = false;
         static std::shared_ptr<CharBuffer> _buffer;
     };
 
@@ -166,7 +172,6 @@ namespace infrastructure {
 
         std::queue<JetsonPlaneBuffer *> _input_buffers;
         std::mutex _input_buffers_mutex;
-        std::shared_ptr<LeakyPlaneBuffer> _leaky_upstream_buffer;
 
         std::unique_ptr<std::thread> _work_thread;
         std::atomic<bool> _work_stop = { true };

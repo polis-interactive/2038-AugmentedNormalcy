@@ -200,13 +200,12 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
         for (int i = 0; i < 500; i++) {
             auto pool = encoder->GetSizedBufferPool();
             auto buffer = pool->GetSizedBuffer();
-            memcpy((char *)buffer->GetMemory(), in_buf.data(), buffer->GetSize());
-            auto sz = buffer->GetSize();
-            buffer = pool->GetSizedBuffer();
-            memcpy((char *)buffer->GetMemory(), in_buf.data() + sz, buffer->GetSize());
-            sz += buffer->GetSize();
-            buffer = pool->GetSizedBuffer();
-            memcpy((char *)buffer->GetMemory(), in_buf.data() + sz, buffer->GetSize());
+            std::size_t offset = 0;
+            while (buffer) {
+                memcpy((char *)buffer->GetMemory(), in_buf.data() + offset, buffer->GetSize());
+                offset += buffer->GetSize();
+                buffer = pool->GetSizedBuffer();
+            }
             encoder->PostSizedBufferPool(std::move(pool));
             std::this_thread::sleep_for(30ms);
         }
@@ -256,15 +255,14 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-TreadTest") {
         for (int i = 0; i < 500; i++) {
             auto pool = encoder->GetSizedBufferPool();
             auto buffer = pool->GetSizedBuffer();
-            memcpy((char *)buffer->GetMemory(), image, buffer->GetSize());
-            auto sz = buffer->GetSize();
-            buffer = pool->GetSizedBuffer();
-            memcpy((char *)buffer->GetMemory(), image + sz, buffer->GetSize());
-            sz += buffer->GetSize();
-            buffer = pool->GetSizedBuffer();
-            memcpy((char *)buffer->GetMemory(), image + sz, buffer->GetSize());
+            std::size_t offset = 0;
+            while (buffer) {
+                memcpy((char *)buffer->GetMemory(), image + offset, buffer->GetSize());
+                offset += buffer->GetSize();
+                buffer = pool->GetSizedBuffer();
+            }
             encoder->PostSizedBufferPool(std::move(pool));
-            std::this_thread::sleep_for(100ms);
+            std::this_thread::sleep_for(30ms);
         }
         std::this_thread::sleep_for(100ms);
         encoder->Stop();

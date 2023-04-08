@@ -81,9 +81,9 @@ namespace infrastructure {
         for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
             _input_buffers.push(new JetsonPlaneBuffer(_width_height));
         }
-        // create leaky buffer
+        // init leaky buffer
         LeakyPlaneBuffer::initialize(_width_height);
-        _leaky_upstream_buffer = std::make_shared<LeakyPlaneBuffer>();
+
         // create downstream buffers
         auto downstream_max_size = getMaxJpegSize(_width_height);
         for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
@@ -101,7 +101,8 @@ namespace infrastructure {
             }
         }
         if (!jetson_plane_buffer) {
-            return _leaky_upstream_buffer;
+            std::cout << "give em da leak" << std::endl;
+            return std::make_shared<LeakyPlaneBuffer>();
         }
         jetson_plane_buffer->SyncCpu();
         auto self(shared_from_this());
