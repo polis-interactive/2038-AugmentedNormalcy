@@ -173,15 +173,12 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
     auto in_frame = this_dir;
     in_frame /= "in.yuv";
 
-    auto out_frame = this_dir;
-    out_frame /= "out_user.jpeg";
-
     std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
 
     std::atomic<int> counter = { 0 };
     std::atomic<bool> is_done = { false };
 
-    SizedBufferCallback callback = [&out_frame, &out_time, &counter, &is_done](
+    SizedBufferCallback callback = [&out_time, &counter, &is_done](
             std::shared_ptr<SizedBuffer> &&ptr
     ) mutable {
         if (++counter >= 300 && !is_done) {
@@ -219,4 +216,77 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-StressTest") {
 
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
     std::cout << "Time to encode 10s of data at 30fps: " << d1.count() << std::endl;
+}
+
+
+TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-TreadTest") {
+    std::filesystem::path this_dir = TEST_DIR;
+    this_dir /= "test_infrastructure";
+    this_dir /= "test_encoder";
+
+    auto in_frame = this_dir;
+    in_frame /= "in.yuv";
+
+    std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
+    std::array<char, 1990656> in_buf = {};
+    test_file_in.read(in_buf.data(), 1990656);
+
+    auto thread_runner = [image=in_buf.data()]() {
+
+        std::atomic<int> counter = { 0 };
+        std::atomic<bool> is_done = { false };
+        std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
+
+        SizedBufferCallback callback = [&out_time, &counter, &is_done](
+                std::shared_ptr<SizedBuffer> &&ptr
+        ) mutable {
+            if (++counter >= 300 && !is_done) {
+                out_time = Clock::now();
+                is_done = true;
+            }
+        };
+
+        TestJetsonEncoderConfig conf;
+        auto encoder = infrastructure::Encoder::Create(conf, std::move(callback));
+        encoder->Start();
+        in_time = Clock::now();
+
+        for (int i = 0; i < 500; i++) {
+            auto pool = encoder->GetSizedBufferPool();
+            auto buffer = pool->GetSizedBuffer();
+            memcpy((char *)buffer->GetMemory(), image, buffer->GetSize());
+            auto sz = buffer->GetSize();
+            buffer = pool->GetSizedBuffer();
+            memcpy((char *)buffer->GetMemory(), image + sz, buffer->GetSize());
+            sz += buffer->GetSize();
+            buffer = pool->GetSizedBuffer();
+            memcpy((char *)buffer->GetMemory(), image + sz, buffer->GetSize());
+            encoder->PostSizedBufferPool(std::move(pool));
+            std::this_thread::sleep_for(30ms);
+        }
+        std::this_thread::sleep_for(100ms);
+        encoder->Stop();
+
+        auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
+        std::cout << "Time to encode 10s of data at 30fps: " << d1.count() << std::endl;
+
+    };
+
+    std::vector<std::thread> threads;
+    std::cout << "Starting threads" << std::endl;
+    std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2;
+
+    t1 = Clock::now();
+    for (int i = 0; i < 9; i++) {
+        threads.emplace_back(std::thread(thread_runner));
+        std::this_thread::sleep_for(0.5s);
+    }
+
+    std::cout << "Waiting for threads to finish" << std::endl;
+    for (auto &th: threads) {
+        th.join();
+    }
+    t2 = Clock::now();
+    auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+    std::cout << "roughly took " << d2.count() << " milliseconds to run" << std::endl;
 }
