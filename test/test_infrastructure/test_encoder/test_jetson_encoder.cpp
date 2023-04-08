@@ -262,7 +262,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-TreadTest") {
             buffer = pool->GetSizedBuffer();
             memcpy((char *)buffer->GetMemory(), image + sz, buffer->GetSize());
             encoder->PostSizedBufferPool(std::move(pool));
-            std::this_thread::sleep_for(30ms);
+            std::this_thread::sleep_for(100ms);
         }
         std::this_thread::sleep_for(100ms);
         encoder->Stop();
