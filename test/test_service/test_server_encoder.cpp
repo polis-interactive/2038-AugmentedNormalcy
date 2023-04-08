@@ -23,9 +23,9 @@ TEST_CASE("SERVICE_SERVER-ENCODER_Setup-and-teardown") {
         streamer->Stop();
         t4 = Clock::now();
     }
-    auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-    auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2);
-    auto d3 = std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3);
-    std::cout << "test_service/test_server_encoder Setup and Teardown: milliseconds: " <<
+    auto d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
+    auto d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2);
+    auto d3 = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3);
+    std::cout << "test_service/test_server_encoder Setup and Teardown: microseconds: " <<
               d1.count() << ", " << d2.count() << ", " << d3.count() << std::endl;
 }
