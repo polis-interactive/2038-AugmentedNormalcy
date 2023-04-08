@@ -121,7 +121,6 @@ namespace infrastructure {
             const EncoderConfig &config, SizedBufferCallback output_callback
         ) {
             auto encoder = std::make_shared<Encoder>(config, std::move(output_callback));
-            encoder->Start();
             return std::move(encoder);
         }
         [[nodiscard]] std::shared_ptr<SizedBufferPool> GetSizedBufferPool() override;

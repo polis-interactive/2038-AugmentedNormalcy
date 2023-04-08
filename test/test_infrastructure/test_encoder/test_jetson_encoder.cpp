@@ -80,15 +80,19 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Start_and_Stop") {
         t1 = Clock::now();
         auto encoder = infrastructure::Encoder::Create(conf, [](std::shared_ptr<SizedBuffer> &&buffer) { });
         t2 = Clock::now();
-        encoder->Stop();
+        encoder->Start();
         t3 = Clock::now();
+        encoder->Stop();
+        t4 = Clock::now();
     }
-    t4 = Clock::now();
+    t5 = Clock::now();
     auto d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
     auto d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2);
     auto d3 = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3);
+    auto d4 = std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4);
     std::cout << "test_infrastructure/encoder/jetson_encoder startup and teardown: " <<
-              d1.count() << ", " << d2.count() << ", " << d3.count() << std::endl;
+              d1.count() << ", " << d2.count() << ", " << d3.count() <<
+              d4.count() << ", " << std::endl;
 }
 
 TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
@@ -122,6 +126,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_JETSON_ENCODER-Encode_a_frame") {
 
     {
         auto encoder = infrastructure::Encoder::Create(conf, std::move(callback));
+        encoder->Start();
         auto buffer = encoder->GetSizedBufferPool();
         std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
         auto sz_buf = buffer->GetSizedBuffer();

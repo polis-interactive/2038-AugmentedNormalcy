@@ -74,7 +74,7 @@ namespace infrastructure {
         _width_height(config.get_encoder_width_height())
     {
         // create plane buffers
-        for (int i = 0; i < _output_buffers.size(); i++) {
+        for (int i = 0; i < config.get_encoder_buffer_count(); i++) {
             _input_buffers.push(new JetsonPlaneBuffer(_width_height));
         }
         // create downstream buffers
