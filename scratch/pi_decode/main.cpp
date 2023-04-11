@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
      * SETUP CAPTURE BUFFERS
      */
 
-    v4l2_plane planes[1];
+    v4l2_plane planes[VIDEO_MAX_PLANES];
     v4l2_buffer buffer = {};
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     buffer.memory = V4L2_MEMORY_MMAP;
@@ -181,6 +181,7 @@ int main(int argc, char *argv[]) {
     std::cout << "V4l2 Decoder MMAPed capture buffer with size like so: " <<
               buffer.m.planes[0].length << ", " << buffer.m.planes[0].m.mem_offset << std::endl;
 
+    buffer.m.planes[0].bytesused = 0;
     if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue capture buffer");
 
