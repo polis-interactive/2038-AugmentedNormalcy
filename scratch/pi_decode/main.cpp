@@ -241,6 +241,17 @@ int main(int argc, char *argv[]) {
     std::cout << "V4l2 Decoder: queued output buffer" << std::endl;
 
     /*
+     * DEQUEUE OUTPUT BUFFER
+     */
+
+
+    if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+        throw std::runtime_error("failed to dequeue output buffer");
+
+    std::cout << "V4l2 Decoder: dequeued output buffer" << std::endl;
+
+
+    /*
      * DEQUEUE CAPTURE BUFFER
      */
 
@@ -256,16 +267,6 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("failed to dequeue capture buffer");
 
     std::cout << "V4l2 Decoder: dequeued capture buffer" << std::endl;
-
-    /*
-     * DEQUEUE OUTPUT BUFFER
-     */
-
-
-    if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
-        throw std::runtime_error("failed to dequeue output buffer");
-
-    std::cout << "V4l2 Decoder: dequeued output buffer" << std::endl;
 
 
     /*
