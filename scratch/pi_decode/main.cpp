@@ -185,14 +185,19 @@ int main(int argc, char *argv[]) {
             buffer.m.planes[0].m.mem_offset
     );
     if (capture_mem == MAP_FAILED)
-        throw std::runtime_error("failed to mmap output buffer");
+        throw std::runtime_error("failed to mmap capture buffer");
 
-    // should have three planes
+    // should have three planes but meh
     std::cout << "V4l2 Decoder MMAPed capture buffer with size like so: " <<
               buffer.m.planes[0].length << ", " << buffer.m.planes[0].m.mem_offset << std::endl;
 
-    memcpy((void *)output_mem, (void *) in_buf.data(), input_size);
+    if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+        throw std::runtime_error("failed to queue capture buffer");
 
+    std::cout << "V4l2 Decoder queued capture buffer" << std::endl;
+
+
+    memcpy((void *)output_mem, (void *) in_buf.data(), input_size);
 
     buffer = {};
     memset(planes, 0, sizeof(planes));
@@ -208,6 +213,7 @@ int main(int argc, char *argv[]) {
     if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
 
+    std::cout << "V4l2 Decoder Queued output buffer" << std::endl;
 
     /*
 
