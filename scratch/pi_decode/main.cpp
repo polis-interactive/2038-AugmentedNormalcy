@@ -124,6 +124,16 @@ int main(int argc, char *argv[]) {
 
     std::cout << "V4l2 Decoder setup caps" << std::endl;
 
+    int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+    if (xioctl(decoder_fd, VIDIOC_STREAMON, &type) < 0)
+        throw std::runtime_error("failed to start output");
+
+    type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    if (xioctl(decoder_fd, VIDIOC_STREAMON, &type) < 0)
+        throw std::runtime_error("failed to start capture");
+
+    std::cout << "v4l2 decoder started!" << std::endl;
+
     v4l2_requestbuffers reqbufs = {};
     reqbufs.count = 1;
     reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -203,16 +213,6 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("failed to queue capture buffer");
 
     std::cout << "V4l2 Decoder queued capture buffer" << std::endl;
-
-    int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    if (xioctl(decoder_fd, VIDIOC_STREAMON, &type) < 0)
-        throw std::runtime_error("failed to start output");
-
-    type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    if (xioctl(decoder_fd, VIDIOC_STREAMON, &type) < 0)
-        throw std::runtime_error("failed to start capture");
-
-    std::cout << "v4l2 decoder started!" << std::endl;
 
     bool did_decode = PollFd(decoder_fd);
     if (did_decode) {
