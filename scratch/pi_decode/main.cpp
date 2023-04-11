@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
      */
 
     v4l2_requestbuffers reqbufs = {};
-    reqbufs.count = 1;
+    reqbufs.count = 4;
     reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     reqbufs.memory = V4L2_MEMORY_MMAP;
     if (xioctl(decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
     std::cout << "V4L2 Decoder got " << reqbufs.count << " output buffers" << std::endl;
 
     reqbufs = {};
-    reqbufs.count = 1;
+    reqbufs.count = 4;
     reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     reqbufs.memory = V4L2_MEMORY_MMAP;
     if (xioctl(decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
