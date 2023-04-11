@@ -183,18 +183,23 @@ int main(int argc, char *argv[]) {
      * SETUP OUTPUT BUFFERS
      */
 
-    buffer = {};
-    memset(planes, 0, sizeof(planes));
-    buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.memory = V4L2_MEMORY_DMABUF;
-    buffer.index = 0;
-    buffer.length = 1;
-    buffer.m.planes = planes;
+    for (int i = 0; i < 4; i++) {
 
-    if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
-        throw std::runtime_error("failed to query output buffer");
+        buffer = {};
+        memset(planes, 0, sizeof(planes));
+        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buffer.memory = V4L2_MEMORY_DMABUF;
+        buffer.index = i;
+        buffer.length = 1;
+        buffer.m.planes = planes;
 
-    std::cout << buffer.m.planes[0].m.fd << ", " << buffer.m.planes[0].length << std::endl;
+        if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+            throw std::runtime_error("failed to query output buffer");
+
+        std::cout << buffer.m.planes[0].m.fd << ", " << buffer.m.planes[0].length << std::endl;
+    }
+
+
 
 
 
