@@ -40,6 +40,7 @@ NvBufSurf::NvAllocate(NvCommonAllocateParams *allocateParams, uint32_t numBuffer
     input_params.params.layout = allocateParams->layout;
     input_params.params.colorFormat = allocateParams->colorFormat;
     input_params.memtag = allocateParams->memtag;
+    input_params.params.isContiguous = true;
 
     for (uint32_t index = 0; index < numBuffers; index++) {
       NvBufSurface *nvbuf_surf = 0;

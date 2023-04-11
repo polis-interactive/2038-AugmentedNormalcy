@@ -33,17 +33,18 @@ public:
         return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
     }
     /* dummy's for the rest */
-    [[nodiscard]] infrastructure::CameraConnectionPayload CreateCameraServerConnection(tcp::endpoint endpoint) override {
+    [[nodiscard]] infrastructure::CameraConnectionPayload CreateCameraServerConnection(
+        std::shared_ptr<infrastructure::TcpSession> session
+    ) override {
         return {};
     }
-    void PostCameraServerBuffer(std::shared_ptr<SizedBuffer> &&buffer) override {};
-    void DestroyCameraServerConnection(tcp::endpoint endpoint, unsigned long session_id) override {}
+    void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> session) override {}
     [[nodiscard]] unsigned long CreateHeadsetServerConnection(
-            tcp::endpoint endpoint, SizedBufferCallback writeCall
+        std::shared_ptr<infrastructure::WritableTcpSession> session
     ) override {
         return 0;
     }
-    void DestroyHeadsetServerConnection(tcp::endpoint endpoint, unsigned long session_id) override {}
+    void DestroyHeadsetServerConnection(std::shared_ptr<infrastructure::WritableTcpSession> session) override {}
 };
 
 #endif //AUGMENTEDNORMALCY_TEST_TCP_SERVER_HPP

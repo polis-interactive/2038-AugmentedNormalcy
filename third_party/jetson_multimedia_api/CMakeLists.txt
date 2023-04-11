@@ -19,7 +19,7 @@ set(
 )
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -D_GLIBCXX_DEBUG -fsanitize=undefined -fno-omit-frame-pointer -DTEGRA_ACCELERATE")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DTEGRA_ACCELERATE")
 add_library(jetson_mm STATIC ${JETSON_MM_SOURCES})
 target_link_libraries(jetson_mm PUBLIC nvjpeg nvbufsurface nvbufsurftransform)
 target_include_directories(jetson_mm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

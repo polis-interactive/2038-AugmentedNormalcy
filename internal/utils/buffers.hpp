@@ -20,6 +20,15 @@ public:
     [[nodiscard]] virtual std::shared_ptr<SizedBuffer> GetSizedBuffer() = 0;
 };
 
+
+using SizedBufferPoolCallback = std::function<void(std::shared_ptr<SizedBufferPool>&&)>;
+
+class SizedPlaneBufferPool {
+public:
+    [[nodiscard]] virtual std::shared_ptr<SizedBufferPool> GetSizedBufferPool() = 0;
+    virtual void PostSizedBufferPool(std::shared_ptr<SizedBufferPool> &&buffer) = 0;
+};
+
 // nowhere better to put this at the moment
 
 struct CameraBuffer: public SizedBuffer {
