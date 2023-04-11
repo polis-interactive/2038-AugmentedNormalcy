@@ -160,9 +160,10 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("failed to query capture buffer");
 
     // should have three planes
-    std::cout << buffer.m.planes[0].m.fd << ", " << buffer.m.planes[1].m.fd << ", " <<
-        buffer.m.planes[2].m.fd << ", " << buffer.m.planes[3].m.fd << std::endl;
-    std::cout << "those should all be the same minus the last" << std::endl;
+    std::cout << buffer.m.planes[0].length << ", " << buffer.m.planes[0].data_offset << ", " <<
+        buffer.m.planes[1].length << ", " << buffer.m.planes[1].data_offset << ", " <<
+        buffer.m.planes[2].length << ", " << buffer.m.planes[2].data_offset << ", " <<
+        " lets see if this makes sense..." << std::endl;
 
 
     /*
