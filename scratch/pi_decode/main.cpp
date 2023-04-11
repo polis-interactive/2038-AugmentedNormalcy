@@ -147,7 +147,8 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("failed to mmap output buffer");
 
 
-    std::cout << "V4l2 Decoder MMAPed output buffer with size: " << output_size << std::endl;
+    std::cout << "V4l2 Decoder MMAPed output buffer with size like so: " <<
+        buffer.m.planes[0].length << ", " << buffer.m.planes[0].m.mem_offset << std::endl;
 
     buffer = {};
     memset(planes, 0, sizeof(planes));
@@ -159,12 +160,17 @@ int main(int argc, char *argv[]) {
     if (xioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
         throw std::runtime_error("failed to query capture buffer");
 
-    // should have three planes
-    std::cout << buffer.m.planes[0].length << ", " << buffer.m.planes[0].m.mem_offset << ", " <<
-        buffer.m.planes[1].length << ", " << buffer.m.planes[1].m.mem_offset << ", " <<
-        buffer.m.planes[2].length << ", " << buffer.m.planes[2].m.mem_offset << ", " <<
-        " lets see if this makes sense..." << std::endl;
+    auto capture_size = buffer.m.planes[0].length;
+    auto capture_mem = mmap(
+            nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, encoder_fd,
+            buffer.m.planes[0].m.mem_offset
+    );
+    if (capture_mem == MAP_FAILED)
+        throw std::runtime_error("failed to mmap output buffer");
 
+    // should have three planes
+    std::cout << "V4l2 Decoder MMAPed capture buffer with size like so: " <<
+              buffer.m.planes[0].length << ", " << buffer.m.planes[0].m.mem_offset << std::endl;
 
     /*
 
