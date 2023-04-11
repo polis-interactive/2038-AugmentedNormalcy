@@ -209,7 +209,7 @@ int main(int argc, char *argv[]) {
 
         buffer = {};
         memset(planes, 0, sizeof(planes));
-        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
         buffer.memory = V4L2_MEMORY_MMAP;
         buffer.index = i;
         buffer.length = 3;
