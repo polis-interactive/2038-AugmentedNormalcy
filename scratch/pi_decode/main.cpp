@@ -221,6 +221,9 @@ int main(int argc, char *argv[]) {
         std::cout << "FAILURE" << std::endl;
     }
 
+    if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+        throw std::runtime_error("failed to dequeue capture buffer");
+
     /*
 
     buf = {};
