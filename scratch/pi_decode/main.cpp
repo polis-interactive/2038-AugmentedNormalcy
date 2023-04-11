@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
     fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     fmt.fmt.pix_mp.width = width;
     fmt.fmt.pix_mp.height = height;
-    fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_MJPEG;
+    fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_JPEG;
 
     if (xioctl(encoder_fd, VIDIOC_S_FMT, &fmt))
         throw std::runtime_error("failed to set output caps");
@@ -107,10 +107,15 @@ int main(int argc, char *argv[]) {
     std::cout << "V4l2 Decoder setup caps" << std::endl;
 
     struct v4l2_buffer buf = {0};
+    struct v4l2_plane planes[1];
     buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     buf.memory = V4L2_MEMORY_USERPTR;
-    buf.m.userptr = reinterpret_cast<unsigned long>(in_buf.data());
-    buf.length = input_size;
+    buf.index = 0;
+    buf.m.planes = planes;
+    buf.length = 1;
+    buf.m.planes[0].m.userptr = reinterpret_cast<unsigned long>(in_buf.data());
+    buf.m.planes[0].length = input_size;
+    buf.m.planes[0].bytesused = input_size;
 
     if (xioctl(encoder_fd, VIDIOC_QBUF, &buf)) {
         std::cout << errno << std::endl;
