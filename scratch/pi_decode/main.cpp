@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     std::cout << "V4l2 Decoder opened fd: " << decoder_fd << std::endl;
 
     /*
-     *  check caps
+     *  check formats
      */
 
     v4l2_fmtdesc fmtdesc{0};
@@ -99,12 +99,70 @@ int main(int argc, char *argv[]) {
         if (xioctl(decoder_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
             break;
         }
-        std::cout << "Format " << i << ": " << fmtdesc.description
+        std::cout << "OUTPUT Format " << i << ": " << fmtdesc.description
                   << ", FourCC: " << static_cast<char>((fmtdesc.pixelformat >> 0) & 0xFF)
                   << static_cast<char>((fmtdesc.pixelformat >> 8) & 0xFF)
                   << static_cast<char>((fmtdesc.pixelformat >> 16) & 0xFF)
                   << static_cast<char>((fmtdesc.pixelformat >> 24) & 0xFF)
                   << std::endl;
+    }
+
+    fmtdesc = {};
+    fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    for (int i = 0;; ++i) {
+        fmtdesc.index = i;
+        if (xioctl(decoder_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
+            break;
+        }
+        std::cout << "CAPTURE Format " << i << ": " << fmtdesc.description
+                  << ", FourCC: " << static_cast<char>((fmtdesc.pixelformat >> 0) & 0xFF)
+                  << static_cast<char>((fmtdesc.pixelformat >> 8) & 0xFF)
+                  << static_cast<char>((fmtdesc.pixelformat >> 16) & 0xFF)
+                  << static_cast<char>((fmtdesc.pixelformat >> 24) & 0xFF)
+                  << std::endl;
+    }
+
+    /*
+     * query ctls
+     */
+
+    struct v4l2_queryctrl queryctrl = {0};
+
+    for (int id = V4L2_CID_BASE; id < V4L2_CID_LASTP1; ++id) {
+        queryctrl.id = id;
+        if (ioctl(decoder_fd, VIDIOC_QUERYCTRL, &queryctrl) == 0) {
+            if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
+                continue; // Skip disabled controls
+            }
+            std::cout << "Control: " << queryctrl.name << " (ID: " << queryctrl.id << ")\n";
+            std::cout << "  Type: " << queryctrl.type << "\n";
+            std::cout << "  Minimum: " << queryctrl.minimum << "\n";
+            std::cout << "  Maximum: " << queryctrl.maximum << "\n";
+            std::cout << "  Default: " << queryctrl.default_value << "\n";
+            std::cout << "  Step: " << queryctrl.step << "\n";
+        } else {
+            if (errno == EINVAL) {
+                continue; // Control not supported
+            }
+            perror("VIDIOC_QUERYCTRL");
+            break;
+        }
+    }
+
+    queryctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
+    while (ioctl(decoder_fd, VIDIOC_QUERYCTRL, &queryctrl) == 0) {
+        if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
+            queryctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
+            continue; // Skip disabled controls
+        }
+        std::cout << "Control: " << queryctrl.name << " (ID: " << queryctrl.id << ")\n";
+        std::cout << "  Type: " << queryctrl.type << "\n";
+        std::cout << "  Minimum: " << queryctrl.minimum << "\n";
+        std::cout << "  Maximum: " << queryctrl.maximum << "\n";
+        std::cout << "  Default: " << queryctrl.default_value << "\n";
+        std::cout << "  Step: " << queryctrl.step << "\n";
+
+        queryctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
     }
 
     /*
@@ -173,7 +231,7 @@ int main(int argc, char *argv[]) {
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     buffer.memory = V4L2_MEMORY_MMAP;
     buffer.index = 0;
-    buffer.length = 3;
+    buffer.length = 1;
     buffer.m.planes = planes;
     if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
         throw std::runtime_error("failed to query capture buffer");
@@ -212,7 +270,7 @@ int main(int argc, char *argv[]) {
         buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
         buffer.memory = V4L2_MEMORY_MMAP;
         buffer.index = i;
-        buffer.length = 3;
+        buffer.length = 1;
         buffer.m.planes = planes;
 
         if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
