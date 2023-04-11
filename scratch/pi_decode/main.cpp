@@ -71,8 +71,8 @@ int main(int argc, char *argv[]) {
     std::array<char, 1990656> out_buf = {};
 
 
-    auto encoder_fd = open(device_name, O_RDWR, 0);
-    if (encoder_fd == -1) {
+    auto decoder_fd = open(device_name, O_RDWR, 0);
+    if (decoder_fd == -1) {
         switch(errno) {
             case ENOENT:
                 std::cerr << "File does not exist" << std::endl;
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
         };
         return 1;
     }
-    std::cout << "V4l2 Decoder opened fd: " << encoder_fd << std::endl;
+    std::cout << "V4l2 Decoder opened fd: " << decoder_fd << std::endl;
 
     /*
     struct v4l2_fmtdesc fmtdesc;
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
     fmt.fmt.pix_mp.height = height;
     fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_MJPEG;
 
-    if (xioctl(encoder_fd, VIDIOC_S_FMT, &fmt))
+    if (xioctl(decoder_fd, VIDIOC_S_FMT, &fmt))
         throw std::runtime_error("failed to set output caps");
 
 
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
     fmt.fmt.pix_mp.height = height;
     fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_YUV420;
 
-    if (xioctl(encoder_fd, VIDIOC_S_FMT, &fmt))
+    if (xioctl(decoder_fd, VIDIOC_S_FMT, &fmt))
         throw std::runtime_error("failed to set output caps");
 
     std::cout << "V4l2 Decoder setup caps" << std::endl;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     reqbufs.count = 1;
     reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     reqbufs.memory = V4L2_MEMORY_MMAP;
-    if (xioctl(encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+    if (xioctl(decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
         std::cout << errno << std::endl;
         throw std::runtime_error("request for capture buffers failed");
     }
@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
     reqbufs.count = 1;
     reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     reqbufs.memory = V4L2_MEMORY_MMAP;
-    if (xioctl(encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+    if (xioctl(decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
         std::cout << errno << std::endl;
         throw std::runtime_error("request for capture buffers failed");
     }
@@ -152,12 +152,12 @@ int main(int argc, char *argv[]) {
     buffer.length = 1;
     buffer.m.planes = planes;
 
-    if (xioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+    if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
         throw std::runtime_error("failed to query output buffer");
 
     auto output_size = buffer.m.planes[0].length;
     auto output_mem = mmap(
-            nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, encoder_fd,
+            nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, decoder_fd,
             buffer.m.planes[0].m.mem_offset
     );
     if (output_mem == MAP_FAILED)
@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
 
     memcpy((void *)output_mem, (void *) in_buf.data(), input_size);
 
-    if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+    if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
 
     std::cout << "V4l2 Decoder: queued output buffer" << std::endl;
@@ -184,12 +184,12 @@ int main(int argc, char *argv[]) {
     buffer.index = 0;
     buffer.length = 1;
     buffer.m.planes = planes;
-    if (xioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+    if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
         throw std::runtime_error("failed to query capture buffer");
 
     auto capture_size = buffer.m.planes[0].length;
     auto capture_mem = mmap(
-            nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, encoder_fd,
+            nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, decoder_fd,
             buffer.m.planes[0].m.mem_offset
     );
     if (capture_mem == MAP_FAILED)
@@ -199,11 +199,17 @@ int main(int argc, char *argv[]) {
     std::cout << "V4l2 Decoder MMAPed capture buffer with size like so: " <<
               buffer.m.planes[0].length << ", " << buffer.m.planes[0].m.mem_offset << std::endl;
 
-    if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+    if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue capture buffer");
 
     std::cout << "V4l2 Decoder queued capture buffer" << std::endl;
 
+    bool did_decode = PollFd(decoder_fd);
+    if (did_decode) {
+        std::cout << "SUCCESS" << std::endl;
+    } else {
+        std::cout << "FAILURE" << std::endl;
+    }
 
     /*
 
@@ -248,7 +254,7 @@ int main(int argc, char *argv[]) {
 
     std::cout << "V4l2 Decoder stopped" << std::endl;
 
-    close(encoder_fd);
+    close(decoder_fd);
     std::cout << "V4l2 Decoder Closed" << std::endl;
     return 0;
 }
