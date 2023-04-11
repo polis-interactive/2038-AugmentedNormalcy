@@ -283,14 +283,16 @@ int main(int argc, char *argv[]) {
     buffer.field = V4L2_FIELD_NONE;
     buffer.memory = V4L2_MEMORY_MMAP;
     buffer.length = 1;
-    buffer.timestamp.tv_sec = 1;
-    buffer.timestamp.tv_usec = 3;
+    buffer.timestamp.tv_sec = 0;
+    buffer.timestamp.tv_usec = 0;
     buffer.m.planes = planes;
     buffer.m.planes[0].length = output_size;
     buffer.m.planes[0].bytesused = input_size;
     buffer.m.planes[0].m.mem_offset = output_offset;
     if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
+
+    std::cout << "v4l2 decoder queued output buffer" << std::endl;
 
     /*
      * Dequeue the capture buffer
