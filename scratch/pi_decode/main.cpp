@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
     fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     fmt.fmt.pix_mp.width = width;
     fmt.fmt.pix_mp.height = height;
-    fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_JPEG;
+    fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_MJPEG;
 
     if (xioctl(encoder_fd, VIDIOC_S_FMT, &fmt))
         throw std::runtime_error("failed to set output caps");
