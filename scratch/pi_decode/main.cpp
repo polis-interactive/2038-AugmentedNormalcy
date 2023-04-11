@@ -123,49 +123,6 @@ int main(int argc, char *argv[]) {
     }
 
     /*
-     * query ctls
-     */
-
-    struct v4l2_queryctrl queryctrl = {0};
-
-    for (int id = V4L2_CID_BASE; id < V4L2_CID_LASTP1; ++id) {
-        queryctrl.id = id;
-        if (ioctl(decoder_fd, VIDIOC_QUERYCTRL, &queryctrl) == 0) {
-            if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
-                continue; // Skip disabled controls
-            }
-            std::cout << "Control: " << queryctrl.name << " (ID: " << queryctrl.id << ")\n";
-            std::cout << "  Type: " << queryctrl.type << "\n";
-            std::cout << "  Minimum: " << queryctrl.minimum << "\n";
-            std::cout << "  Maximum: " << queryctrl.maximum << "\n";
-            std::cout << "  Default: " << queryctrl.default_value << "\n";
-            std::cout << "  Step: " << queryctrl.step << "\n";
-        } else {
-            if (errno == EINVAL) {
-                continue; // Control not supported
-            }
-            perror("VIDIOC_QUERYCTRL");
-            break;
-        }
-    }
-
-    queryctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-    while (ioctl(decoder_fd, VIDIOC_QUERYCTRL, &queryctrl) == 0) {
-        if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
-            queryctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
-            continue; // Skip disabled controls
-        }
-        std::cout << "Control: " << queryctrl.name << " (ID: " << queryctrl.id << ")\n";
-        std::cout << "  Type: " << queryctrl.type << "\n";
-        std::cout << "  Minimum: " << queryctrl.minimum << "\n";
-        std::cout << "  Maximum: " << queryctrl.maximum << "\n";
-        std::cout << "  Default: " << queryctrl.default_value << "\n";
-        std::cout << "  Step: " << queryctrl.step << "\n";
-
-        queryctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
-    }
-
-    /*
      *  SET FORMATS
      */
 
@@ -178,7 +135,8 @@ int main(int argc, char *argv[]) {
     fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
     fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
     fmt.fmt.pix_mp.num_planes = 1;
-
+    fmt.fmt.pix_mp.plane_fmt[0].bytesperline = 0;
+    fmt.fmt.pix_mp.plane_fmt[0].sizeimage = 512 << 10;
 
     if (xioctl(decoder_fd, VIDIOC_S_FMT, &fmt))
         throw std::runtime_error("failed to set output caps");
@@ -203,7 +161,7 @@ int main(int argc, char *argv[]) {
      */
 
     v4l2_requestbuffers reqbufs = {};
-    reqbufs.count = 4;
+    reqbufs.count = 1;
     reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     reqbufs.memory = V4L2_MEMORY_MMAP;
     if (xioctl(decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
@@ -213,7 +171,7 @@ int main(int argc, char *argv[]) {
     std::cout << "V4L2 Decoder got " << reqbufs.count << " output buffers" << std::endl;
 
     reqbufs = {};
-    reqbufs.count = 4;
+    reqbufs.count = 1;
     reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     reqbufs.memory = V4L2_MEMORY_MMAP;
     if (xioctl(decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
@@ -222,12 +180,45 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "V4L2 Decoder got " << reqbufs.count << " capture buffers" << std::endl;
 
+
     /*
-     * SETUP CAPTURE BUFFERS
+     * SETUP OUTPUT BUFFERS
      */
 
     v4l2_plane planes[VIDEO_MAX_PLANES];
     v4l2_buffer buffer = {};
+
+    buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+    buffer.memory = V4L2_MEMORY_MMAP;
+    buffer.index = 0;
+    buffer.length = 1;
+    buffer.m.planes = planes;
+
+    if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+        throw std::runtime_error("failed to query output buffer");
+
+    auto output_size = buffer.m.planes[0].length;
+    auto output_offset = buffer.m.planes[0].m.mem_offset;
+    auto output_mem = mmap(
+            nullptr, output_size, PROT_READ | PROT_WRITE, MAP_SHARED, decoder_fd, output_offset
+    );
+    if (output_mem == MAP_FAILED)
+        throw std::runtime_error("failed to mmap output buffer");
+
+
+    std::cout << "V4l2 Decoder MMAPed output buffer with size like so: " <<
+        output_size << ", " << output_offset << std::endl;
+
+    std::cout << "MUST BE BIGGER THEN: " << input_size << std::endl;
+
+    memcpy((void *)output_mem, (void *) in_buf.data(), input_size);
+
+    /*
+     * SETUP CAPTURE BUFFERS
+     */
+
+    buffer = {};
+    memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     buffer.memory = V4L2_MEMORY_MMAP;
     buffer.index = 0;
@@ -236,57 +227,100 @@ int main(int argc, char *argv[]) {
     if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
         throw std::runtime_error("failed to query capture buffer");
 
+    auto capture_size = buffer.m.planes[0].length;
+    auto capture_offset = buffer.m.planes[0].m.mem_offset;
+    auto capture_mem = mmap(
+            nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, decoder_fd,
+            buffer.m.planes[0].m.mem_offset
+    );
+    if (capture_mem == MAP_FAILED)
+        throw std::runtime_error("failed to mmap capture buffer");
+
+    std::cout << "V4l2 Decoder MMAPed capture buffer with size like so: " <<
+              buffer.m.planes[0].length << ", " << buffer.m.planes[0].m.mem_offset << std::endl;
 
     /*
-     * SETUP OUTPUT BUFFERS
+     * Queue the capture buffer
      */
 
-    for (int i = 0; i < 4; i++) {
+    buffer = {};
+    memset(planes, 0, sizeof(planes));
+    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    buffer.memory = V4L2_MEMORY_MMAP;
+    buffer.index = 0;
+    buffer.length = 1;
+    buffer.m.planes = planes;
+    buffer.m.planes[0].length = capture_size;
+    buffer.m.planes[0].m.mem_offset = capture_offset;
 
-        buffer = {};
-        memset(planes, 0, sizeof(planes));
-        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buffer.memory = V4L2_MEMORY_MMAP;
-        buffer.index = i;
-        buffer.length = 1;
-        buffer.m.planes = planes;
+    if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+        throw std::runtime_error("failed to dequeue capture buffer");
 
-        if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
-            throw std::runtime_error("failed to query output buffer");
-
-        std::cout << ", " << buffer.m.planes[0].length <<
-            ", " << buffer.m.planes[0].m.mem_offset << std::endl;
-    }
+    std::cout << "V4l2 Decoder queued capture buffer" << std::endl;
 
     /*
-     * SETUP CAPTURE BUFFERS
+     * START DECODER
+     */
+
+    int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+    if (xioctl(decoder_fd, VIDIOC_STREAMON, &type) < 0)
+        throw std::runtime_error("failed to start output");
+
+    type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    if (xioctl(decoder_fd, VIDIOC_STREAMON, &type) < 0)
+        throw std::runtime_error("failed to start capture");
+
+    std::cout << "v4l2 decoder started!" << std::endl;
+
+    /*
+     * QUEUE OUTPUT BUFFER
+     */
+
+    buffer = {};
+    memset(planes, 0, sizeof(planes));
+    buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+    buffer.index = 0;
+    buffer.field = V4L2_FIELD_NONE;
+    buffer.memory = V4L2_MEMORY_MMAP;
+    buffer.length = 1;
+    buffer.timestamp.tv_sec = 1;
+    buffer.timestamp.tv_usec = 3;
+    buffer.m.planes = planes;
+    buffer.m.planes[0].length = output_size;
+    buffer.m.planes[0].bytesused = input_size;
+    buffer.m.planes[0].m.mem_offset = output_offset;
+    if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+        throw std::runtime_error("failed to queue output buffer");
+
+    /*
+     * Dequeue the capture buffer
+     */
+
+    buffer = {};
+    memset(planes, 0, sizeof(planes));
+    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    buffer.memory = V4L2_MEMORY_MMAP;
+    buffer.index = 0;
+    buffer.length = 1;
+    buffer.m.planes = planes;
+    buffer.m.planes[0].length = capture_size;
+    buffer.m.planes[0].m.mem_offset = capture_offset;
+
+    if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+        throw std::runtime_error("failed to dequeue capture buffer");
+
+    /*
+     * STOP DECODER
      */
 
 
-    for (int i = 0; i < 4; i++) {
+    type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+    if (xioctl(decoder_fd, VIDIOC_STREAMOFF, &type) < 0)
+        throw std::runtime_error("failed to start output");
 
-        buffer = {};
-        memset(planes, 0, sizeof(planes));
-        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        buffer.memory = V4L2_MEMORY_MMAP;
-        buffer.index = i;
-        buffer.length = 1;
-        buffer.m.planes = planes;
-
-        if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
-            throw std::runtime_error("failed to query output buffer");
-
-        std::cout << ", " << buffer.m.planes[0].length <<
-                  ", " << buffer.m.planes[0].m.mem_offset <<
-                  ", " << buffer.m.planes[1].length <<
-                  ", " << buffer.m.planes[1].m.mem_offset <<
-                  ", " << buffer.m.planes[2].length <<
-                  ", " << buffer.m.planes[2].m.mem_offset << std::endl;
-    }
-
-
-
-
+    type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    if (xioctl(decoder_fd, VIDIOC_STREAMOFF, &type) < 0)
+        throw std::runtime_error("failed to start capture");
 
     std::cout << "V4l2 Decoder stopped" << std::endl;
 
