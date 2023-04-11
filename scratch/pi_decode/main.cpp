@@ -112,8 +112,10 @@ int main(int argc, char *argv[]) {
     buf.m.userptr = reinterpret_cast<unsigned long>(in_buf.data());
     buf.length = input_size;
 
-    if (xioctl(encoder_fd, VIDIOC_QBUF, &buf))
+    if (xioctl(encoder_fd, VIDIOC_QBUF, &buf)) {
+        std::cout << errno << std::endl;
         throw std::runtime_error("failed to queue output buffer");
+    }
 
     buf = {};
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
