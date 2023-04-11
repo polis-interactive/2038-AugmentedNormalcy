@@ -107,8 +107,7 @@ int main(int argc, char *argv[]) {
     std::cout << "V4l2 Decoder setup caps" << std::endl;
 
     v4l2_requestbuffers reqbufs = {};
-    reqbufs = {};
-    reqbufs.count = 4;
+    reqbufs.count = 1;
     reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     reqbufs.memory = V4L2_MEMORY_MMAP;
     if (xioctl(encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
@@ -116,6 +115,16 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("request for capture buffers failed");
     }
     std::cout << "V4L2 Decoder got " << reqbufs.count << " output buffers" << std::endl;
+
+    reqbufs = {};
+    reqbufs.count = 1;
+    reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    reqbufs.memory = V4L2_MEMORY_MMAP;
+    if (xioctl(encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+        std::cout << errno << std::endl;
+        throw std::runtime_error("request for capture buffers failed");
+    }
+    std::cout << "V4L2 Decoder got " << reqbufs.count << " capture buffers" << std::endl;
 
     /*
 
