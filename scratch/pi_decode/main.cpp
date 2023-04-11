@@ -169,6 +169,14 @@ int main(int argc, char *argv[]) {
 
     std::cout << "MUST BE BIGGER THEN: " << input_size << std::endl;
 
+    memcpy((void *)output_mem, (void *) in_buf.data(), input_size);
+
+    if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+        throw std::runtime_error("failed to queue output buffer");
+
+    std::cout << "V4l2 Decoder: queued output buffer" << std::endl;
+
+
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
@@ -179,20 +187,13 @@ int main(int argc, char *argv[]) {
     if (xioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
         throw std::runtime_error("failed to query capture buffer");
 
+    auto capture_size = buffer.m.planes[0].length;
     auto capture_mem = mmap(
             nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, encoder_fd,
             buffer.m.planes[0].m.mem_offset
     );
     if (capture_mem == MAP_FAILED)
         throw std::runtime_error("failed to mmap capture buffer");
-
-
-    memcpy((void *)output_mem, (void *) in_buf.data(), input_size);
-
-    std::cout << "V4l2 Decoder queued output buffer" << std::endl;
-
-    if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
-        throw std::runtime_error("failed to queue output buffer");
 
     // should have three planes but meh
     std::cout << "V4l2 Decoder MMAPed capture buffer with size like so: " <<
@@ -202,6 +203,7 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("failed to queue capture buffer");
 
     std::cout << "V4l2 Decoder queued capture buffer" << std::endl;
+
 
     /*
 
