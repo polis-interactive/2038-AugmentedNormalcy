@@ -10,6 +10,7 @@
 #include <linux/videodev2.h>
 
 #include <filesystem>
+#include <cstring>
 #include <fstream>
 
 
@@ -147,6 +148,22 @@ int main(int argc, char *argv[]) {
 
 
     std::cout << "V4l2 Decoder MMAPed output buffer with size: " << output_size << std::endl;
+
+    buffer = {};
+    memset(planes, 0, sizeof(planes));
+    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    buffer.memory = V4L2_MEMORY_MMAP;
+    buffer.index = 0;
+    buffer.length = 1;
+    buffer.m.planes = planes;
+    if (xioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+        throw std::runtime_error("failed to query capture buffer");
+
+    // should have three planes
+    std::cout << buffer.m.planes[0].m.fd << ", " << buffer.m.planes[1].m.fd << ", " <<
+        buffer.m.planes[2].m.fd << ", " << buffer.m.planes[3].m.fd << std::endl;
+    std::cout << "those should all be the same minus the last" << std::endl;
+
 
     /*
 
