@@ -167,6 +167,8 @@ int main(int argc, char *argv[]) {
     std::cout << "V4l2 Decoder MMAPed output buffer with size like so: " <<
         buffer.m.planes[0].length << ", " << buffer.m.planes[0].m.mem_offset << std::endl;
 
+    std::cout << "MUST BE BIGGER THEN: " << input_size << std::endl;
+
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
@@ -188,6 +190,8 @@ int main(int argc, char *argv[]) {
     // should have three planes
     std::cout << "V4l2 Decoder MMAPed capture buffer with size like so: " <<
               buffer.m.planes[0].length << ", " << buffer.m.planes[0].m.mem_offset << std::endl;
+
+    memcpy((void *)output_mem, (void *) in_buf.data(), input_size);
 
     /*
 
