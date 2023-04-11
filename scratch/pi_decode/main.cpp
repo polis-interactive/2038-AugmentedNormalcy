@@ -235,6 +235,7 @@ int main(int argc, char *argv[]) {
      * QUEUE OUTPUT BUFFER
      */
 
+    buffer.m.planes[0].bytesused = input_size;
     if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
 
