@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
     v4l2_requestbuffers reqbufs = {};
     reqbufs.count = 4;
     reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    reqbufs.memory = V4L2_MEMORY_DMABUF;
+    reqbufs.memory = V4L2_MEMORY_MMAP;
     if (xioctl(decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
         std::cout << errno << std::endl;
         throw std::runtime_error("request for output buffers failed");
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
     reqbufs = {};
     reqbufs.count = 4;
     reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    reqbufs.memory = V4L2_MEMORY_DMABUF;
+    reqbufs.memory = V4L2_MEMORY_MMAP;
     if (xioctl(decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
         std::cout << errno << std::endl;
         throw std::runtime_error("request for capture buffers failed");
@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
     v4l2_plane planes[VIDEO_MAX_PLANES];
     v4l2_buffer buffer = {};
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    buffer.memory = V4L2_MEMORY_DMABUF;
+    buffer.memory = V4L2_MEMORY_MMAP;
     buffer.index = 0;
     buffer.length = 1;
     buffer.m.planes = planes;
@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
         buffer = {};
         memset(planes, 0, sizeof(planes));
         buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buffer.memory = V4L2_MEMORY_DMABUF;
+        buffer.memory = V4L2_MEMORY_MMAP;
         buffer.index = i;
         buffer.length = 1;
         buffer.m.planes = planes;
