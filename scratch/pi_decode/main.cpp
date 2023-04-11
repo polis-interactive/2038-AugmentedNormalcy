@@ -294,6 +294,17 @@ int main(int argc, char *argv[]) {
 
     std::cout << "v4l2 decoder queued output buffer" << std::endl;
 
+    if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+        throw std::runtime_error("failed to queue output buffer");
+
+    buffer.timestamp.tv_sec = 0;
+    buffer.timestamp.tv_usec = 33000;
+
+    if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+        throw std::runtime_error("failed to queue output buffer");
+
+    std::cout << "lets do multiple" << std::endl;
+
     /*
      * Dequeue the capture buffer
      */
