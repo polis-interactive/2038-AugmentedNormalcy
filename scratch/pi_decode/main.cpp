@@ -214,13 +214,6 @@ int main(int argc, char *argv[]) {
 
     std::cout << "V4l2 Decoder queued capture buffer" << std::endl;
 
-    bool did_decode = PollFd(decoder_fd);
-    if (did_decode) {
-        std::cout << "SUCCESS" << std::endl;
-    } else {
-        std::cout << "FAILURE" << std::endl;
-    }
-
     if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
         throw std::runtime_error("failed to dequeue capture buffer");
 
