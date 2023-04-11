@@ -46,6 +46,7 @@ int main(int argc, char *argv[]) {
     const char device_name[] = "/dev/video10";
     const int width = 1536;
     const int height = 864;
+    const int stride = 1536;
 
 
     std::filesystem::path this_dir = TMP_DIR;
@@ -91,7 +92,7 @@ int main(int argc, char *argv[]) {
      *  check caps
      */
 
-    struct v4l2_fmtdesc fmtdesc;
+    v4l2_fmtdesc fmtdesc{0};
     fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     for (int i = 0;; ++i) {
         fmtdesc.index = i;
@@ -111,11 +112,15 @@ int main(int argc, char *argv[]) {
      */
 
 
-    struct v4l2_format fmt = {0};
+    v4l2_format fmt = {0};
     fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     fmt.fmt.pix_mp.width = width;
     fmt.fmt.pix_mp.height = height;
-    fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_H264;
+    fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_MJPEG;
+    fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
+    fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
+    fmt.fmt.pix_mp.num_planes = 1;
+
 
     if (xioctl(decoder_fd, VIDIOC_S_FMT, &fmt))
         throw std::runtime_error("failed to set output caps");
@@ -125,6 +130,10 @@ int main(int argc, char *argv[]) {
     fmt.fmt.pix_mp.width = width;
     fmt.fmt.pix_mp.height = height;
     fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_YUV420;
+    fmt.fmt.pix_mp.plane_fmt[0].bytesperline = stride;
+    fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
+    fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
+    fmt.fmt.pix_mp.num_planes = 1;
 
     if (xioctl(decoder_fd, VIDIOC_S_FMT, &fmt))
         throw std::runtime_error("failed to set output caps");
