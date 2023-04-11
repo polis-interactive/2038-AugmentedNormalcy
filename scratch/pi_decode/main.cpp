@@ -126,6 +126,28 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "V4L2 Decoder got " << reqbufs.count << " capture buffers" << std::endl;
 
+    v4l2_plane planes[VIDEO_MAX_PLANES];
+    v4l2_buffer buffer = {};
+    buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+    buffer.memory = V4L2_MEMORY_MMAP;
+    buffer.index = 0;
+    buffer.length = 1;
+    buffer.m.planes = planes;
+
+    if (xioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+        throw std::runtime_error("failed to query output buffer");
+
+    auto output_size = buffer.m.planes[0].length;
+    auto output_mem = mmap(
+            nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, encoder_fd,
+            buffer.m.planes[0].m.mem_offset
+    );
+    if (output_mem == MAP_FAILED)
+        throw std::runtime_error("failed to mmap output buffer");
+
+
+    std::cout << "V4l2 Decoder MMAPed output buffer with size: " << output_size << std::endl;
+
     /*
 
     buf = {};
