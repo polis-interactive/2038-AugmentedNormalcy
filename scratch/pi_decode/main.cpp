@@ -185,6 +185,8 @@ int main(int argc, char *argv[]) {
     if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
         throw std::runtime_error("failed to query output buffer");
 
+    std::cout << buffer.m.planes[0].m.fd << ", " << buffer.m.planes[0].length << std::endl;
+
 
 
     std::cout << "V4l2 Decoder stopped" << std::endl;
