@@ -87,6 +87,9 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "V4l2 Decoder opened fd: " << decoder_fd << std::endl;
 
+    /*
+     *  check caps
+     */
 
     struct v4l2_fmtdesc fmtdesc;
     fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -102,6 +105,10 @@ int main(int argc, char *argv[]) {
                   << static_cast<char>((fmtdesc.pixelformat >> 24) & 0xFF)
                   << std::endl;
     }
+
+    /*
+     *  SET FORMATS
+     */
 
 
     struct v4l2_format fmt = {0};
@@ -124,13 +131,17 @@ int main(int argc, char *argv[]) {
 
     std::cout << "V4l2 Decoder setup caps" << std::endl;
 
+    /*
+     * REQUEST BUFFERS
+     */
+
     v4l2_requestbuffers reqbufs = {};
     reqbufs.count = 1;
     reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     reqbufs.memory = V4L2_MEMORY_MMAP;
     if (xioctl(decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
         std::cout << errno << std::endl;
-        throw std::runtime_error("request for capture buffers failed");
+        throw std::runtime_error("request for output buffers failed");
     }
     std::cout << "V4L2 Decoder got " << reqbufs.count << " output buffers" << std::endl;
 
@@ -143,6 +154,10 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("request for capture buffers failed");
     }
     std::cout << "V4L2 Decoder got " << reqbufs.count << " capture buffers" << std::endl;
+
+    /*
+     * SETUP CAPTURE BUFFERS
+     */
 
     v4l2_plane planes[1];
     v4l2_buffer buffer = {};
@@ -171,6 +186,10 @@ int main(int argc, char *argv[]) {
 
     std::cout << "V4l2 Decoder queued capture buffer" << std::endl;
 
+    /*
+     * SETUP OUTPUT BUFFERS
+     */
+
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -198,10 +217,9 @@ int main(int argc, char *argv[]) {
 
     memcpy((void *)output_mem, (void *) in_buf.data(), input_size);
 
-    if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
-        throw std::runtime_error("failed to queue output buffer");
-
-    std::cout << "V4l2 Decoder: queued output buffer" << std::endl;
+    /*
+     * START ENCODER
+     */
 
     int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     if (xioctl(decoder_fd, VIDIOC_STREAMON, &type) < 0)
@@ -213,6 +231,19 @@ int main(int argc, char *argv[]) {
 
     std::cout << "v4l2 decoder started!" << std::endl;
 
+    /*
+     * QUEUE OUTPUT BUFFER
+     */
+
+    if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+        throw std::runtime_error("failed to queue output buffer");
+
+    std::cout << "V4l2 Decoder: queued output buffer" << std::endl;
+
+    /*
+     * DEQUEUE CAPTURE BUFFER
+     */
+
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
@@ -222,9 +253,13 @@ int main(int argc, char *argv[]) {
     buffer.m.planes = planes;
 
     if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
-        throw std::runtime_error("failed to dequeue output buffer");
+        throw std::runtime_error("failed to dequeue capture buffer");
 
     std::cout << "V4l2 Decoder: dequeued capture buffer" << std::endl;
+
+    /*
+     * DEQUEUE OUTPUT BUFFER
+     */
 
 
     if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
