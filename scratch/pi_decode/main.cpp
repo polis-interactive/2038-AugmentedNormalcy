@@ -87,6 +87,21 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "V4l2 Decoder opened fd: " << encoder_fd << std::endl;
 
+    struct v4l2_fmtdesc fmtdesc;
+    fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+    for (int i = 0;; ++i) {
+        fmtdesc.index = i;
+        if (xioctl(encoder_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
+            break;
+        }
+        std::cout << "Format " << i << ": " << fmtdesc.description
+                  << ", FourCC: " << static_cast<char>((fmtdesc.pixelformat >> 0) & 0xFF)
+                  << static_cast<char>((fmtdesc.pixelformat >> 8) & 0xFF)
+                  << static_cast<char>((fmtdesc.pixelformat >> 16) & 0xFF)
+                  << static_cast<char>((fmtdesc.pixelformat >> 24) & 0xFF)
+                  << std::endl;
+    }
+
     struct v4l2_format fmt = {0};
     fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     fmt.fmt.pix_mp.width = width;
