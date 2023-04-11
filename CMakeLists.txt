@@ -53,6 +53,10 @@ endif()
 if (FEATURE_ENCODER)
     add_subdirectory(${internal_dir}/infrastructure/encoder)
 endif()
+if (FEATURE_DECODER)
+    add_subdirectory(${root_dir}/scratch/pi_decode)
+endif()
+
 add_subdirectory(${internal_dir}/service)
 
 add_subdirectory(test)
