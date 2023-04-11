@@ -43,7 +43,7 @@ bool PollFd(int fd) {
 }
 
 int main(int argc, char *argv[]) {
-    const char device_name[] = "/dev/video11";
+    const char device_name[] = "/dev/video10";
     const int width = 1536;
     const int height = 864;
 
