@@ -87,6 +87,7 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "V4l2 Decoder opened fd: " << encoder_fd << std::endl;
 
+    /*
     struct v4l2_fmtdesc fmtdesc;
     fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     for (int i = 0;; ++i) {
@@ -101,12 +102,13 @@ int main(int argc, char *argv[]) {
                   << static_cast<char>((fmtdesc.pixelformat >> 24) & 0xFF)
                   << std::endl;
     }
+     */
 
     struct v4l2_format fmt = {0};
     fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     fmt.fmt.pix_mp.width = width;
     fmt.fmt.pix_mp.height = height;
-    fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_H264;
+    fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_MJPEG;
 
     if (xioctl(encoder_fd, VIDIOC_S_FMT, &fmt))
         throw std::runtime_error("failed to set output caps");
