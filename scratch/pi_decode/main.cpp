@@ -13,6 +13,10 @@
 #include <cstring>
 #include <fstream>
 
+#include <chrono>
+using namespace std::literals;
+typedef std::chrono::high_resolution_clock Clock;
+
 
 int xioctl(int fd, unsigned long ctl, void *arg) {
     int ret, num_tries = 10;
@@ -70,6 +74,8 @@ int main(int argc, char *argv[]) {
     std::array<char, 1990656> in_buf = {};
     test_in_file.read(in_buf.data(), input_size);
     std::array<char, 1990656> out_buf = {};
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
 
 
     auto decoder_fd = open(device_name, O_RDWR, 0);
@@ -284,7 +290,7 @@ int main(int argc, char *argv[]) {
     buffer.memory = V4L2_MEMORY_MMAP;
     buffer.length = 1;
     buffer.timestamp.tv_sec = 0;
-    buffer.timestamp.tv_usec = 33000;
+    buffer.timestamp.tv_usec = 0;
     buffer.m.planes = planes;
     buffer.m.planes[0].length = output_size;
     buffer.m.planes[0].bytesused = input_size;
@@ -294,18 +300,19 @@ int main(int argc, char *argv[]) {
 
     std::cout << "v4l2 decoder queued output buffer" << std::endl;
 
-    /*
+
     if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
 
     buffer.timestamp.tv_sec = 0;
     buffer.timestamp.tv_usec = 33000;
 
+
     if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
 
+    in_time = Clock::now();
     std::cout << "did multiple cycles" << std::endl;
-     */
 
     /*
      * Dequeue the capture buffer
@@ -323,6 +330,8 @@ int main(int argc, char *argv[]) {
 
     if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
         throw std::runtime_error("failed to dequeue capture buffer");
+
+    out_time = Clock::now();
 
     std::cout << "v4l2 decoder dequeued capture buffer" << std::endl;
 
@@ -375,5 +384,9 @@ int main(int argc, char *argv[]) {
 
     close(decoder_fd);
     std::cout << "V4l2 Decoder Closed" << std::endl;
+
+    auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
+    std::cout << "Time to decode: " << d1.count() << std::endl;
+
     return 0;
 }
