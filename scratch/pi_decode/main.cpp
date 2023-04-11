@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
     if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
 
-    std::cout << "lets do multiple" << std::endl;
+    std::cout << "did multiple cycles" << std::endl;
 
     /*
      * Dequeue the capture buffer
@@ -322,10 +322,18 @@ int main(int argc, char *argv[]) {
     if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
         throw std::runtime_error("failed to dequeue capture buffer");
 
+    std::cout << "v4l2 decoder dequeued capture buffer" << std::endl;
+
+    memcpy((void *)out_buf.data(), (void *) capture_mem, capture_size);
+
+    std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+    test_file_out.write(out_buf.data(), capture_size);
+    test_file_out.flush();
+    test_file_out.close();
+
     /*
      * STOP DECODER
      */
-
 
     type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     if (xioctl(decoder_fd, VIDIOC_STREAMOFF, &type) < 0)
@@ -336,6 +344,32 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("failed to start capture");
 
     std::cout << "V4l2 Decoder stopped" << std::endl;
+
+    /*
+     * CLEANUP
+     */
+
+    munmap(capture_mem, capture_size);
+    munmap(output_mem, output_size);
+
+    reqbufs = {};
+    reqbufs.count = 0;
+    reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+    reqbufs.memory = V4L2_MEMORY_MMAP;
+    if (xioctl(decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+        std::cout << "Failed to free output buffers" << std::endl;
+    }
+
+    reqbufs = {};
+    reqbufs.count = 0;
+    reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    reqbufs.memory = V4L2_MEMORY_MMAP;
+    if (xioctl(decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+        std::cout << "Failed to free capture buffers" << std::endl;
+    }
+
+    std::cout << "v4l2 Decoder cleaned up buffers" << std::endl;
+
 
     close(decoder_fd);
     std::cout << "V4l2 Decoder Closed" << std::endl;
