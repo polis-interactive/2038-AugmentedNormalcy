@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     buffer.memory = V4L2_MEMORY_MMAP;
     buffer.index = 0;
-    buffer.length = 1;
+    buffer.length = 3;
     buffer.m.planes = planes;
     if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
         throw std::runtime_error("failed to query capture buffer");
