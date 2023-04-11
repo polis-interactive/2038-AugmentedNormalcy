@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
     std::cout << "V4l2 Decoder opened fd: " << encoder_fd << std::endl;
 
     struct v4l2_fmtdesc fmtdesc;
-    fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+    fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     for (int i = 0;; ++i) {
         fmtdesc.index = i;
         if (xioctl(encoder_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
