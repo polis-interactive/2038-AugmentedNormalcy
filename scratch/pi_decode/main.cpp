@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
         };
         return 1;
     }
-    std::cout << "V4l2 Encoder opend fd: " << encoder_fd << std::endl;
+    std::cout << "V4l2 Decoder opend fd: " << encoder_fd << std::endl;
 
     v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
     if (xioctl(encoder_fd, VIDIOC_STREAMON, &type) < 0)
@@ -43,6 +43,8 @@ int main(int argc, char *argv[]) {
     type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if (xioctl(encoder_fd, VIDIOC_STREAMON, &type) < 0)
         throw std::runtime_error("failed to start capture streaming");
+
+    std::cout << "V4l2 Decoder started" << std::endl;
 
     type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
     if (xioctl(encoder_fd, VIDIOC_STREAMOFF, &type) < 0) {
@@ -53,8 +55,9 @@ int main(int argc, char *argv[]) {
     if (xioctl(encoder_fd, VIDIOC_STREAMOFF, &type) < 0)
         throw std::runtime_error("failed to start capture streaming");
 
+    std::cout << "V4l2 Decoder stopped" << std::endl;
 
     close(encoder_fd);
-    std::cout << "V4l2 Encoder Closed" << std::endl;
+    std::cout << "V4l2 Decoder Closed" << std::endl;
     return 0;
 }
