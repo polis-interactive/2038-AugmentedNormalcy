@@ -208,6 +208,8 @@ namespace infrastructure {
             std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
             auto v4l2_rz_buffer = _upstream_buffers.at(buf.index);
             _available_upstream_buffers.push(v4l2_rz_buffer);
+        } else {
+            return nullptr;
         }
 
         /*
