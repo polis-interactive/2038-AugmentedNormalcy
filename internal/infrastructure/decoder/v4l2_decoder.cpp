@@ -148,6 +148,8 @@ namespace infrastructure {
             buffer.timestamp.tv_usec = _timestamp % 1000000;
             if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
                 throw std::runtime_error("failed to queue output buffer during priming");
+
+            _is_primed = true;
         }
 
     }
