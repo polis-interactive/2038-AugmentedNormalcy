@@ -3,8 +3,10 @@
 //
 
 #include <doctest.h>
-
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <cstring>
 #include <chrono>
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
@@ -44,4 +46,58 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Start_And_Stop") {
     std::cout << "test_infrastructure/decoder/v4l2_decoder startup and teardown: " <<
               d1.count() << ", " << d2.count() << ", " << d3.count() <<
               d4.count() << ", " << std::endl;
+}
+
+TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-One_Frame") {
+
+    std::filesystem::path this_dir = TEST_DIR;
+    this_dir /= "test_infrastructure";
+    this_dir /= "test_decoder";
+
+    auto in_frame = this_dir;
+    in_frame /= "in.jpeg";
+
+    auto out_frame = this_dir;
+    out_frame /= "out_single.yuv";
+
+    if(std::filesystem::remove(out_frame)) {
+        std::cout << "Removed output file" << std::endl;
+    } else {
+        std::cout << "No output file to remove" << std::endl;
+    }
+
+    std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
+    test_in_file.seekg(0, std::ios::end);
+    size_t input_size = test_in_file.tellg();
+    test_in_file.seekg(0, std::ios::beg);
+    std::array<char, 1990656> in_buf = {};
+    test_in_file.read(in_buf.data(), input_size);
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
+    auto callback = [&out_frame, &out_time](std::shared_ptr<DecoderBuffer> &&buffer) mutable {
+        out_time = Clock::now();
+        std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+        test_file_out.write((char *)(buffer->GetMemory()), buffer->GetSize());
+        test_file_out.flush();
+        test_file_out.close();
+    };
+
+    {
+        TestV4l2DecoderConfig conf;
+        auto decoder = infrastructure::V4l2Decoder::Create(conf, std::move(callback));
+        decoder->Start();
+        auto buffer = decoder->GetResizableBuffer();
+        memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+        buffer->SetSize(input_size);
+        in_time = Clock::now();
+        decoder->PostResizableBuffer(std::move(buffer));
+        std::this_thread::sleep_for(100ms);
+        decoder->Stop();
+    }
+
+    REQUIRE(std::filesystem::exists(out_frame));
+
+    auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
+    std::cout << "Time to encode: " << d1.count() << std::endl;
+
 }
