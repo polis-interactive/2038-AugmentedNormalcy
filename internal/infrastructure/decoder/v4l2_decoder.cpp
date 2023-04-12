@@ -285,7 +285,7 @@ namespace infrastructure {
          */
 
         v4l2_requestbuffers reqbufs = {};
-        reqbufs.count = 1;
+        reqbufs.count = request_upstream_buffers;
         reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         reqbufs.memory = V4L2_MEMORY_MMAP;
         if (xioctl(_decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
@@ -353,7 +353,7 @@ namespace infrastructure {
          */
 
         v4l2_requestbuffers reqbufs = {};
-        reqbufs.count = 1;
+        reqbufs.count = request_downstream_buffers;
         reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
         reqbufs.memory = V4L2_MEMORY_MMAP;
         if (xioctl(_decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
