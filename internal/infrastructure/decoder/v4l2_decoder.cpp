@@ -119,6 +119,8 @@ namespace infrastructure {
             _available_upstream_buffers.push((V4l2ResizableBuffer *)upstream_buffer.get());
         }
 
+        std::cout << "how many fail" << std::endl;
+
         _timestamp += 33000;
 
         auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(upstream_buffer);
