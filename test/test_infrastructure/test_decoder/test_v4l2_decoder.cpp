@@ -37,10 +37,10 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Start_And_Stop") {
     }
     t5 = Clock::now();
 
-    auto d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
-    auto d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2);
-    auto d3 = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3);
-    auto d4 = std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4);
+    auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+    auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2);
+    auto d3 = std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3);
+    auto d4 = std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4);
     std::cout << "test_infrastructure/decoder/v4l2_decoder startup and teardown: " <<
               d1.count() << ", " << d2.count() << ", " << d3.count() <<
               d4.count() << ", " << std::endl;
