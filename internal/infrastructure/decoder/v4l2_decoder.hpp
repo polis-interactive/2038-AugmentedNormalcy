@@ -10,6 +10,7 @@
 #include <mutex>
 #include <map>
 #include <atomic>
+#include <thread>
 
 #include "utils/buffers.hpp"
 
@@ -96,6 +97,7 @@ namespace infrastructure {
             const DecoderConfig &config, DecoderBufferCallback output_callback
         ) {
             auto decoder = std::make_shared<V4l2Decoder>(config, std::move(output_callback));
+            return std::move(decoder);
         }
         [[nodiscard]] std::shared_ptr<ResizableBuffer> GetResizableBuffer() override;
         void PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&buffer) override;
@@ -107,6 +109,13 @@ namespace infrastructure {
         void setupDecoder();
         void setupUpstreamBuffers(unsigned int request_upstream_buffers);
         void setupDownstreamBuffers(unsigned int request_downstream_buffers);
+        void handleDownstream();
+        bool waitForDecoder();
+        std::shared_ptr<DecoderBuffer> getDownstreamBuffer();
+        void queueDownstreamBuffer(DecoderBuffer *d) const;
+        void teardownUpstreamBuffers();
+        void teardownDownstreamBuffers();
+
         static const char _device_name[];
 
         DecoderBufferCallback _output_callback;
@@ -121,6 +130,7 @@ namespace infrastructure {
         std::queue<V4l2ResizableBuffer *> _available_upstream_buffers;
         std::map<unsigned int, V4l2ResizableBuffer *> _upstream_buffers;
 
+        std::unique_ptr<std::thread> _downstream_thread;
         std::map<unsigned int, DecoderBuffer *> _downstream_buffers;
 
         std::shared_ptr<V4l2LeakyUpstreamBuffer> _leaky_upstream_buffer;

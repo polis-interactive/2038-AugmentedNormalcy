@@ -83,6 +83,9 @@ struct DecoderBuffer: public SizedBuffer {
     [[nodiscard]] std::size_t GetSize() override {
         return _size;
     };
+    [[nodiscard]] std::size_t GetIndex() const {
+        return _buffer_index;
+    };
 private:
     const unsigned int _buffer_index;
     const int _fd;

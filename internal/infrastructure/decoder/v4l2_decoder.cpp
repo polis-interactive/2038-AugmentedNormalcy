@@ -54,6 +54,37 @@ namespace infrastructure {
 
         _is_primed = false;
         _decoder_running = true;
+        auto self(shared_from_this());
+        _downstream_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
+            handleDownstream();
+        });
+    }
+
+    void V4l2Decoder::Stop() {
+        if (!_decoder_running) {
+            return;
+        }
+        _decoder_running = false;
+
+        if (_downstream_thread) {
+            if (_downstream_thread->joinable()) {
+                _downstream_thread->join();
+            }
+            _downstream_thread.reset();
+        }
+
+        int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        if (xioctl(_decoder_fd, VIDIOC_STREAMOFF, &type) < 0)
+            throw std::runtime_error("failed to stop output");
+
+        type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        if (xioctl(_decoder_fd, VIDIOC_STREAMOFF, &type) < 0)
+            throw std::runtime_error("failed to stop capture");
+
+        /*
+         * I think I should dequeue things but meh
+         */
+
     }
 
     [[nodiscard]] std::shared_ptr<ResizableBuffer> V4l2Decoder::GetResizableBuffer() {
@@ -119,6 +150,99 @@ namespace infrastructure {
                 throw std::runtime_error("failed to queue output buffer during priming");
         }
 
+    }
+
+    void V4l2Decoder::handleDownstream() {
+        while (true) {
+            const auto decoder_ready = waitForDecoder();
+            if (!_decoder_running) {
+                break;
+            } else if (!decoder_ready) {
+                continue;
+            }
+            auto downstream_buffer = getDownstreamBuffer();
+            if (downstream_buffer) {
+                _output_callback(std::move(downstream_buffer));
+            }
+        }
+    }
+
+    bool V4l2Decoder::waitForDecoder() {
+        int attempts = 3;
+        while (attempts > 0) {
+            pollfd p = { _decoder_fd, POLLIN, 0 };
+            int ret = poll(&p, 1, 10);
+            if (ret == -1) {
+                if (errno == EINTR)
+                    continue;
+                throw std::runtime_error("unexpected errno " + std::to_string(errno) + " from poll");
+            }
+            if (p.revents & POLLIN)
+            {
+                return true;
+            }
+            attempts--;
+        }
+        return false;
+    }
+
+    std::shared_ptr<DecoderBuffer> V4l2Decoder::getDownstreamBuffer() {
+
+        /*
+         * dequeue upstream buffer, return it to the pool
+         */
+
+        v4l2_buffer buf = {};
+        v4l2_plane planes[VIDEO_MAX_PLANES] = {};
+        buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buf.memory = V4L2_MEMORY_MMAP;
+        buf.length = 1;
+        buf.m.planes = planes;
+        int ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
+        if (ret == 0) {
+            std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
+            auto v4l2_rz_buffer = _upstream_buffers.at(buf.index);
+            _available_upstream_buffers.push(v4l2_rz_buffer);
+        }
+
+        /*
+         * dequeue downstream buffer; wrap it and return it
+         */
+
+        buf = {};
+        memset(planes, 0, sizeof(planes));
+        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        buf.memory = V4L2_MEMORY_MMAP;
+        buf.length = 1;
+        buf.m.planes = planes;
+        ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
+        if (ret == 0) {
+            auto downstream_buffer = _downstream_buffers.at(buf.index);
+            auto self(shared_from_this());
+            auto wrapped_buffer = std::shared_ptr<DecoderBuffer>(
+                downstream_buffer,
+                [this, s = std::move(self)](DecoderBuffer *d) {
+                    queueDownstreamBuffer(d);
+                }
+            );
+            return std::move(wrapped_buffer);
+        } else {
+            return nullptr;
+        }
+    }
+
+    void V4l2Decoder::queueDownstreamBuffer(DecoderBuffer *d) const {
+        v4l2_buffer buf = {};
+        v4l2_plane planes[VIDEO_MAX_PLANES] = {};
+        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        buf.memory = V4L2_MEMORY_MMAP;
+        buf.index = d->GetIndex();
+        buf.length = 1;
+        buf.m.planes = planes;
+        buf.m.planes[0].bytesused = 0;
+        buf.m.planes[0].length = d->GetSize();
+        if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
+            throw std::runtime_error("failed to re-queue encoded buffer");
     }
 
     void V4l2Decoder::setupDecoder() {
@@ -298,6 +422,42 @@ namespace infrastructure {
 
             auto downstream_buffer = new DecoderBuffer(buffer.index, expbuf.fd, capture_mem, capture_size);
             _downstream_buffers.insert({ buffer.index, downstream_buffer });
+        }
+    }
+
+    V4l2Decoder::~V4l2Decoder() {
+        Stop();
+        teardownUpstreamBuffers();
+        teardownDownstreamBuffers();
+        close(_decoder_fd);
+    }
+
+    void V4l2Decoder::teardownUpstreamBuffers() {
+        for (auto [index, buffer] : _upstream_buffers) {
+            munmap(buffer->GetMemory(), buffer->GetMaxSize());
+        }
+
+        v4l2_requestbuffers reqbufs = {};
+        reqbufs.count = 0;
+        reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        reqbufs.memory = V4L2_MEMORY_MMAP;
+        if (xioctl(_decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+            std::cout << "Failed to free output buffers" << std::endl;
+        }
+    }
+
+    void V4l2Decoder::teardownDownstreamBuffers() {
+        for (auto [index, buffer] : _downstream_buffers) {
+            munmap(buffer->GetMemory(), buffer->GetSize());
+            close(buffer->GetFd());
+        }
+
+        v4l2_requestbuffers reqbufs = {};
+        reqbufs.count = 0;
+        reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        reqbufs.memory = V4L2_MEMORY_MMAP;
+        if (xioctl(_decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+            std::cout << "Failed to free output buffers" << std::endl;
         }
     }
 }
