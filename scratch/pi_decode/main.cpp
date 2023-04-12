@@ -265,18 +265,20 @@ int main(int argc, char *argv[]) {
      * Queue the capture buffer
      */
 
-    buffer = {};
-    memset(planes, 0, sizeof(planes));
-    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    buffer.memory = V4L2_MEMORY_MMAP;
-    buffer.index = 0;
-    buffer.length = 1;
-    buffer.m.planes = planes;
-    buffer.m.planes[0].length = capture_size;
-    buffer.m.planes[0].m.mem_offset = capture_offset;
+    for (int i = 0; i < 4; i++) {
+        buffer = {};
+        memset(planes, 0, sizeof(planes));
+        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.index = i;
+        buffer.length = 1;
+        buffer.m.planes = planes;
+        buffer.m.planes[0].length = capture_size;
+        buffer.m.planes[0].m.mem_offset = capture_offset;
 
-    if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
-        throw std::runtime_error("failed to dequeue capture buffer");
+        if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+            throw std::runtime_error("failed to dequeue capture buffer");
+    }
 
     std::cout << "V4l2 Decoder queued capture buffer" << std::endl;
 
