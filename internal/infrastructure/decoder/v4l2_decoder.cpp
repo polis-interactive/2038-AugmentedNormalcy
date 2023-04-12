@@ -401,6 +401,7 @@ namespace infrastructure {
              * export to dmabuf
              */
 
+            /*
             memset(&expbuf, 0, sizeof(expbuf));
             expbuf.type = buffer.type;
             expbuf.index = buffer.index;
@@ -408,6 +409,7 @@ namespace infrastructure {
 
             if (xioctl(_decoder_fd, VIDIOC_EXPBUF, &expbuf) < 0)
                 throw std::runtime_error("failed to export the capture buffer");
+            */
 
             /*
              * queue buffer
@@ -420,7 +422,7 @@ namespace infrastructure {
              * setup proxy
              */
 
-            auto downstream_buffer = new DecoderBuffer(buffer.index, expbuf.fd, capture_mem, capture_size);
+            auto downstream_buffer = new DecoderBuffer(buffer.index, -1, capture_mem, capture_size);
             _downstream_buffers.insert({ buffer.index, downstream_buffer });
         }
     }
