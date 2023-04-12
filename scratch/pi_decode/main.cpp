@@ -152,10 +152,11 @@ int main(int argc, char *argv[]) {
     fmt.fmt.pix_mp.width = width;
     fmt.fmt.pix_mp.height = height;
     fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_YUV420;
-    fmt.fmt.pix_mp.plane_fmt[0].bytesperline = stride;
     fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
     fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
     fmt.fmt.pix_mp.num_planes = 1;
+    fmt.fmt.pix_mp.plane_fmt[0].bytesperline = stride;
+    fmt.fmt.pix_mp.plane_fmt[0].sizeimage = width * height * 3 / 2;
 
     if (xioctl(decoder_fd, VIDIOC_S_FMT, &fmt))
         throw std::runtime_error("failed to set output caps");
@@ -328,6 +329,12 @@ int main(int argc, char *argv[]) {
 
     in_time = Clock::now();
     std::cout << "did multiple cycles" << std::endl;
+
+    if (!PollFd(decoder_fd)) {
+        std::cout << "failed D:" << std::endl;
+    } else {
+        std::cout << "SUCCESS" << std::endl;
+    }
 
     /*
      * Dequeue the capture buffer
