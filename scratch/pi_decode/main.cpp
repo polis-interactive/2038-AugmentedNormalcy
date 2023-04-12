@@ -246,6 +246,21 @@ int main(int argc, char *argv[]) {
               buffer.m.planes[0].length << ", " << buffer.m.planes[0].m.mem_offset << std::endl;
 
     /*
+     * Export the capture buffer
+     */
+
+    v4l2_exportbuffer expbuf = {};
+    memset(&expbuf, 0, sizeof(expbuf));
+    expbuf.type = buffer.type;
+    expbuf.index = buffer.index;
+    expbuf.flags = O_RDWR;
+
+    if (xioctl(decoder_fd, VIDIOC_EXPBUF, &expbuf) < 0)
+        throw std::runtime_error("failed to export the capture buffer");
+
+    std::cout << "V4l2 Decoder Exported capture buffer with fd: " << expbuf.fd << std::endl;
+
+    /*
      * Queue the capture buffer
      */
 
