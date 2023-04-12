@@ -86,18 +86,13 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-One_Frame") {
         TestV4l2DecoderConfig conf;
         auto decoder = infrastructure::V4l2Decoder::Create(conf, std::move(callback));
         decoder->Start();
-        std::cout << "who" << std::endl;
         auto buffer = decoder->GetResizableBuffer();
-        std::cout << "is" << std::endl;
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
         buffer->SetSize(input_size);
         in_time = Clock::now();
-        std::cout << "the" << std::endl;
         decoder->PostResizableBuffer(std::move(buffer));
-        std::cout << "hanger" << std::endl;
         std::this_thread::sleep_for(100ms);
         decoder->Stop();
-        std::cout << "mf" << std::endl;
     }
 
     REQUIRE(std::filesystem::exists(out_frame));

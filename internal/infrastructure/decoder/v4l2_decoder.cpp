@@ -153,16 +153,21 @@ namespace infrastructure {
     }
 
     void V4l2Decoder::handleDownstream() {
-        while (true) {
+        while (_decoder_running) {
+            std::cout << "one" << std::endl;
             const auto decoder_ready = waitForDecoder();
             if (!_decoder_running) {
                 break;
             } else if (!decoder_ready) {
                 continue;
             }
+            std::cout << "of" << std::endl;
             auto downstream_buffer = getDownstreamBuffer();
+            std::cout << "you" << std::endl;
             if (downstream_buffer) {
+                std::cout << "suckers" << std::endl;
                 _output_callback(std::move(downstream_buffer));
+                std::cout << "hang" << std::endl;
             }
         }
     }
