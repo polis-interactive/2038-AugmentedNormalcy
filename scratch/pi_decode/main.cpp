@@ -341,6 +341,8 @@ int main(int argc, char *argv[]) {
      * Dequeue the capture buffer
      */
 
+    /*
+
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
@@ -351,6 +353,7 @@ int main(int argc, char *argv[]) {
 
     if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
         throw std::runtime_error("failed to dequeue capture buffer");
+        */
 
     out_time = Clock::now();
 
