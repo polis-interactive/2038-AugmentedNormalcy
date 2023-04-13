@@ -15,10 +15,10 @@ typedef std::chrono::high_resolution_clock Clock;
 
 class TestV4l2DecoderConfig: public infrastructure::DecoderConfig {
     [[nodiscard]] unsigned int get_decoder_upstream_buffer_count() const override {
-        return 1;
+        return 4;
     };
     [[nodiscard]] unsigned int get_decoder_downstream_buffer_count() const override {
-        return 1;
+        return 4;
     };
     [[nodiscard]] std::pair<int, int> get_decoder_width_height() const override {
         return { 1536, 864 };
