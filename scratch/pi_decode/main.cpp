@@ -199,6 +199,8 @@ int main(int argc, char *argv[]) {
     std::vector<std::tuple<int, int, void *>> output_params;
 
     for (int i = 0; i < 4; i++) {
+        buffer = {};
+        memset(planes, 0, sizeof(planes));
         buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         buffer.memory = V4L2_MEMORY_MMAP;
         buffer.index = i;

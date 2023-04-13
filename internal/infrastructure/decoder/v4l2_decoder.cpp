@@ -300,7 +300,6 @@ namespace infrastructure {
             out_str << "Unable to return " << request_upstream_buffers << " output buffers; only got " << reqbufs.count;
             throw std::runtime_error(out_str.str());
         }
-        std::cout << "Creating " << reqbufs.count << "  buffers" << std::endl;
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
