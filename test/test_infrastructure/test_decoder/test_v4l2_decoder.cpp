@@ -147,15 +147,20 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
         TestV4l2DecoderConfig conf;
         auto decoder = infrastructure::V4l2Decoder::Create(conf, std::move(callback));
         decoder->Start();
-        auto buffer = decoder->GetResizableBuffer();
-        memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
-        buffer->SetSize(input_size);
         in_time = Clock::now();
-        decoder->PostResizableBuffer(std::move(buffer));
+
+        for (int i = 0; i < 500; i++) {
+            std::cout << i << std::endl;
+            auto buffer = decoder->GetResizableBuffer();
+            memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+            buffer->SetSize(input_size);
+            in_time = Clock::now();
+            decoder->PostResizableBuffer(std::move(buffer));
+            std::this_thread::sleep_for(30ms);
+        }
         std::this_thread::sleep_for(100ms);
         decoder->Stop();
     }
-    return;
 
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
     std::cout << "Time to decode 10s of data at 30fps: " << d1.count() << std::endl;
