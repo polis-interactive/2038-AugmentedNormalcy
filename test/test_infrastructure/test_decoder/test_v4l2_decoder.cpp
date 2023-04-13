@@ -150,6 +150,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
         {
             auto buffer = decoder->GetResizableBuffer();
             memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+            decoder->PostResizableBuffer(std::move(buffer));
             buffer->SetSize(input_size);
             buffer = decoder->GetResizableBuffer();
             memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
