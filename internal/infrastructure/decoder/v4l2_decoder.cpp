@@ -65,28 +65,29 @@ namespace infrastructure {
 
         int ctr = 0;
 
-        for (int i = 0; i < 3; i++) {
-            auto buffer = GetResizableBuffer();
-            auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
-            auto v4l2_ptr = v4l2_rz_buffer.get();
-            buffer.reset();
+        for (int i = 0; i < 300; i++) {
+            V4l2ResizableBuffer *v4l2_resizable_buffer;
+            {
+                std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
+                v4l2_resizable_buffer = _available_upstream_buffers.front();
+                if (v4l2_resizable_buffer) {
+                    _available_upstream_buffers.pop();
+                }
+            }
 
-            memcpy((void *)v4l2_ptr->GetMemory(), (void *) in_buf.data(), input_size);
-            v4l2_ptr->SetSize(input_size);
-
-
-            std::cout << v4l2_ptr->GetMemory() << ", " << v4l2_ptr->GetIndex() << ", " << v4l2_ptr->GetSize() << ", " << _decoder_fd << std::endl;
+            memcpy((void *)v4l2_resizable_buffer->GetMemory(), (void *) in_buf.data(), input_size);
+            v4l2_resizable_buffer->SetSize(input_size);
 
             std::this_thread::sleep_for(30ms);
 
             v4l2_plane planes[VIDEO_MAX_PLANES];
             v4l2_buffer buf = {};
             buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-            buf.index = v4l2_rz_buffer->GetIndex();
+            buf.index = v4l2_resizable_buffer->GetIndex();
             buf.memory = V4L2_MEMORY_MMAP;
             buf.length = 1;
             buf.m.planes = planes;
-            buf.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
+            buf.m.planes[0].bytesused = v4l2_resizable_buffer->GetSize();
             if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
                 throw std::runtime_error("failed to queue output buffer");
 
