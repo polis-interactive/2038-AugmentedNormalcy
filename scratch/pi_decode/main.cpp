@@ -222,53 +222,14 @@ int main(int argc, char *argv[]) {
 
         std::cout << "MUST BE BIGGER THEN: " << input_size << std::endl;
 
-        output_params.push_back({ output_size, output_offset, output_mem });
+        output_params.emplace_back( output_size, output_offset, output_mem );
     }
 
     /*
      * SETUP CAPTURE BUFFERS
      */
 
-    buffer = {};
-    memset(planes, 0, sizeof(planes));
-    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    buffer.memory = V4L2_MEMORY_MMAP;
-    buffer.index = 0;
-    buffer.length = 1;
-    buffer.m.planes = planes;
-    if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
-        throw std::runtime_error("failed to query capture buffer");
-
-    auto capture_size = buffer.m.planes[0].length;
-    auto capture_offset = buffer.m.planes[0].m.mem_offset;
-    auto capture_mem = mmap(
-            nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, decoder_fd,
-            buffer.m.planes[0].m.mem_offset
-    );
-    if (capture_mem == MAP_FAILED)
-        throw std::runtime_error("failed to mmap capture buffer");
-
-    std::cout << "V4l2 Decoder MMAPed capture buffer with size like so: " <<
-              buffer.m.planes[0].length << ", " << buffer.m.planes[0].m.mem_offset << std::endl;
-
-    /*
-     * Export the capture buffer
-     */
-
-    v4l2_exportbuffer expbuf = {};
-    memset(&expbuf, 0, sizeof(expbuf));
-    expbuf.type = buffer.type;
-    expbuf.index = buffer.index;
-    expbuf.flags = O_RDWR;
-
-    if (xioctl(decoder_fd, VIDIOC_EXPBUF, &expbuf) < 0)
-        throw std::runtime_error("failed to export the capture buffer");
-
-    std::cout << "V4l2 Decoder Exported capture buffer with fd: " << expbuf.fd << std::endl;
-
-    /*
-     * Queue the capture buffer
-     */
+    std::vector<std::tuple<int, int, void *>> capture_params;
 
     for (int i = 0; i < 4; i++) {
         buffer = {};
@@ -278,12 +239,38 @@ int main(int argc, char *argv[]) {
         buffer.index = i;
         buffer.length = 1;
         buffer.m.planes = planes;
+        if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+            throw std::runtime_error("failed to query capture buffer");
+
+        auto capture_size = buffer.m.planes[0].length;
+        auto capture_offset = buffer.m.planes[0].m.mem_offset;
+        auto capture_mem = mmap(
+                nullptr, buffer.m.planes[0].length, PROT_READ | PROT_WRITE, MAP_SHARED, decoder_fd,
+                buffer.m.planes[0].m.mem_offset
+        );
+        if (capture_mem == MAP_FAILED)
+            throw std::runtime_error("failed to mmap capture buffer");
+
+        std::cout << "V4l2 Decoder MMAPed capture buffer with size like so: " <<
+                  buffer.m.planes[0].length << ", " << buffer.m.planes[0].m.mem_offset << std::endl;
+
+        v4l2_exportbuffer expbuf = {};
+        memset(&expbuf, 0, sizeof(expbuf));
+        expbuf.type = buffer.type;
+        expbuf.index = buffer.index;
+        expbuf.flags = O_RDWR;
+
+        if (xioctl(decoder_fd, VIDIOC_EXPBUF, &expbuf) < 0)
+            throw std::runtime_error("failed to export the capture buffer");
+
+        std::cout << "V4l2 Decoder Exported capture buffer with fd: " << expbuf.fd << std::endl;
 
         if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
-            throw std::runtime_error("failed to dequeue capture buffer");
+            throw std::runtime_error("failed to queue capture buffer");
+
+        capture_params.emplace_back( capture_size, capture_offset, capture_mem );
     }
 
-    std::cout << "V4l2 Decoder queued capture buffer" << std::endl;
 
     /*
      * START DECODER
@@ -339,28 +326,25 @@ int main(int argc, char *argv[]) {
      * Dequeue the capture buffer
      */
 
-    /*
 
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     buffer.memory = V4L2_MEMORY_MMAP;
-    buffer.index = 0;
     buffer.length = 1;
     buffer.m.planes = planes;
 
     if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
         throw std::runtime_error("failed to dequeue capture buffer");
-        */
 
     out_time = Clock::now();
 
     std::cout << "v4l2 decoder dequeued capture buffer" << std::endl;
 
-    memcpy((void *)out_buf.data(), (void *) capture_mem, capture_size);
+    memcpy((void *)out_buf.data(), (void *) std::get<2>(capture_params[buffer.index]), std::get<0>(capture_params[buffer.index]));
 
     std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-    test_file_out.write(out_buf.data(), capture_size);
+    test_file_out.write(out_buf.data(), std::get<0>(capture_params[buffer.index]));
     test_file_out.flush();
     test_file_out.close();
 
