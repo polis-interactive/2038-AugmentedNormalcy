@@ -135,20 +135,14 @@ namespace infrastructure {
         buffer.m.planes = planes;
         buffer.m.planes[0].length = v4l2_rz_buffer->GetMaxSize();
         buffer.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
-        std::cout << v4l2_rz_buffer->GetSize() << std::endl;
         buffer.m.planes[0].m.mem_offset = v4l2_rz_buffer->GetMemoryOffset();
-        std::cout << "is it the initial queue?" << std::endl;
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
             throw std::runtime_error("failed to queue output buffer");
 
-        std::cout << "or " << std::endl;
         if (!_is_primed) {
-
-            std::cout << "the " << std::endl;
             if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
                 throw std::runtime_error("failed to dequeue output buffer primer");
 
-            std::cout << "second one? " << std::endl;
             _timestamp += 33000;
             buffer.timestamp.tv_sec = _timestamp / 1000000;
             buffer.timestamp.tv_usec = _timestamp % 1000000;
@@ -442,6 +436,7 @@ namespace infrastructure {
     }
 
     V4l2Decoder::~V4l2Decoder() {
+        std::cout << "is the deconstructor getting run?" << std::endl;
         Stop();
         teardownUpstreamBuffers();
         teardownDownstreamBuffers();
