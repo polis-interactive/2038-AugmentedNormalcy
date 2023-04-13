@@ -236,6 +236,7 @@ namespace infrastructure {
         buf.length = 1;
         buf.m.planes = planes;
         buf.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
+        std::cout << "do i" << std::endl;
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
             throw std::runtime_error("failed to queue output buffer");
 
