@@ -103,7 +103,9 @@ namespace infrastructure {
         auto self(shared_from_this());
         auto buffer = std::shared_ptr<ResizableBuffer>(
             (ResizableBuffer *) v4l2_resizable_buffer,
-            [this, s = std::move(self)](ResizableBuffer *) {}
+            [this, s = std::move(self)](ResizableBuffer *) {
+                std::cout << "when do i go out of scope" << std::endl;
+            }
         );
         return std::move(buffer);
     }
