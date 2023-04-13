@@ -69,35 +69,40 @@ namespace infrastructure {
         std::array<char, 1990656> in_buf = {};
         test_in_file.read(in_buf.data(), input_size);
 
-        auto buffer = GetResizableBuffer();
-        memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
-        buffer->SetSize(input_size);
-        PostResizableBuffer(std::move(buffer));
-
-        auto success = waitForDecoder();
-        if (success) {
-            std::cout << "Success" << std::endl;
-        } else {
-            std::cout << "Failure" << std::endl;
-        }
-
-        auto v4l2_resizable_buffer = _upstream_buffers.at(0);
-        memcpy((void *)v4l2_resizable_buffer->GetMemory(), (void *) in_buf.data(), input_size);
-        v4l2_resizable_buffer->SetSize(input_size);
-
         v4l2_plane planes[VIDEO_MAX_PLANES];
-        v4l2_buffer buf = {};
-        buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buf.index = v4l2_resizable_buffer->GetIndex();
-        buf.memory = V4L2_MEMORY_MMAP;
-        buf.length = 1;
-        buf.m.planes = planes;
-        buf.m.planes[0].bytesused = input_size;
+        v4l2_buffer buffer = {};
+        buffer = {};
+        memset(planes, 0, sizeof(planes));
+        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.index = 2;
+        buffer.length = 1;
+        buffer.m.planes = planes;
+
+        if (xioctl(_decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+            throw std::runtime_error("failed to query output buffer");
+
+        auto output_size = buffer.m.planes[0].length;
+        auto output_offset = buffer.m.planes[0].m.mem_offset;
+        auto output_mem = mmap(
+            nullptr, output_size, PROT_READ | PROT_WRITE, MAP_SHARED, _decoder_fd, output_offset
+        );
+
+        memcpy((void *)output_mem, (void *) in_buf.data(), input_size);
+
+        buffer = {};
+        memset(planes, 0, sizeof(planes));
+        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buffer.index = 2;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.length = 1;
+        buffer.m.planes = planes;
+        buffer.m.planes[0].bytesused = input_size;
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
             throw std::runtime_error("failed to queue output buffer");
 
 
-        success = waitForDecoder();
+        auto success = waitForDecoder();
         if (success) {
             std::cout << "Success" << std::endl;
         } else {
