@@ -292,7 +292,7 @@ int main(int argc, char *argv[]) {
      * QUEUE OUTPUT BUFFER
      */
 
-    // memcpy(std::get<2>(output_params[3]), in_buf.data(), input_size);
+    memcpy(std::get<2>(output_params[3]), in_buf.data(), input_size);
 
     buffer = {};
     memset(planes, 0, sizeof(planes));
