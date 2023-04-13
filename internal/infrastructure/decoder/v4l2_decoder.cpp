@@ -80,7 +80,7 @@ namespace infrastructure {
 
 
             std::cout << v4l2_rz_buffer->GetMemory() << ", " << v4l2_rz_buffer->GetSize() << ", " << v4l2_rz_buffer->GetIndex() << std::endl;
-            PostResizableBuffers(v4l2_rz_buffer);
+            PostResizableBuffers(v4l2_rz_buffer.get());
             std::this_thread::sleep_for(30ms);
         }
 
