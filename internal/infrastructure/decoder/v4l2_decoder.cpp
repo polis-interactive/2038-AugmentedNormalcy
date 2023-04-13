@@ -65,22 +65,15 @@ namespace infrastructure {
 
         for (int i = 0; i < 300; i++) {
             auto buffer = GetResizableBuffer();
-
-            memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
-            buffer->SetSize(input_size);
-
-
             auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
+            auto v4l2_ptr = v4l2_rz_buffer.get();
 
-            const unsigned char *bytes = static_cast<const unsigned char *>(v4l2_rz_buffer->GetMemory());
-            for (int i = 0; i < 5; ++i) {
-                std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(bytes[i]) << ' ';
-            }
-            std::cout << std::endl;
+            memcpy((void *)v4l2_ptr->GetMemory(), (void *) in_buf.data(), input_size);
+            v4l2_ptr->SetSize(input_size);
 
 
-            std::cout << v4l2_rz_buffer->GetMemory() << ", " << v4l2_rz_buffer->GetSize() << ", " << v4l2_rz_buffer->GetIndex() << std::endl;
-            PostResizableBuffers(v4l2_rz_buffer.get());
+            std::cout << v4l2_ptr->GetMemory() << ", " << v4l2_ptr->GetSize() << ", " << v4l2_ptr->GetIndex() << std::endl;
+            PostResizableBuffers(v4l2_ptr);
             std::this_thread::sleep_for(30ms);
         }
 
