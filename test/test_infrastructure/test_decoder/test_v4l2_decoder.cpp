@@ -149,6 +149,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
         decoder->Start();
 
         auto buffer = decoder->GetResizableBuffer();
+        std::cout << (void *) buffer.get() << std::endl;
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
         buffer->SetSize(input_size);
         in_time = Clock::now();
@@ -156,6 +157,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
         std::this_thread::sleep_for(30ms);
 
         buffer = decoder->GetResizableBuffer();
+        std::cout << (void *) buffer.get() << std::endl;
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
         buffer->SetSize(input_size);
         in_time = Clock::now();

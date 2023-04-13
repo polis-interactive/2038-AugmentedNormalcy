@@ -334,7 +334,8 @@ namespace infrastructure {
                 throw std::runtime_error("failed to mmap output buffer");
 
             std::cout << "V4l2 Decoder MMAPed output buffer with size like so: " <<
-                      output_size << ", " << output_offset << ", " << buffer.index << std::endl;
+                      output_size << ", " << output_offset << ", " << buffer.index <<
+                      ", " << (void *) output_mem << std::endl;
 
             /*
              * Create proxy
