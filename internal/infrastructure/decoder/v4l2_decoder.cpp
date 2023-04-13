@@ -69,7 +69,28 @@ namespace infrastructure {
             memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
             buffer->SetSize(input_size);
 
-            PostResizableBuffer(std::move(buffer));
+            // PostResizableBuffer(std::move(buffer));
+            auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
+
+            v4l2_plane planes[VIDEO_MAX_PLANES];
+            v4l2_buffer buf = {};
+            buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+            buf.index = v4l2_rz_buffer->GetIndex();
+            buf.memory = V4L2_MEMORY_MMAP;
+            buf.length = 1;
+            buf.m.planes = planes;
+            buf.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
+            if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
+                throw std::runtime_error("failed to queue output buffer");
+
+            if (i == 0) {
+                if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
+                    throw std::runtime_error("failed to queue output buffer");
+
+
+                if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
+                    throw std::runtime_error("failed to queue output buffer");
+            }
             std::this_thread::sleep_for(30ms);
         }
 
