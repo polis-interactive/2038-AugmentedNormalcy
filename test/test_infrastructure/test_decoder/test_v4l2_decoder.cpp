@@ -86,15 +86,11 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-One_Frame") {
         TestV4l2DecoderConfig conf;
         auto decoder = infrastructure::V4l2Decoder::Create(conf, std::move(callback));
         decoder->Start();
-        for (int i = 0; i < 2; i++){
-            std::this_thread::sleep_for(5s);
-            auto buffer = decoder->GetResizableBuffer();
-            memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
-            buffer->SetSize(input_size);
-            in_time = Clock::now();
-            decoder->PostResizableBuffer(std::move(buffer));
-        }
-
+        auto buffer = decoder->GetResizableBuffer();
+        memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+        buffer->SetSize(input_size);
+        in_time = Clock::now();
+        decoder->PostResizableBuffer(std::move(buffer));
         std::this_thread::sleep_for(100ms);
         decoder->Stop();
     }
@@ -104,6 +100,12 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-One_Frame") {
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
     std::cout << "Time to encode: " << d1.count() << std::endl;
 
+}
+
+TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Dummy") {
+    TestV4l2DecoderConfig conf;
+    auto decoder = infrastructure::V4l2Decoder::Create(conf, std::move(callback));
+    decoder->Dummy();
 }
 
 TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {

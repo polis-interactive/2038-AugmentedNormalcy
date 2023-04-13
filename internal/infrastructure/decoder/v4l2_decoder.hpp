@@ -100,6 +100,7 @@ namespace infrastructure {
         void PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&buffer) override;
         void Start();
         void Stop();
+        void Dummy();
         V4l2Decoder(const DecoderConfig &config, DecoderBufferCallback output_callback);
         ~V4l2Decoder();
     private:

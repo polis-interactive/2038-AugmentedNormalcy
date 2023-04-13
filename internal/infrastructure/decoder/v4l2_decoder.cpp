@@ -12,9 +12,13 @@
 #include <poll.h>
 #include <unistd.h>
 #include <linux/videodev2.h>
+#include <filesystem>
 
 #include <sstream>
 #include <cstring>
+
+
+#include <fstream>
 
 int xioctl(int fd, unsigned long ctl, void *arg) {
     int ret, num_tries = 10;
@@ -36,6 +40,44 @@ namespace infrastructure {
         setupDecoder();
         setupUpstreamBuffers(config.get_decoder_upstream_buffer_count());
         setupDownstreamBuffers(config.get_decoder_downstream_buffer_count());
+    }
+
+    void V4l2Decoder::Dummy() {
+        int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        if (xioctl(_decoder_fd, VIDIOC_STREAMON, &type) < 0)
+            throw std::runtime_error("failed to start output");
+
+        type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        if (xioctl(_decoder_fd, VIDIOC_STREAMON, &type) < 0)
+            throw std::runtime_error("failed to start capture");
+
+        std::filesystem::path this_dir = THIS_DIR;
+        auto in_frame = this_dir;
+        in_frame /= "in.jpeg";
+
+        std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
+        test_in_file.seekg(0, std::ios::end);
+        size_t input_size = test_in_file.tellg();
+        test_in_file.seekg(0, std::ios::beg);
+        std::array<char, 1990656> in_buf = {};
+        test_in_file.read(in_buf.data(), input_size);
+
+        auto buffer = _available_upstream_buffers.front();
+        _available_upstream_buffers.pop();
+        memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+        buffer->SetSize(input_size);
+        auto out_buffer = std::shared_ptr<V4l2ResizableBuffer>(buffer, [](V4l2ResizableBuffer *) {});
+        PostResizableBuffer(std::move(out_buffer));
+
+        buffer = _available_upstream_buffers.front();
+        _available_upstream_buffers.pop();
+        memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+        buffer->SetSize(input_size);
+        out_buffer = std::shared_ptr<V4l2ResizableBuffer>(buffer, [](V4l2ResizableBuffer *) {});
+        PostResizableBuffer(std::move(out_buffer));
+
+        Stop();
+
     }
 
     void V4l2Decoder::Start() {
