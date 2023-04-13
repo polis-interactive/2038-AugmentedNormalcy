@@ -69,27 +69,7 @@ namespace infrastructure {
             memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
             buffer->SetSize(input_size);
 
-            auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
-
-            v4l2_plane planes[VIDEO_MAX_PLANES];
-            v4l2_buffer buf = {};
-            buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-            buf.index = v4l2_rz_buffer->GetIndex();
-            buf.memory = V4L2_MEMORY_MMAP;
-            buf.length = 1;
-            buf.m.planes = planes;
-            buf.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
-            if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-                throw std::runtime_error("failed to queue output buffer");
-
-            if (i == 0) {
-                if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
-                    throw std::runtime_error("failed to queue output buffer");
-
-
-                if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-                    throw std::runtime_error("failed to queue output buffer");
-            }
+            PostResizableBuffer(std::move(buffer));
             std::this_thread::sleep_for(30ms);
         }
 
@@ -174,6 +154,7 @@ namespace infrastructure {
 
     void V4l2Decoder::PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&rz_buffer) {
 
+        /*
         auto upstream_buffer = (V4l2UpstreamBuffer *) rz_buffer.get();
 
         if (upstream_buffer->IsLeakyBuffer()) {
@@ -188,28 +169,31 @@ namespace infrastructure {
             return;
         }
 
+         */
+
+        auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(rz_buffer);
 
         std::cout << "index? " << v4l2_rz_buffer->GetIndex() << std::endl;
         std::cout << "size?" << v4l2_rz_buffer->GetSize() << std::endl;
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
-        v4l2_buffer buffer = {};
-        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buffer.index = v4l2_rz_buffer->GetIndex();
-        buffer.memory = V4L2_MEMORY_MMAP;
-        buffer.length = 1;
-        buffer.m.planes = planes;
-        buffer.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
-        if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0) {
+        v4l2_buffer buf = {};
+        buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buf.index = v4l2_rz_buffer->GetIndex();
+        buf.memory = V4L2_MEMORY_MMAP;
+        buf.length = 1;
+        buf.m.planes = planes;
+        buf.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
+        if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0) {
             std::cout << errno << std::endl;
             throw std::runtime_error("failed to queue output buffer");
         }
 
         if (!_is_primed) {
-            if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+            if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
                 throw std::runtime_error("failed to dequeue output buffer primer");
 
-            if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+            if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
                 throw std::runtime_error("failed to queue output buffer during priming");
 
             _is_primed = true;
