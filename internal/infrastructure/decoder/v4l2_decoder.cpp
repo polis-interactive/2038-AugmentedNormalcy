@@ -101,6 +101,7 @@ namespace infrastructure {
         if (!v4l2_resizable_buffer) {
             return _leaky_upstream_buffer;
         }
+        std::cout << v4l2_resizable_buffer->GetIndex() << ", " << v4l2_resizable_buffer->GetMemory() << std::endl;
         // we use a capture with self here so the object isn't destructed if we have outstanding refs
         auto self(shared_from_this());
         auto buffer = std::shared_ptr<ResizableBuffer>(
@@ -112,16 +113,20 @@ namespace infrastructure {
 
     void V4l2Decoder::PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&rz_buffer) {
 
-        auto upstream_buffer = std::static_pointer_cast<V4l2UpstreamBuffer>(rz_buffer);
+        auto upstream_buffer = (V4l2UpstreamBuffer *) rz_buffer.get();
 
         if (upstream_buffer->IsLeakyBuffer()) {
             return;
-        } else if (!_decoder_running) {
-            std::unique_lock<std::mutex> lock(_available_upstream_buffers_mutex);
-            _available_upstream_buffers.push((V4l2ResizableBuffer *)upstream_buffer.get());
         }
 
-        auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(upstream_buffer);
+        auto v4l2_rz_buffer = (V4l2ResizableBuffer *) upstream_buffer;
+
+        if (!_decoder_running) {
+            std::unique_lock<std::mutex> lock(_available_upstream_buffers_mutex);
+            _available_upstream_buffers.push(v4l2_rz_buffer);
+            return;
+        }
+
 
         std::cout << "index? " << v4l2_rz_buffer->GetIndex() << std::endl;
         std::cout << "size?" << v4l2_rz_buffer->GetSize() << std::endl;
@@ -208,10 +213,7 @@ namespace infrastructure {
             std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
             auto v4l2_rz_buffer = _upstream_buffers.at(buf.index);
             _available_upstream_buffers.push(v4l2_rz_buffer);
-        } else {
-            return nullptr;
         }
-
         /*
          * dequeue downstream buffer; wrap it and return it
          */
