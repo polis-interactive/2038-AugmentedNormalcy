@@ -63,6 +63,31 @@ namespace infrastructure {
         std::array<char, 1990656> in_buf = {};
         test_in_file.read(in_buf.data(), input_size);
 
+        auto this_fn = [decoder = _decoder_fd](V4l2ResizableBuffer *buffer) {
+            static int i = 0;
+
+            v4l2_plane planes[VIDEO_MAX_PLANES];
+            v4l2_buffer buf = {};
+            buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+            buf.index = buffer->GetIndex();
+            buf.memory = V4L2_MEMORY_MMAP;
+            buf.length = 1;
+            buf.m.planes = planes;
+            buf.m.planes[0].bytesused = buffer->GetSize();
+            if (xioctl(decoder, VIDIOC_QBUF, &buf) < 0)
+                throw std::runtime_error("failed to queue output buffer");
+
+            if (i == 0) {
+                if (xioctl(decoder, VIDIOC_DQBUF, &buf) < 0)
+                    throw std::runtime_error("failed to queue output buffer");
+
+
+                if (xioctl(decoder, VIDIOC_QBUF, &buf) < 0)
+                    throw std::runtime_error("failed to queue output buffer");
+                i++;
+            }
+        };
+
         for (int i = 0; i < 300; i++) {
             auto buffer = GetResizableBuffer();
             auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
@@ -73,7 +98,7 @@ namespace infrastructure {
 
             std::this_thread::sleep_for(30ms);
 
-            PostResizableBuffers(v4l2_ptr);
+            this_fn(v4l2_ptr);
 
             std::this_thread::sleep_for(30ms);
         }
