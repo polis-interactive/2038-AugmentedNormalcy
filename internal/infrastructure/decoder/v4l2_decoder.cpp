@@ -63,7 +63,7 @@ namespace infrastructure {
         std::array<char, 1990656> in_buf = {};
         test_in_file.read(in_buf.data(), input_size);
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 20; i++) {
             V4l2ResizableBuffer *buffer;
             {
                 std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
@@ -93,6 +93,7 @@ namespace infrastructure {
                 if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
                     throw std::runtime_error("failed to queue output buffer");
             }
+            std::this_thread::sleep_for(30ms);
         }
 
         std::this_thread::sleep_for(1s);
