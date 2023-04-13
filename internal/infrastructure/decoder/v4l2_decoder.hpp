@@ -55,6 +55,9 @@ namespace infrastructure {
         [[nodiscard]] bool IsLeakyBuffer() final {
             return false;
         };
+        ~V4l2ResizableBuffer() {
+            std::cout << "AGH MAJOR PANIC" << std::endl;
+        }
     private:
         void *_memory;
         const unsigned int _index;
