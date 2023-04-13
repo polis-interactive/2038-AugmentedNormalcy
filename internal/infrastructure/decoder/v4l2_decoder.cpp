@@ -257,7 +257,7 @@ namespace infrastructure {
         int attempts = 5;
         while (attempts > 0) {
             pollfd p = { _decoder_fd, POLLIN, 0 };
-            int ret = poll(&p, 1, 10);
+            int ret = poll(&p, 1, 100);
             if (ret == -1) {
                 if (errno == EINTR)
                     continue;
