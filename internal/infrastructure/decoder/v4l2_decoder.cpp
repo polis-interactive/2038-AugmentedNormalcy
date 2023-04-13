@@ -69,37 +69,40 @@ namespace infrastructure {
         std::array<char, 1990656> in_buf = {};
         test_in_file.read(in_buf.data(), input_size);
 
-        auto buffer = _upstream_buffers.at(0);
+        for (int i = 0; i < 4; i++) {
+            auto buffer = _upstream_buffers.at(i);
 
-        memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+            memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
 
-        v4l2_plane planes[VIDEO_MAX_PLANES];
-        v4l2_buffer buf = {};
-        buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buf.index = 0;
-        buf.memory = V4L2_MEMORY_MMAP;
-        buf.length = 1;
-        buf.m.planes = planes;
-        buf.m.planes[0].bytesused = input_size;
-        if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-            throw std::runtime_error("failed to queue output buffer");
+            v4l2_plane planes[VIDEO_MAX_PLANES];
+            v4l2_buffer buf = {};
+            buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+            buf.index = i;
+            buf.memory = V4L2_MEMORY_MMAP;
+            buf.length = 1;
+            buf.m.planes = planes;
+            buf.m.planes[0].bytesused = input_size;
+            if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
+                throw std::runtime_error("failed to queue output buffer");
 
-        if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
-            throw std::runtime_error("failed to queue output buffer");
+            if (i == 0) {
+                if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
+                    throw std::runtime_error("failed to queue output buffer");
 
 
-        if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-            throw std::runtime_error("failed to queue output buffer");
+                if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
+                    throw std::runtime_error("failed to queue output buffer");
+            }
 
-        std::this_thread::sleep_for(50ms);
-        auto success = waitForDecoder();
-        if (success) {
-            std::cout << "Success" << std::endl;
-        } else {
-            std::cout << "Failure" << std::endl;
+            std::this_thread::sleep_for(50ms);
+            auto success = waitForDecoder();
+            if (success) {
+                std::cout << "Success" << std::endl;
+            } else {
+                std::cout << "Failure" << std::endl;
+            }
         }
 
-        std::this_thread::sleep_for(10s);
 
         Stop();
 
