@@ -87,7 +87,7 @@ namespace infrastructure {
         buffer->SetSize(input_size);
         PostResizableBuffer(std::move(buffer));
 
-        std::this_thread::sleep_for(1s);
+        std::this_thread::sleep_for(10s);
 
         Stop();
 
@@ -147,13 +147,14 @@ namespace infrastructure {
     [[nodiscard]] std::shared_ptr<ResizableBuffer> V4l2Decoder::GetResizableBuffer() {
         V4l2ResizableBuffer *v4l2_resizable_buffer;
         {
-            std::unique_lock<std::mutex> lock(_available_upstream_buffers_mutex);
+            std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
             v4l2_resizable_buffer = _available_upstream_buffers.front();
             if (v4l2_resizable_buffer) {
                 _available_upstream_buffers.pop();
             }
         }
         if (!v4l2_resizable_buffer) {
+            std::cout << "returning leaky" << std::endl;
             return _leaky_upstream_buffer;
         }
         std::cout << v4l2_resizable_buffer->GetIndex() << ", " << v4l2_resizable_buffer->GetMemory() << std::endl;
