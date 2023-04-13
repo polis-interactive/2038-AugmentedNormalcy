@@ -103,9 +103,7 @@ namespace infrastructure {
         auto self(shared_from_this());
         auto buffer = std::shared_ptr<ResizableBuffer>(
             (ResizableBuffer *) v4l2_resizable_buffer,
-            [this, s = std::move(self)](ResizableBuffer *) {
-                std::cout << "when do i go out of scope" << std::endl;
-            }
+            [this, s = std::move(self)](ResizableBuffer *) {}
         );
         return std::move(buffer);
     }
@@ -165,7 +163,6 @@ namespace infrastructure {
             } else if (!decoder_ready) {
                 continue;
             }
-            std::cout << "made it downstream" << std::endl;
             auto downstream_buffer = getDownstreamBuffer();
             if (downstream_buffer) {
                 _output_callback(std::move(downstream_buffer));
@@ -207,7 +204,6 @@ namespace infrastructure {
         int ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
         if (ret == 0) {
             std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
-            std::cout << "Am i ever returned? " << buf.index << std::endl;
             auto v4l2_rz_buffer = _upstream_buffers.at(buf.index);
             _available_upstream_buffers.push(v4l2_rz_buffer);
         } else {
@@ -436,7 +432,6 @@ namespace infrastructure {
     }
 
     V4l2Decoder::~V4l2Decoder() {
-        std::cout << "is the deconstructor getting run?" << std::endl;
         Stop();
         teardownUpstreamBuffers();
         teardownDownstreamBuffers();
