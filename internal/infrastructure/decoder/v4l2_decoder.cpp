@@ -64,20 +64,16 @@ namespace infrastructure {
         test_in_file.read(in_buf.data(), input_size);
 
         for (int i = 0; i < 300; i++) {
-            V4l2ResizableBuffer *buffer;
-            {
-                std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
-                buffer = _available_upstream_buffers.front();
-                _available_upstream_buffers.pop();
-            }
-            std::cout << buffer->GetIndex() << std::endl;
+            auto buffer = GetResizableBuffer();
 
             memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+
+            auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
 
             v4l2_plane planes[VIDEO_MAX_PLANES];
             v4l2_buffer buf = {};
             buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-            buf.index = buffer->GetIndex();
+            buf.index = v4l2_rz_buffer->GetIndex();
             buf.memory = V4L2_MEMORY_MMAP;
             buf.length = 1;
             buf.m.planes = planes;
