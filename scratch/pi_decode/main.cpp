@@ -14,6 +14,8 @@
 #include <fstream>
 
 #include <chrono>
+#include <vector>
+
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
@@ -194,31 +196,34 @@ int main(int argc, char *argv[]) {
 
     v4l2_plane planes[VIDEO_MAX_PLANES];
     v4l2_buffer buffer = {};
+    std::vector<std::tuple<int, int, void *>> output_params;
 
-    buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.memory = V4L2_MEMORY_MMAP;
-    buffer.index = 0;
-    buffer.length = 1;
-    buffer.m.planes = planes;
+    for (int i = 0; i < 4; i++) {
+        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.index = i;
+        buffer.length = 1;
+        buffer.m.planes = planes;
 
-    if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
-        throw std::runtime_error("failed to query output buffer");
+        if (xioctl(decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+            throw std::runtime_error("failed to query output buffer");
 
-    auto output_size = buffer.m.planes[0].length;
-    auto output_offset = buffer.m.planes[0].m.mem_offset;
-    auto output_mem = mmap(
-            nullptr, output_size, PROT_READ | PROT_WRITE, MAP_SHARED, decoder_fd, output_offset
-    );
-    if (output_mem == MAP_FAILED)
-        throw std::runtime_error("failed to mmap output buffer");
+        auto output_size = buffer.m.planes[0].length;
+        auto output_offset = buffer.m.planes[0].m.mem_offset;
+        auto output_mem = mmap(
+                nullptr, output_size, PROT_READ | PROT_WRITE, MAP_SHARED, decoder_fd, output_offset
+        );
+        if (output_mem == MAP_FAILED)
+            throw std::runtime_error("failed to mmap output buffer");
 
 
-    std::cout << "V4l2 Decoder MMAPed output buffer with size like so: " <<
-        output_size << ", " << output_offset << std::endl;
+        std::cout << "V4l2 Decoder MMAPed output buffer with size like so: " <<
+            output_size << ", " << output_offset << std::endl;
 
-    std::cout << "MUST BE BIGGER THEN: " << input_size << std::endl;
+        std::cout << "MUST BE BIGGER THEN: " << input_size << std::endl;
 
-    memcpy((void *)output_mem, (void *) in_buf.data(), input_size);
+        output_params.push_back({ output_size, output_offset, output_mem });
+    }
 
     /*
      * SETUP CAPTURE BUFFERS
@@ -300,6 +305,8 @@ int main(int argc, char *argv[]) {
      * QUEUE OUTPUT BUFFER
      */
 
+    memcpy(std::get<2>(output_params[0]), in_buf.data(), input_size);
+
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -310,9 +317,9 @@ int main(int argc, char *argv[]) {
     buffer.timestamp.tv_sec = 0;
     buffer.timestamp.tv_usec = 0;
     buffer.m.planes = planes;
-    buffer.m.planes[0].length = output_size;
+    buffer.m.planes[0].length = std::get<0>(output_params[0]);
     buffer.m.planes[0].bytesused = input_size;
-    buffer.m.planes[0].m.mem_offset = output_offset;
+    buffer.m.planes[0].m.mem_offset = std::get<1>(output_params[0]);
     if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
 
@@ -367,6 +374,51 @@ int main(int argc, char *argv[]) {
     test_file_out.close();
 
     /*
+     * do it more times
+     */
+    buffer = {};
+    memset(planes, 0, sizeof(planes));
+    buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+    buffer.index = 0;
+    if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+        throw std::runtime_error("failed to dequeue output buffer");
+
+
+    memcpy(std::get<2>(output_params[1]), in_buf.data(), input_size);
+
+    buffer = {};
+    memset(planes, 0, sizeof(planes));
+    buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+    buffer.index = 1;
+    buffer.field = V4L2_FIELD_NONE;
+    buffer.memory = V4L2_MEMORY_MMAP;
+    buffer.length = 1;
+    buffer.timestamp.tv_sec = 0;
+    buffer.timestamp.tv_usec = 0;
+    buffer.m.planes = planes;
+    buffer.m.planes[0].length = std::get<0>(output_params[1]);
+    buffer.m.planes[0].bytesused = input_size;
+    buffer.m.planes[0].m.mem_offset = std::get<1>(output_params[1]);
+    if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+        throw std::runtime_error("failed to queue output buffer again");
+
+
+    if (!PollFd(decoder_fd)) {
+        std::cout << "failed D:" << std::endl;
+    } else {
+        std::cout << "SUCCESS" << std::endl;
+    }
+
+    buffer = {};
+    memset(planes, 0, sizeof(planes));
+    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    buffer.m.planes = planes;
+    if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+        throw std::runtime_error("failed to dequeue output buffer (again)");
+
+
+
+    /*
      * STOP DECODER
      */
 
@@ -385,7 +437,9 @@ int main(int argc, char *argv[]) {
      */
 
     munmap(capture_mem, capture_size);
-    munmap(output_mem, output_size);
+    for (auto [length, offset, mem]: output_params) {
+        munmap(mem, length);
+    }
 
     reqbufs = {};
     reqbufs.count = 0;
