@@ -63,7 +63,7 @@ namespace infrastructure {
         std::array<char, 1990656> in_buf = {};
         test_in_file.read(in_buf.data(), input_size);
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 300; i++) {
             V4l2ResizableBuffer *buffer;
             {
                 std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
