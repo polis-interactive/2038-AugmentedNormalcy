@@ -406,8 +406,6 @@ int main(int argc, char *argv[]) {
     buffer.field = V4L2_FIELD_NONE;
     buffer.memory = V4L2_MEMORY_MMAP;
     buffer.length = 1;
-    buffer.timestamp.tv_sec = 0;
-    buffer.timestamp.tv_usec = 0;
     buffer.m.planes = planes;
     buffer.m.planes[0].length = std::get<0>(output_params[1]);
     buffer.m.planes[0].bytesused = input_size;
