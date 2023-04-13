@@ -13,8 +13,12 @@
 #include <cstring>
 #include <fstream>
 
-#include <chrono>
 #include <vector>
+
+#include <thread>
+#include <chrono>
+using namespace std::literals;
+typedef std::chrono::high_resolution_clock Clock;
 
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
@@ -273,6 +277,7 @@ int main(int argc, char *argv[]) {
         capture_params.emplace_back( capture_size, capture_offset, capture_mem );
     }
 
+    std::this_thread::sleep_for(5s);
 
     /*
      * START DECODER
@@ -291,6 +296,8 @@ int main(int argc, char *argv[]) {
     /*
      * QUEUE OUTPUT BUFFER
      */
+
+    std::this_thread::sleep_for(5s);
 
     memcpy(std::get<2>(output_params[3]), in_buf.data(), input_size);
 
