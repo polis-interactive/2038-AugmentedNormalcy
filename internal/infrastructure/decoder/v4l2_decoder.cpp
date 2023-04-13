@@ -67,6 +67,7 @@ namespace infrastructure {
             auto buffer = GetResizableBuffer();
 
             memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+            buffer->SetSize(input_size);
 
             auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
 
@@ -77,7 +78,7 @@ namespace infrastructure {
             buf.memory = V4L2_MEMORY_MMAP;
             buf.length = 1;
             buf.m.planes = planes;
-            buf.m.planes[0].bytesused = input_size;
+            buf.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
             if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
                 throw std::runtime_error("failed to queue output buffer");
 
@@ -173,7 +174,6 @@ namespace infrastructure {
 
     void V4l2Decoder::PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&rz_buffer) {
 
-        /*
         auto upstream_buffer = (V4l2UpstreamBuffer *) rz_buffer.get();
 
         if (upstream_buffer->IsLeakyBuffer()) {
@@ -187,8 +187,6 @@ namespace infrastructure {
             _available_upstream_buffers.push(v4l2_rz_buffer);
             return;
         }
-         */
-        auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(rz_buffer);
 
 
         std::cout << "index? " << v4l2_rz_buffer->GetIndex() << std::endl;
