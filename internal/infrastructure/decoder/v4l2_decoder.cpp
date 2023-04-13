@@ -165,25 +165,16 @@ namespace infrastructure {
         return std::move(buffer);
     }
 
-    void V4l2Decoder::PostResizableBuffers(std::shared_ptr<ResizableBuffer> rz_buffer) {
-        auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(rz_buffer);
-
-        std::cout << v4l2_rz_buffer->GetMemory() << ", " << v4l2_rz_buffer->GetSize() << ", " << v4l2_rz_buffer->GetIndex() << std::endl;
-
-        const unsigned char *bytes = static_cast<const unsigned char *>(v4l2_rz_buffer->GetMemory());
-        for (int i = 0; i < 5; ++i) {
-            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(bytes[i]) << ' ';
-        }
-        std::cout << std::endl;
+    void V4l2Decoder::PostResizableBuffers(V4l2ResizableBuffer *buffer) {
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buf = {};
         buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buf.index = v4l2_rz_buffer->GetIndex();
+        buf.index = buffer->GetIndex();
         buf.memory = V4L2_MEMORY_MMAP;
         buf.length = 1;
         buf.m.planes = planes;
-        buf.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
+        buf.m.planes[0].bytesused = buffer->GetSize();
         std::cout << "do i" << std::endl;
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
             throw std::runtime_error("failed to queue output buffer");

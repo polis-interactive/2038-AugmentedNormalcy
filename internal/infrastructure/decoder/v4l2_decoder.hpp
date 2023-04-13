@@ -98,7 +98,7 @@ namespace infrastructure {
         }
         [[nodiscard]] std::shared_ptr<ResizableBuffer> GetResizableBuffer() override;
         void PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&buffer) override;
-        void PostResizableBuffers(std::shared_ptr<ResizableBuffer> buffer);
+        void PostResizableBuffers(V4l2ResizableBuffer *buffer);
         void Start();
         void Stop();
         void Dummy();
