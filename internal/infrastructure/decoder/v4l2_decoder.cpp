@@ -67,33 +67,25 @@ namespace infrastructure {
         std::array<char, 1990656> in_buf = {};
         test_in_file.read(in_buf.data(), input_size);
 
-        auto buffer = _available_upstream_buffers.front();
-        _available_upstream_buffers.pop();
+        auto buffer = GetResizableBuffer();
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
         buffer->SetSize(input_size);
-        auto out_buffer = std::shared_ptr<V4l2ResizableBuffer>(buffer, [](V4l2ResizableBuffer *) {});
-        PostResizableBuffer(std::move(out_buffer));
+        PostResizableBuffer(std::move(buffer));
 
-        buffer = _available_upstream_buffers.front();
-        _available_upstream_buffers.pop();
+        buffer = GetResizableBuffer();
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
         buffer->SetSize(input_size);
-        out_buffer = std::shared_ptr<V4l2ResizableBuffer>(buffer, [](V4l2ResizableBuffer *) {});
-        PostResizableBuffer(std::move(out_buffer));
+        PostResizableBuffer(std::move(buffer));
 
-        buffer = _available_upstream_buffers.front();
-        _available_upstream_buffers.pop();
+        buffer = GetResizableBuffer();
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
         buffer->SetSize(input_size);
-        out_buffer = std::shared_ptr<V4l2ResizableBuffer>(buffer, [](V4l2ResizableBuffer *) {});
-        PostResizableBuffer(std::move(out_buffer));
+        PostResizableBuffer(std::move(buffer));
 
-        buffer = _available_upstream_buffers.front();
-        _available_upstream_buffers.pop();
+        buffer = GetResizableBuffer();
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
         buffer->SetSize(input_size);
-        out_buffer = std::shared_ptr<V4l2ResizableBuffer>(buffer, [](V4l2ResizableBuffer *) {});
-        PostResizableBuffer(std::move(out_buffer));
+        PostResizableBuffer(std::move(buffer));
 
         std::this_thread::sleep_for(1s);
 
