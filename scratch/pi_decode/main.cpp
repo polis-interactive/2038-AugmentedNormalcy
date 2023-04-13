@@ -380,6 +380,7 @@ int main(int argc, char *argv[]) {
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     buffer.index = 0;
+    buffer.m.planes = planes;
     if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
         throw std::runtime_error("failed to dequeue output buffer");
 
