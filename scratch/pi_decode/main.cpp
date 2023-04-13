@@ -327,6 +327,7 @@ int main(int argc, char *argv[]) {
      */
 
 
+    /*
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
@@ -347,6 +348,7 @@ int main(int argc, char *argv[]) {
     test_file_out.write(out_buf.data(), std::get<0>(capture_params[buffer.index]));
     test_file_out.flush();
     test_file_out.close();
+     */
 
 
     memcpy(std::get<2>(output_params[1]), in_buf.data(), input_size);
