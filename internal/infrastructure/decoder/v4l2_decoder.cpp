@@ -63,7 +63,6 @@ namespace infrastructure {
     }
 
     void V4l2Decoder::Stop() {
-        std::cout << "stoping" << std::endl;
         if (!_decoder_running) {
             return;
         }
