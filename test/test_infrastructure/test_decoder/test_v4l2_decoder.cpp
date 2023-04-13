@@ -147,10 +147,6 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
         TestV4l2DecoderConfig conf;
         auto decoder = infrastructure::V4l2Decoder::Create(conf, std::move(callback));
         decoder->Start();
-
-        {
-            auto buffer = decoder->GetResizableBuffer();
-        }
         {
             auto buffer = decoder->GetResizableBuffer();
             memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
