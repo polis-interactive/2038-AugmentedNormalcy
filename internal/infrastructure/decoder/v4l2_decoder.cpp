@@ -158,7 +158,9 @@ namespace infrastructure {
         // we use a capture with self here so the object isn't destructed if we have outstanding refs
         auto self(shared_from_this());
         auto buffer = std::shared_ptr<V4l2ResizableBuffer>(
-            v4l2_resizable_buffer, [](V4l2ResizableBuffer *) {}
+            v4l2_resizable_buffer, [](V4l2ResizableBuffer *) {
+                std::cout << "ima deconstructing boy" << std::endl;
+            }
         );
         return std::move(buffer);
     }
