@@ -71,6 +71,8 @@ namespace infrastructure {
             memcpy((void *)v4l2_ptr->GetMemory(), (void *) in_buf.data(), input_size);
             v4l2_ptr->SetSize(input_size);
 
+            std::this_thread::sleep_for(30ms);
+
             v4l2_plane planes[VIDEO_MAX_PLANES];
             v4l2_buffer buf = {};
             buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
