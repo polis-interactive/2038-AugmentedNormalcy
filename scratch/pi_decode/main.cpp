@@ -400,7 +400,6 @@ int main(int argc, char *argv[]) {
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.index = 1;
     buffer.memory = V4L2_MEMORY_MMAP;
     buffer.length = 1;
     buffer.m.planes = planes;
@@ -410,7 +409,6 @@ int main(int argc, char *argv[]) {
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.index = 0;
     buffer.memory = V4L2_MEMORY_MMAP;
     buffer.length = 1;
     buffer.m.planes = planes;
