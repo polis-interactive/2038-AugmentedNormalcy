@@ -356,8 +356,6 @@ int main(int argc, char *argv[]) {
     buffer.index = 0;
     buffer.length = 1;
     buffer.m.planes = planes;
-    buffer.m.planes[0].length = capture_size;
-    buffer.m.planes[0].m.mem_offset = capture_offset;
 
     if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
         throw std::runtime_error("failed to dequeue capture buffer");
