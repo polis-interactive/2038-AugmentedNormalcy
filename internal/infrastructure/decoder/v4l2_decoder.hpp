@@ -30,8 +30,8 @@ namespace infrastructure {
 
     class V4l2ResizableBuffer: public V4l2UpstreamBuffer {
     public:
-        V4l2ResizableBuffer(void *memory, unsigned int index, std::size_t max_size, unsigned int mem_offset):
-            _memory(memory), _index(index), _max_size(max_size), _used_size(max_size), _mem_offset(mem_offset) {}
+        V4l2ResizableBuffer(void *memory, unsigned int index, std::size_t max_size):
+            _memory(memory), _index(index), _max_size(max_size), _used_size(max_size) {}
         [[nodiscard]] void *GetMemory() override {
             return _memory;
         };
@@ -47,12 +47,6 @@ namespace infrastructure {
         [[nodiscard]] unsigned int GetMaxSize() const {
             return _max_size;
         }
-        [[nodiscard]] unsigned int GetMemoryOffset() const {
-            return _mem_offset;
-        }
-        void ResetSize() {
-            _used_size = _max_size;
-        };
         [[nodiscard]] bool IsLeakyBuffer() final {
             return false;
         };
@@ -62,7 +56,6 @@ namespace infrastructure {
     private:
         void *_memory;
         const unsigned int _index;
-        const unsigned int _mem_offset;
         const std::size_t _max_size;
         std::size_t _used_size;
     };

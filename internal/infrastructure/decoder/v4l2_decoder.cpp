@@ -54,15 +54,16 @@ namespace infrastructure {
 
         _is_primed = false;
         _decoder_running = true;
-        /*
+
         auto self(shared_from_this());
         _downstream_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
             handleDownstream();
         });
-         */
+
     }
 
     void V4l2Decoder::Stop() {
+        std::cout << "stoping" << std::endl;
         if (!_decoder_running) {
             return;
         }
@@ -342,7 +343,7 @@ namespace infrastructure {
              * Create proxy
              */
 
-            auto upstream_buffer = new V4l2ResizableBuffer(output_mem, buffer.index, output_size, output_offset);
+            auto upstream_buffer = new V4l2ResizableBuffer(output_mem, buffer.index, output_size);
             _available_upstream_buffers.push(upstream_buffer);
             _upstream_buffers.insert({buffer.index, upstream_buffer});
         }
