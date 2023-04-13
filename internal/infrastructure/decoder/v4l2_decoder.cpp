@@ -68,7 +68,27 @@ namespace infrastructure {
 
             memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
 
-            PostResizableBuffer(std::move(buffer));
+            auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
+
+            v4l2_plane planes[VIDEO_MAX_PLANES];
+            v4l2_buffer buf = {};
+            buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+            buf.index = v4l2_rz_buffer->GetIndex();
+            buf.memory = V4L2_MEMORY_MMAP;
+            buf.length = 1;
+            buf.m.planes = planes;
+            buf.m.planes[0].bytesused = input_size;
+            if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
+                throw std::runtime_error("failed to queue output buffer");
+
+            if (i == 0) {
+                if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
+                    throw std::runtime_error("failed to queue output buffer");
+
+
+                if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
+                    throw std::runtime_error("failed to queue output buffer");
+            }
             std::this_thread::sleep_for(30ms);
         }
 
@@ -153,6 +173,7 @@ namespace infrastructure {
 
     void V4l2Decoder::PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&rz_buffer) {
 
+        /*
         auto upstream_buffer = (V4l2UpstreamBuffer *) rz_buffer.get();
 
         if (upstream_buffer->IsLeakyBuffer()) {
@@ -166,6 +187,8 @@ namespace infrastructure {
             _available_upstream_buffers.push(v4l2_rz_buffer);
             return;
         }
+         */
+        auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(rz_buffer);
 
 
         std::cout << "index? " << v4l2_rz_buffer->GetIndex() << std::endl;
