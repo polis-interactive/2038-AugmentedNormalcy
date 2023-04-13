@@ -104,7 +104,7 @@ namespace infrastructure {
         V4l2Decoder(const DecoderConfig &config, DecoderBufferCallback output_callback);
         ~V4l2Decoder();
     private:
-        void setupDecoder();
+        void setupDecoder(unsigned int request_upstream_buffers, unsigned int request_downstream_buffers);
         void setupUpstreamBuffers(unsigned int request_upstream_buffers);
         void setupDownstreamBuffers(unsigned int request_downstream_buffers);
         void handleDownstream();

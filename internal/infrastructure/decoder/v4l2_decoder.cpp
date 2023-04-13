@@ -41,9 +41,11 @@ namespace infrastructure {
         _output_callback(std::move(output_callback)),
         _width_height(config.get_decoder_width_height())
     {
-        setupDecoder();
-        setupUpstreamBuffers(config.get_decoder_upstream_buffer_count());
-        setupDownstreamBuffers(config.get_decoder_downstream_buffer_count());
+        auto upstream_count = config.get_decoder_upstream_buffer_count();
+        auto downstream_count = config.get_decoder_downstream_buffer_count()
+        setupDecoder(upstream_count, downstream_count);
+        setupUpstreamBuffers(upstream_count);
+        setupDownstreamBuffers(downstream_count);
     }
 
     void V4l2Decoder::Dummy() {
@@ -328,7 +330,7 @@ namespace infrastructure {
             throw std::runtime_error("failed to re-queue encoded buffer");
     }
 
-    void V4l2Decoder::setupDecoder() {
+    void V4l2Decoder::setupDecoder(unsigned int request_upstream_buffers, unsigned int request_downstream_buffers) {
 
         _decoder_fd = open(_device_name, O_RDWR, 0);
 
@@ -359,13 +361,6 @@ namespace infrastructure {
 
         if (xioctl(_decoder_fd, VIDIOC_S_FMT, &fmt))
             throw std::runtime_error("failed to set capture caps");
-    }
-
-    void V4l2Decoder::setupUpstreamBuffers(const unsigned int request_upstream_buffers) {
-
-        /*
-         * request buffers
-         */
 
         v4l2_requestbuffers reqbufs = {};
         reqbufs.count = request_upstream_buffers;
@@ -378,6 +373,23 @@ namespace infrastructure {
             out_str << "Unable to return " << request_upstream_buffers << " output buffers; only got " << reqbufs.count;
             throw std::runtime_error(out_str.str());
         }
+
+        reqbufs = {};
+        reqbufs.count = request_downstream_buffers;
+        reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        reqbufs.memory = V4L2_MEMORY_MMAP;
+        if (xioctl(_decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+            throw std::runtime_error("request for output buffers failed");
+        } else if (reqbufs.count != request_downstream_buffers) {
+            std::stringstream out_str;
+            out_str << "Unable to return " << request_downstream_buffers << " capture buffers; only got " << reqbufs.count;
+            throw std::runtime_error(out_str.str());
+        }
+
+
+    }
+
+    void V4l2Decoder::setupUpstreamBuffers(const unsigned int request_upstream_buffers) {
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
@@ -434,22 +446,6 @@ namespace infrastructure {
     }
 
     void V4l2Decoder::setupDownstreamBuffers(unsigned int request_downstream_buffers) {
-
-        /*
-         * Request buffers
-         */
-
-        v4l2_requestbuffers reqbufs = {};
-        reqbufs.count = request_downstream_buffers;
-        reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        reqbufs.memory = V4L2_MEMORY_MMAP;
-        if (xioctl(_decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
-            throw std::runtime_error("request for output buffers failed");
-        } else if (reqbufs.count != request_downstream_buffers) {
-            std::stringstream out_str;
-            out_str << "Unable to return " << request_downstream_buffers << " capture buffers; only got " << reqbufs.count;
-            throw std::runtime_error(out_str.str());
-        }
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
