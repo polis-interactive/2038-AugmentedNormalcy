@@ -63,6 +63,31 @@ namespace infrastructure {
         std::array<char, 1990656> in_buf = {};
         test_in_file.read(in_buf.data(), input_size);
 
+        int ctr = 0;
+
+        auto this_fn = [decoder = _decoder_fd, &ctr](V4l2ResizableBuffer *buffer) {
+            v4l2_plane planes[VIDEO_MAX_PLANES];
+            v4l2_buffer buf = {};
+            buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+            buf.index = buffer->GetIndex();
+            buf.memory = V4L2_MEMORY_MMAP;
+            buf.length = 1;
+            buf.m.planes = planes;
+            buf.m.planes[0].bytesused = buffer->GetSize();
+            if (xioctl(decoder, VIDIOC_QBUF, &buf) < 0)
+                throw std::runtime_error("failed to queue output buffer");
+
+            if (ctr == 0) {
+                if (xioctl(decoder, VIDIOC_DQBUF, &buf) < 0)
+                    throw std::runtime_error("failed to queue output buffer");
+
+
+                if (xioctl(decoder, VIDIOC_QBUF, &buf) < 0)
+                    throw std::runtime_error("failed to queue output buffer");
+                ctr++;
+            }
+        };
+
         for (int i = 0; i < 300; i++) {
             auto buffer = GetResizableBuffer();
             auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
@@ -73,30 +98,8 @@ namespace infrastructure {
             v4l2_ptr->SetSize(input_size);
 
             std::this_thread::sleep_for(30ms);
-            {
-                v4l2_plane planes[VIDEO_MAX_PLANES];
-                v4l2_buffer buf = {};
-                buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-                buf.index = v4l2_ptr->GetIndex();
-                buf.memory = V4L2_MEMORY_MMAP;
-                buf.length = 1;
-                buf.m.planes = planes;
-                buf.m.planes[0].bytesused = v4l2_ptr->GetSize();
-                if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-                    throw std::runtime_error("failed to queue output buffer");
 
-                if (i == 0) {
-                    if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
-                        throw std::runtime_error("failed to queue output buffer");
-
-
-                    if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-                        throw std::runtime_error("failed to queue output buffer");
-                    i++;
-                }
-
-            }
-
+            this_fn(v4l2_ptr);
 
             std::this_thread::sleep_for(30ms);
         }
