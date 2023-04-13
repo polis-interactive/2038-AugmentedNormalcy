@@ -204,6 +204,7 @@ namespace infrastructure {
         int ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
         if (ret == 0) {
             std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
+            std::cout << "Am i ever returned? " << buf.index << std::endl;
             auto v4l2_rz_buffer = _upstream_buffers.at(buf.index);
             _available_upstream_buffers.push(v4l2_rz_buffer);
         } else {
