@@ -119,8 +119,6 @@ namespace infrastructure {
             _available_upstream_buffers.push((V4l2ResizableBuffer *)upstream_buffer.get());
         }
 
-        std::cout << "how many fail" << std::endl;
-
         _timestamp += 33000;
 
         auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(upstream_buffer);
@@ -138,13 +136,17 @@ namespace infrastructure {
         buffer.m.planes[0].length = v4l2_rz_buffer->GetMaxSize();
         buffer.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
         buffer.m.planes[0].m.mem_offset = v4l2_rz_buffer->GetMemoryOffset();
+        std::cout << "is it the initial queue?" << std::endl;
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
             throw std::runtime_error("failed to queue output buffer");
 
         if (!_is_primed) {
+
+            std::cout << "or the " << std::endl;
             if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
                 throw std::runtime_error("failed to dequeue output buffer primer");
 
+            std::cout << "second one? " << std::endl;
             _timestamp += 33000;
             buffer.timestamp.tv_sec = _timestamp / 1000000;
             buffer.timestamp.tv_usec = _timestamp % 1000000;
