@@ -79,6 +79,7 @@ namespace infrastructure {
                 throw std::runtime_error("failed to queue output buffer");
 
             if (ctr == 0) {
+                std::cout << "double queue" << std::endl;
                 if (xioctl(decoder, VIDIOC_DQBUF, &buf) < 0)
                     throw std::runtime_error("failed to queue output buffer");
 
