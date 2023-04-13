@@ -76,7 +76,7 @@ namespace infrastructure {
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buf = {};
         buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buf.index = 0;
+        buf.index = 1;
         buf.memory = V4L2_MEMORY_MMAP;
         buf.length = 1;
         buf.m.planes = planes;
