@@ -50,13 +50,7 @@ namespace infrastructure {
 
     void V4l2Decoder::Dummy() {
 
-        int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        if (xioctl(_decoder_fd, VIDIOC_STREAMON, &type) < 0)
-            throw std::runtime_error("failed to start output");
-
-        type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        if (xioctl(_decoder_fd, VIDIOC_STREAMON, &type) < 0)
-            throw std::runtime_error("failed to start capture");
+        Start();
 
         std::filesystem::path this_dir = THIS_DIR;
         auto in_frame = this_dir;
@@ -93,16 +87,9 @@ namespace infrastructure {
                 if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
                     throw std::runtime_error("failed to queue output buffer");
             }
-
-            std::this_thread::sleep_for(50ms);
-            auto success = waitForDecoder();
-            if (success) {
-                std::cout << "Success" << std::endl;
-            } else {
-                std::cout << "Failure" << std::endl;
-            }
         }
 
+        std::this_thread::sleep_for(1s);
 
         Stop();
 
