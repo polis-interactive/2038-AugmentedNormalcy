@@ -50,15 +50,7 @@ namespace infrastructure {
 
     void V4l2Decoder::Dummy() {
 
-        // Start();
-
-        int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        if (xioctl(_decoder_fd, VIDIOC_STREAMON, &type) < 0)
-            throw std::runtime_error("failed to start output");
-
-        type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        if (xioctl(_decoder_fd, VIDIOC_STREAMON, &type) < 0)
-            throw std::runtime_error("failed to start capture");
+        Start();
 
         std::filesystem::path this_dir = THIS_DIR;
         auto in_frame = this_dir;
@@ -72,31 +64,6 @@ namespace infrastructure {
         test_in_file.read(in_buf.data(), input_size);
 
         int ctr = 0;
-
-        auto this_fn = [decoder = _decoder_fd, &ctr](V4l2ResizableBuffer *buffer) {
-            std::cout << buffer->GetMemory() << ", " << buffer->GetIndex() << ", " << buffer->GetSize() << ", " << decoder << std::endl;
-            v4l2_plane planes[VIDEO_MAX_PLANES];
-            v4l2_buffer buf = {};
-            buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-            buf.index = buffer->GetIndex();
-            buf.memory = V4L2_MEMORY_MMAP;
-            buf.length = 1;
-            buf.m.planes = planes;
-            buf.m.planes[0].bytesused = buffer->GetSize();
-            if (xioctl(decoder, VIDIOC_QBUF, &buf) < 0)
-                throw std::runtime_error("failed to queue output buffer");
-
-            if (ctr == 0) {
-                std::cout << "double queue" << std::endl;
-                if (xioctl(decoder, VIDIOC_DQBUF, &buf) < 0)
-                    throw std::runtime_error("failed to queue output buffer");
-
-
-                if (xioctl(decoder, VIDIOC_QBUF, &buf) < 0)
-                    throw std::runtime_error("failed to queue output buffer");
-                ctr++;
-            }
-        };
 
         for (int i = 0; i < 3; i++) {
             auto buffer = GetResizableBuffer();
@@ -112,7 +79,7 @@ namespace infrastructure {
 
             std::this_thread::sleep_for(30ms);
 
-            this_fn(v4l2_ptr);
+            PostResizableBuffers(v4l2_ptr);
 
             std::this_thread::sleep_for(30ms);
         }
