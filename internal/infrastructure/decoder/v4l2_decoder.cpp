@@ -50,7 +50,15 @@ namespace infrastructure {
 
     void V4l2Decoder::Dummy() {
 
-        Start();
+        // Start();
+
+        int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        if (xioctl(_decoder_fd, VIDIOC_STREAMON, &type) < 0)
+            throw std::runtime_error("failed to start output");
+
+        type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        if (xioctl(_decoder_fd, VIDIOC_STREAMON, &type) < 0)
+            throw std::runtime_error("failed to start capture");
 
         std::filesystem::path this_dir = THIS_DIR;
         auto in_frame = this_dir;
@@ -90,7 +98,7 @@ namespace infrastructure {
             }
         };
 
-        for (int i = 0; i < 300; i++) {
+        for (int i = 0; i < 3; i++) {
             auto buffer = GetResizableBuffer();
             auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
             auto v4l2_ptr = v4l2_rz_buffer.get();
