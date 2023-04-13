@@ -69,8 +69,11 @@ namespace infrastructure {
             memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
             buffer->SetSize(input_size);
 
-            // PostResizableBuffer(std::move(buffer));
+
             auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
+
+
+            std::cout << v4l2_rz_buffer->GetMemory() << ", " << v4l2_rz_buffer->GetSize() << ", " << v4l2_rz_buffer->GetIndex() << std::endl;
 
             v4l2_plane planes[VIDEO_MAX_PLANES];
             v4l2_buffer buf = {};
