@@ -137,7 +137,6 @@ namespace infrastructure {
             throw std::runtime_error("failed to queue output buffer");
         }
 
-        /*
         if (!_is_primed) {
             if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
                 throw std::runtime_error("failed to dequeue output buffer primer");
@@ -147,7 +146,6 @@ namespace infrastructure {
 
             _is_primed = true;
         }
-         */
 
     }
 
@@ -247,8 +245,6 @@ namespace infrastructure {
         buf.index = d->GetIndex();
         buf.length = 1;
         buf.m.planes = planes;
-        buf.m.planes[0].bytesused = 0;
-        buf.m.planes[0].length = d->GetSize();
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
             throw std::runtime_error("failed to re-queue encoded buffer");
     }
