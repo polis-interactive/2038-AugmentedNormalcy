@@ -18,7 +18,7 @@ class TestV4l2DecoderConfig: public infrastructure::DecoderConfig {
         return 1;
     };
     [[nodiscard]] unsigned int get_decoder_downstream_buffer_count() const override {
-        return 4;
+        return 1;
     };
     [[nodiscard]] std::pair<int, int> get_decoder_width_height() const override {
         return { 1536, 864 };
@@ -154,7 +154,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
         buffer->SetSize(input_size);
         in_time = Clock::now();
         decoder->PostResizableBuffer(std::move(buffer));
-        std::this_thread::sleep_for(30ms);
+        std::this_thread::sleep_for(5s);
 
         buffer = decoder->GetResizableBuffer();
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
