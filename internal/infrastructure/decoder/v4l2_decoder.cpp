@@ -123,6 +123,8 @@ namespace infrastructure {
 
         auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(upstream_buffer);
 
+        std::cout << "index? " << v4l2_rz_buffer->GetIndex() << std::endl;
+
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
         buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
