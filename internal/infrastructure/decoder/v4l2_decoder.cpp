@@ -174,6 +174,7 @@ namespace infrastructure {
 
 
         if (!_is_primed) {
+            std::cout << "double queueing" << std::endl;
             if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
                 throw std::runtime_error("failed to dequeue output buffer primer");
 
