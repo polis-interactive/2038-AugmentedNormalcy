@@ -72,15 +72,36 @@ namespace infrastructure {
         buffer->SetSize(input_size);
         PostResizableBuffer(std::move(buffer));
 
-        buffer = GetResizableBuffer();
-        memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
-        buffer->SetSize(input_size);
-        PostResizableBuffer(std::move(buffer));
+        auto success = waitForDecoder();
+        if (success) {
+            std::cout << "Success" << std::endl;
+        } else {
+            std::cout << "Failure" << std::endl;
+        }
 
         buffer = GetResizableBuffer();
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
         buffer->SetSize(input_size);
         PostResizableBuffer(std::move(buffer));
+
+        success = waitForDecoder();
+        if (success) {
+            std::cout << "Success" << std::endl;
+        } else {
+            std::cout << "Failure" << std::endl;
+        }
+
+        buffer = GetResizableBuffer();
+        memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+        buffer->SetSize(input_size);
+        PostResizableBuffer(std::move(buffer));
+
+        success = waitForDecoder();
+        if (success) {
+            std::cout << "Success" << std::endl;
+        } else {
+            std::cout << "Failure" << std::endl;
+        }
 
         buffer = GetResizableBuffer();
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
@@ -233,7 +254,7 @@ namespace infrastructure {
     }
 
     bool V4l2Decoder::waitForDecoder() {
-        int attempts = 3;
+        int attempts = 5;
         while (attempts > 0) {
             pollfd p = { _decoder_fd, POLLIN, 0 };
             int ret = poll(&p, 1, 10);
