@@ -101,6 +101,13 @@ namespace infrastructure {
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
             throw std::runtime_error("failed to queue output buffer");
 
+        if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+            throw std::runtime_error("failed to queue output buffer");
+
+
+        if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+            throw std::runtime_error("failed to queue output buffer");
+
         std::this_thread::sleep_for(50ms);
         auto success = waitForDecoder();
         if (success) {
