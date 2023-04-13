@@ -419,7 +419,16 @@ int main(int argc, char *argv[]) {
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    buffer.index = 1;
+    buffer.field = V4L2_FIELD_NONE;
+    buffer.memory = V4L2_MEMORY_MMAP;
+    buffer.length = 1;
+    buffer.timestamp.tv_sec = 0;
+    buffer.timestamp.tv_usec = 0;
     buffer.m.planes = planes;
+    buffer.m.planes[0].length = std::get<0>(output_params[1]);
+    buffer.m.planes[0].bytesused = input_size;
+    buffer.m.planes[0].m.mem_offset = std::get<1>(output_params[1]);
     if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
         throw std::runtime_error("failed to dequeue output buffer (again)");
 
