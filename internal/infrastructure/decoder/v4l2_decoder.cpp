@@ -81,14 +81,14 @@ namespace infrastructure {
         buf.length = 1;
         buf.m.planes = planes;
         buf.m.planes[0].bytesused = input_size;
-        if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+        if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
             throw std::runtime_error("failed to queue output buffer");
 
-        if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+        if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
             throw std::runtime_error("failed to queue output buffer");
 
 
-        if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+        if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
             throw std::runtime_error("failed to queue output buffer");
 
         std::this_thread::sleep_for(50ms);
@@ -413,7 +413,7 @@ namespace infrastructure {
                 throw std::runtime_error("failed to mmap output buffer");
 
             std::cout << "V4l2 Decoder MMAPed output buffer with size like so: " <<
-                      output_size << ", " << output_offset << ", " << buffer.index << ", " << i <<
+                      output_size << ", " << output_offset << ", " << buffer.index <<
                       ", " << (void *) output_mem << std::endl;
 
             /*

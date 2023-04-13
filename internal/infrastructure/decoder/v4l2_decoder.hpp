@@ -132,6 +132,7 @@ namespace infrastructure {
         std::map<unsigned int, DecoderBuffer *> _downstream_buffers;
 
         std::shared_ptr<V4l2LeakyUpstreamBuffer> _leaky_upstream_buffer;
+        std::vector<std::tuple<int, int, void *>> _output_params;
     };
 
 }
