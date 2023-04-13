@@ -76,7 +76,7 @@ namespace infrastructure {
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buf = {};
         buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buf.index = 1;
+        buf.index = 0;
         buf.memory = V4L2_MEMORY_MMAP;
         buf.length = 1;
         buf.m.planes = planes;
@@ -413,7 +413,7 @@ namespace infrastructure {
                 throw std::runtime_error("failed to mmap output buffer");
 
             std::cout << "V4l2 Decoder MMAPed output buffer with size like so: " <<
-                      output_size << ", " << output_offset << ", " << buffer.index <<
+                      output_size << ", " << output_offset << ", " << buffer.index << ", " << i <<
                       ", " << (void *) output_mem << std::endl;
 
             /*
