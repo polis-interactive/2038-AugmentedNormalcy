@@ -66,6 +66,7 @@ namespace infrastructure {
         int ctr = 0;
 
         auto this_fn = [decoder = _decoder_fd, &ctr](V4l2ResizableBuffer *buffer) {
+            std::cout << buffer->GetMemory() << ", " << buffer->GetIndex() << ", " << buffer->GetSize() << ", " << decoder << std::endl;
             v4l2_plane planes[VIDEO_MAX_PLANES];
             v4l2_buffer buf = {};
             buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -96,6 +97,9 @@ namespace infrastructure {
 
             memcpy((void *)v4l2_ptr->GetMemory(), (void *) in_buf.data(), input_size);
             v4l2_ptr->SetSize(input_size);
+
+
+            std::cout << v4l2_ptr->GetMemory() << ", " << v4l2_ptr->GetIndex() << ", " << v4l2_ptr->GetSize() << ", " << _decoder_fd << std::endl;
 
             std::this_thread::sleep_for(30ms);
 
