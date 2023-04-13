@@ -141,9 +141,10 @@ namespace infrastructure {
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
             throw std::runtime_error("failed to queue output buffer");
 
+        std::cout << "or " << std::endl;
         if (!_is_primed) {
 
-            std::cout << "or the " << std::endl;
+            std::cout << "the " << std::endl;
             if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
                 throw std::runtime_error("failed to dequeue output buffer primer");
 
