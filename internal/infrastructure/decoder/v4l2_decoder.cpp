@@ -165,6 +165,7 @@ namespace infrastructure {
             } else if (!decoder_ready) {
                 continue;
             }
+            std::cout << "made it downstream" << std::endl;
             auto downstream_buffer = getDownstreamBuffer();
             if (downstream_buffer) {
                 _output_callback(std::move(downstream_buffer));
