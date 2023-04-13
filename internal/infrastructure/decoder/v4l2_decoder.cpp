@@ -216,12 +216,14 @@ namespace infrastructure {
     void V4l2Decoder::handleDownstream() {
         while (_decoder_running) {
             const auto decoder_ready = waitForDecoder();
+            /*
             {
                 std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
                 if (_available_upstream_buffers.size() == _upstream_buffers.size()) {
                     continue;
                 }
             }
+             */
             if (!_decoder_running) {
                 break;
             } else if (!decoder_ready) {
