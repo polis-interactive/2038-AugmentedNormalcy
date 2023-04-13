@@ -104,7 +104,9 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-One_Frame") {
 
 TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Dummy") {
     TestV4l2DecoderConfig conf;
-    auto callback = [](std::shared_ptr<DecoderBuffer> &&buffer){};
+    auto callback = [](std::shared_ptr<DecoderBuffer> &&buffer){
+        std::cout << "success" << std::endl;
+    };
     auto decoder = infrastructure::V4l2Decoder::Create(conf, std::move(callback));
     decoder->Dummy();
 }
