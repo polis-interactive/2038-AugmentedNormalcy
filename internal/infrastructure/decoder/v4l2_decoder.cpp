@@ -73,25 +73,7 @@ namespace infrastructure {
 
             std::this_thread::sleep_for(30ms);
 
-            v4l2_plane planes[VIDEO_MAX_PLANES];
-            v4l2_buffer buf = {};
-            buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-            buf.index = v4l2_ptr->GetIndex();
-            buf.memory = V4L2_MEMORY_MMAP;
-            buf.length = 1;
-            buf.m.planes = planes;
-            buf.m.planes[0].bytesused = v4l2_ptr->GetSize();
-            if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-                throw std::runtime_error("failed to queue output buffer");
-
-            if (i == 0) {
-                if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
-                    throw std::runtime_error("failed to queue output buffer");
-
-
-                if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-                    throw std::runtime_error("failed to queue output buffer");
-            }
+            PostResizableBuffers(v4l2_ptr);
 
             std::this_thread::sleep_for(30ms);
         }
@@ -177,30 +159,29 @@ namespace infrastructure {
         return std::move(buffer);
     }
 
-    void V4l2Decoder::PostResizableBuffers(V4l2ResizableBuffer *buffer) {
+    void V4l2Decoder::PostResizableBuffers(V4l2ResizableBuffer *v4l2_ptr) {
+
+        static int i = 0;
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buf = {};
         buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buf.index = buffer->GetIndex();
+        buf.index = v4l2_ptr->GetIndex();
         buf.memory = V4L2_MEMORY_MMAP;
         buf.length = 1;
         buf.m.planes = planes;
-        buf.m.planes[0].bytesused = buffer->GetSize();
-        std::cout << "do i" << std::endl;
+        buf.m.planes[0].bytesused = v4l2_ptr->GetSize();
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
             throw std::runtime_error("failed to queue output buffer");
 
-
-        if (!_is_primed) {
-            std::cout << "double queueing" << std::endl;
+        if (i == 0) {
             if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
-                throw std::runtime_error("failed to dequeue output buffer primer");
+                throw std::runtime_error("failed to queue output buffer");
+
 
             if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-                throw std::runtime_error("failed to queue output buffer during priming");
-
-            _is_primed = true;
+                throw std::runtime_error("failed to queue output buffer");
+            i++;
         }
     }
 
