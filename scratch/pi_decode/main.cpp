@@ -290,12 +290,12 @@ int main(int argc, char *argv[]) {
      * QUEUE OUTPUT BUFFER
      */
 
-    memcpy(std::get<2>(output_params[0]), in_buf.data(), input_size);
+    memcpy(std::get<2>(output_params[1]), in_buf.data(), input_size);
 
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.index = 0;
+    buffer.index = 1;
     buffer.memory = V4L2_MEMORY_MMAP;
     buffer.length = 1;
     buffer.m.planes = planes;
@@ -351,12 +351,12 @@ int main(int argc, char *argv[]) {
      */
 
 
-    memcpy(std::get<2>(output_params[1]), in_buf.data(), input_size);
+    memcpy(std::get<2>(output_params[0]), in_buf.data(), input_size);
 
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.index = 1;
+    buffer.index = 0;
     buffer.memory = V4L2_MEMORY_MMAP;
     buffer.length = 1;
     buffer.m.planes = planes;
