@@ -11,6 +11,7 @@
 #include <map>
 #include <atomic>
 #include <thread>
+#include <iostream>
 
 #include "utils/buffers.hpp"
 
