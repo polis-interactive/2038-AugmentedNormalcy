@@ -119,25 +119,19 @@ namespace infrastructure {
             _available_upstream_buffers.push((V4l2ResizableBuffer *)upstream_buffer.get());
         }
 
-        _timestamp += 33000;
-
         auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(upstream_buffer);
 
         std::cout << "index? " << v4l2_rz_buffer->GetIndex() << std::endl;
+        std::cout << "size?" << v4l2_rz_buffer->GetSize() << std::endl;
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
         buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         buffer.index = v4l2_rz_buffer->GetIndex();
-        buffer.field = V4L2_FIELD_NONE;
         buffer.memory = V4L2_MEMORY_MMAP;
         buffer.length = 1;
-        buffer.timestamp.tv_sec = _timestamp / 1000000;
-        buffer.timestamp.tv_usec = _timestamp % 1000000;
         buffer.m.planes = planes;
-        buffer.m.planes[0].length = v4l2_rz_buffer->GetMaxSize();
         buffer.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
-        buffer.m.planes[0].m.mem_offset = v4l2_rz_buffer->GetMemoryOffset();
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0) {
             std::cout << errno << std::endl;
             throw std::runtime_error("failed to queue output buffer");
@@ -147,9 +141,6 @@ namespace infrastructure {
             if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
                 throw std::runtime_error("failed to dequeue output buffer primer");
 
-            _timestamp += 33000;
-            buffer.timestamp.tv_sec = _timestamp / 1000000;
-            buffer.timestamp.tv_usec = _timestamp % 1000000;
             if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
                 throw std::runtime_error("failed to queue output buffer during priming");
 
