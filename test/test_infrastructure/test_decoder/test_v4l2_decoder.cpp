@@ -15,7 +15,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 class TestV4l2DecoderConfig: public infrastructure::DecoderConfig {
     [[nodiscard]] unsigned int get_decoder_upstream_buffer_count() const override {
-        return 4;
+        return 1;
     };
     [[nodiscard]] unsigned int get_decoder_downstream_buffer_count() const override {
         return 4;
