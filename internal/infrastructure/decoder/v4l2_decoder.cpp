@@ -73,27 +73,30 @@ namespace infrastructure {
             v4l2_ptr->SetSize(input_size);
 
             std::this_thread::sleep_for(30ms);
-
-            v4l2_plane planes[VIDEO_MAX_PLANES];
-            v4l2_buffer buf = {};
-            buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-            buf.index = v4l2_ptr->GetIndex();
-            buf.memory = V4L2_MEMORY_MMAP;
-            buf.length = 1;
-            buf.m.planes = planes;
-            buf.m.planes[0].bytesused = v4l2_ptr->GetSize();
-            if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-                throw std::runtime_error("failed to queue output buffer");
-
-            if (i == 0) {
-                if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
-                    throw std::runtime_error("failed to queue output buffer");
-
-
+            {
+                v4l2_plane planes[VIDEO_MAX_PLANES];
+                v4l2_buffer buf = {};
+                buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+                buf.index = v4l2_ptr->GetIndex();
+                buf.memory = V4L2_MEMORY_MMAP;
+                buf.length = 1;
+                buf.m.planes = planes;
+                buf.m.planes[0].bytesused = v4l2_ptr->GetSize();
                 if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
                     throw std::runtime_error("failed to queue output buffer");
-                i++;
+
+                if (i == 0) {
+                    if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
+                        throw std::runtime_error("failed to queue output buffer");
+
+
+                    if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
+                        throw std::runtime_error("failed to queue output buffer");
+                    i++;
+                }
+
             }
+
 
             std::this_thread::sleep_for(30ms);
         }
