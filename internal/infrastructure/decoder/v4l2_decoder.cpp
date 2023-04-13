@@ -135,9 +135,7 @@ namespace infrastructure {
         buffer.timestamp.tv_sec = _timestamp / 1000000;
         buffer.timestamp.tv_usec = _timestamp % 1000000;
         buffer.m.planes = planes;
-        buffer.m.planes[0].length = v4l2_rz_buffer->GetMaxSize();
         buffer.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
-        buffer.m.planes[0].m.mem_offset = v4l2_rz_buffer->GetMemoryOffset();
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
             throw std::runtime_error("failed to queue output buffer");
 
