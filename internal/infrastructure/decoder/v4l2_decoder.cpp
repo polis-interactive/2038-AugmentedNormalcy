@@ -64,14 +64,20 @@ namespace infrastructure {
         test_in_file.read(in_buf.data(), input_size);
 
         for (int i = 0; i < 4; i++) {
-            auto buffer = _upstream_buffers.at(i);
+            V4l2ResizableBuffer *buffer;
+            {
+                std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
+                buffer = _available_upstream_buffers.front();
+                _available_upstream_buffers.pop();
+            }
+            std::cout << buffer->GetIndex() << std::endl;
 
             memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
 
             v4l2_plane planes[VIDEO_MAX_PLANES];
             v4l2_buffer buf = {};
             buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-            buf.index = i;
+            buf.index = buffer->GetIndex();
             buf.memory = V4L2_MEMORY_MMAP;
             buf.length = 1;
             buf.m.planes = planes;
@@ -216,14 +222,12 @@ namespace infrastructure {
     void V4l2Decoder::handleDownstream() {
         while (_decoder_running) {
             const auto decoder_ready = waitForDecoder();
-            /*
             {
                 std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
                 if (_available_upstream_buffers.size() == _upstream_buffers.size()) {
                     continue;
                 }
             }
-             */
             if (!_decoder_running) {
                 break;
             } else if (!decoder_ready) {
