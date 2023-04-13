@@ -54,10 +54,12 @@ namespace infrastructure {
 
         _is_primed = false;
         _decoder_running = true;
+        /*
         auto self(shared_from_this());
         _downstream_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
             handleDownstream();
         });
+         */
     }
 
     void V4l2Decoder::Stop() {
@@ -197,7 +199,6 @@ namespace infrastructure {
 
         v4l2_buffer buf = {};
         v4l2_plane planes[VIDEO_MAX_PLANES] = {};
-        /*
         buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         buf.memory = V4L2_MEMORY_MMAP;
         buf.length = 1;
@@ -210,7 +211,6 @@ namespace infrastructure {
         } else {
             return nullptr;
         }
-         */
 
         /*
          * dequeue downstream buffer; wrap it and return it
@@ -222,7 +222,7 @@ namespace infrastructure {
         buf.memory = V4L2_MEMORY_MMAP;
         buf.length = 1;
         buf.m.planes = planes;
-        int ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
+        ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
         if (ret == 0) {
             auto downstream_buffer = _downstream_buffers.at(buf.index);
             auto self(shared_from_this());
