@@ -27,3 +27,11 @@ $ cmake -DAN_PLATFORM:STRING=RPI_CAMERA ..
     (or RPI_HEADSET)
 $ make -j4
 ```
+
+## RPI debug
+
+```
+$ sudo modprobe -r bcm2835-codec
+$ sudo modprobe bcm2835-codec debug=5
+$ dmesg
+```

@@ -141,19 +141,6 @@ namespace infrastructure {
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
             throw std::runtime_error("failed to queue output buffer");
 
-        if (!_is_primed) {
-            if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
-                throw std::runtime_error("failed to dequeue output buffer primer");
-
-            _timestamp += 33000;
-            buffer.timestamp.tv_sec = _timestamp / 1000000;
-            buffer.timestamp.tv_usec = _timestamp % 1000000;
-            if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
-                throw std::runtime_error("failed to queue output buffer during priming");
-
-            _is_primed = true;
-        }
-
     }
 
     void V4l2Decoder::handleDownstream() {
