@@ -133,6 +133,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
     auto callback = [&out_frame, &out_time, &counter, &is_done](
         std::shared_ptr<DecoderBuffer> &&buffer
     ) mutable {
+        std::cout << "I had to get called if leaky wasn't used" << std::endl;
         if (++counter >= 300 && !is_done) {
             out_time = Clock::now();
             is_done = true;
