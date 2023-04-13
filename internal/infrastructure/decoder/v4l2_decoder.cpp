@@ -44,7 +44,7 @@ namespace infrastructure {
         auto upstream_count = config.get_decoder_upstream_buffer_count();
         auto downstream_count = config.get_decoder_downstream_buffer_count();
         setupDecoder(upstream_count, downstream_count);
-        // setupUpstreamBuffers(upstream_count);
+        setupUpstreamBuffers(upstream_count);
         setupDownstreamBuffers(downstream_count);
     }
 
