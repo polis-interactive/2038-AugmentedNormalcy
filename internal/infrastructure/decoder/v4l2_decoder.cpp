@@ -342,6 +342,9 @@ namespace infrastructure {
             if (output_mem == MAP_FAILED)
                 throw std::runtime_error("failed to mmap output buffer");
 
+            std::cout << "V4l2 Decoder MMAPed output buffer with size like so: " <<
+                      output_size << ", " << output_offset << ", " << buffer.index << std::endl;
+
             /*
              * Create proxy
              */
