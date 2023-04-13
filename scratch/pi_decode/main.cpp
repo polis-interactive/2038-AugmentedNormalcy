@@ -407,8 +407,12 @@ int main(int argc, char *argv[]) {
      * CLEANUP
      */
 
-    munmap(capture_mem, capture_size);
+
     for (auto [length, offset, mem]: output_params) {
+        munmap(mem, length);
+    }
+
+    for (auto [length, offset, mem]: capture_params) {
         munmap(mem, length);
     }
 
