@@ -135,6 +135,7 @@ namespace infrastructure {
         buffer.m.planes = planes;
         buffer.m.planes[0].length = v4l2_rz_buffer->GetMaxSize();
         buffer.m.planes[0].bytesused = v4l2_rz_buffer->GetSize();
+        std::cout << v4l2_rz_buffer->GetSize() << std::endl;
         buffer.m.planes[0].m.mem_offset = v4l2_rz_buffer->GetMemoryOffset();
         std::cout << "is it the initial queue?" << std::endl;
         if (xioctl(_decoder_fd, VIDIOC_QBUF, &buffer) < 0)
