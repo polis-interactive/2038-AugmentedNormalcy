@@ -218,6 +218,7 @@ namespace infrastructure {
             if (!_decoder_running) {
                 break;
             } else if (!decoder_ready) {
+                std::this_thread::sleep_for(10ms);
                 continue;
             }
             auto downstream_buffer = getDownstreamBuffer();
@@ -231,7 +232,7 @@ namespace infrastructure {
         int attempts = 5;
         while (attempts > 0) {
             pollfd p = { _decoder_fd, POLLIN, 0 };
-            int ret = poll(&p, 1, 100);
+            int ret = poll(&p, 1, 200);
             if (ret == -1) {
                 if (errno == EINTR)
                     continue;
