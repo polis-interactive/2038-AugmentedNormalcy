@@ -167,7 +167,7 @@ namespace infrastructure {
         }
         if (!v4l2_resizable_buffer) {
             std::cout << "returning leaky" << std::endl;
-            return nullptr
+            return nullptr;
         }
         // we use a capture with self here so the object isn't destructed if we have outstanding refs
         auto buffer = std::shared_ptr<V4l2ResizableBuffer>(
