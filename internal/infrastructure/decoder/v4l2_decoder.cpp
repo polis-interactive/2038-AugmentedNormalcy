@@ -66,10 +66,18 @@ namespace infrastructure {
         int ctr = 0;
 
         for (int i = 0; i < 300; i++) {
-            auto buffer = GetResizableBuffer();
+            V4l2ResizableBuffer *v4l2_resizable_buffer;
+            {
+                std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
+                v4l2_resizable_buffer = _available_upstream_buffers.front();
+                if (v4l2_resizable_buffer) {
+                    _available_upstream_buffers.pop();
+                }
+            }
 
-            memcpy(buffer->GetMemory(), (void *) in_buf.data(), input_size);
-            buffer->SetSize(input_size);
+            memcpy(v4l2_resizable_buffer->GetMemory(), (void *) in_buf.data(), input_size);
+            v4l2_resizable_buffer->SetSize(input_size);
+            auto buffer = std::shared_ptr<V4l2ResizableBuffer>(v4l2_resizable_buffer, [](V4l2ResizableBuffer *){});
 
             std::this_thread::sleep_for(30ms);
             PostResizableBuffer(std::move(buffer));
