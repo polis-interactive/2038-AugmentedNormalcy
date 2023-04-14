@@ -66,15 +66,22 @@ namespace infrastructure {
         int ctr = 0;
 
         for (int i = 0; i < 300; i++) {
-            auto buffer = GetResizableBuffer();
+            V4l2ResizableBuffer *v4l2_resizable_buffer;
+            {
+                std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
+                v4l2_resizable_buffer = _available_upstream_buffers.front();
+                if (v4l2_resizable_buffer) {
+                    _available_upstream_buffers.pop();
+                }
+            }
+            // we use a capture with self here so the object isn't destructed if we have outstanding refs
+            auto buffer = std::shared_ptr<ResizableBuffer>(v4l2_resizable_buffer, [](ResizableBuffer *){});
 
-            auto v4l2_buffer = std::dynamic_pointer_cast<V4l2ResizableBuffer>(buffer);
-
-            memcpy(v4l2_buffer->GetMemory(), (void *) in_buf.data(), input_size);
-            v4l2_buffer->SetSize(input_size);
+            memcpy(buffer->GetMemory(), (void *) in_buf.data(), input_size);
+            buffer->SetSize(input_size);
 
             std::this_thread::sleep_for(30ms);
-            PostResizableBuffer(std::move(v4l2_buffer));
+            PostResizableBuffer(std::move(buffer));
 
             std::this_thread::sleep_for(30ms);
         }
@@ -157,9 +164,7 @@ namespace infrastructure {
         }
 
         auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(rz_buffer);
-        if (v4l2_rz_buffer == nullptr) {
-            throw std::runtime_error("Failed to downcast to V4l2ResizableBuffer");
-        } else if (!_decoder_running) {
+        if (!_decoder_running) {
             std::unique_lock<std::mutex> lock(_available_upstream_buffers_mutex);
             _available_upstream_buffers.push(v4l2_rz_buffer.get());
             return;
