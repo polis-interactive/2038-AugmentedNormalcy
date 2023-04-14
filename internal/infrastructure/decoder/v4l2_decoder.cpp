@@ -241,18 +241,16 @@ namespace infrastructure {
 
     void V4l2Decoder::PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&rz_buffer) {
 
-        auto upstream_buffer = dynamic_cast<V4l2UpstreamBuffer *>(rz_buffer.get());
-
-        if (upstream_buffer == nullptr || upstream_buffer->IsLeakyBuffer()) {
+        if (rz_buffer == nullptr || rz_buffer->IsLeakyBuffer()) {
             return;
         }
 
-        auto v4l2_rz_buffer = dynamic_cast<V4l2ResizableBuffer *>(upstream_buffer);
+        auto v4l2_rz_buffer = std::dynamic_pointer_cast<V4l2ResizableBuffer>(rz_buffer);
         if (v4l2_rz_buffer == nullptr) {
             throw std::runtime_error("Failed to downcast to V4l2ResizableBuffer");
         } else if (!_decoder_running) {
             std::unique_lock<std::mutex> lock(_available_upstream_buffers_mutex);
-            _available_upstream_buffers.push(v4l2_rz_buffer);
+            _available_upstream_buffers.push(v4l2_rz_buffer.get());
             return;
         }
 
