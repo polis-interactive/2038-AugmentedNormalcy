@@ -148,8 +148,8 @@ namespace infrastructure {
             return _leaky_upstream_buffer;
         }
         // we use a capture with self here so the object isn't destructed if we have outstanding refs
-        auto buffer = std::shared_ptr<ResizableBuffer>(
-            (ResizableBuffer *)v4l2_resizable_buffer, [](ResizableBuffer *) {}
+        auto buffer = std::shared_ptr<V4l2ResizableBuffer>(
+            (V4l2ResizableBuffer *)v4l2_resizable_buffer, [](V4l2ResizableBuffer *) {}
         );
         return std::move(buffer);
     }
