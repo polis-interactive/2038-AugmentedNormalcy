@@ -68,13 +68,13 @@ namespace infrastructure {
         for (int i = 0; i < 300; i++) {
             auto buffer = GetResizableBuffer();
 
-            std::cout << typeid(*buffer).name() << std::endl;
+            auto v4l2_buffer = std::dynamic_pointer_cast<V4l2ResizableBuffer>(buffer);
 
-            memcpy(buffer->GetMemory(), (void *) in_buf.data(), input_size);
-            buffer->SetSize(input_size);
+            memcpy(v4l2_buffer->GetMemory(), (void *) in_buf.data(), input_size);
+            v4l2_buffer->SetSize(input_size);
 
             std::this_thread::sleep_for(30ms);
-            PostResizableBuffer(std::move(buffer));
+            PostResizableBuffer(std::move(v4l2_buffer));
 
             std::this_thread::sleep_for(30ms);
         }
