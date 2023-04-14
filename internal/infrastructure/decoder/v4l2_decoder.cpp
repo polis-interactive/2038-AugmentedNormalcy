@@ -149,7 +149,7 @@ namespace infrastructure {
         }
         // we use a capture with self here so the object isn't destructed if we have outstanding refs
         auto buffer = std::shared_ptr<ResizableBuffer>(v4l2_resizable_buffer, [](ResizableBuffer *){});
-        return std::move(buffer);
+        return buffer;
     }
 
     void V4l2Decoder::PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&rz_buffer) {
