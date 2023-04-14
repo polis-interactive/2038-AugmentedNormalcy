@@ -66,17 +66,15 @@ namespace infrastructure {
         int ctr = 0;
 
         for (int i = 0; i < 300; i++) {
-            auto buffer = GetResizableBuffer();
+            auto buffer = GetResizableBufferRaw();
 
-            auto v4l2_rz_buffer = std::dynamic_pointer_cast<V4l2ResizableBuffer>(buffer);
-
-            memcpy((void *)v4l2_rz_buffer->GetMemory(), (void *) in_buf.data(), input_size);
-            v4l2_rz_buffer->SetSize(input_size);
+            memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+            buffer->SetSize(input_size);
 
 
 
             std::this_thread::sleep_for(30ms);
-            PostResizableBuffers(v4l2_rz_buffer.get());
+            PostVoidBuffer(std::move(buffer));
 
             std::this_thread::sleep_for(30ms);
         }
@@ -154,6 +152,26 @@ namespace infrastructure {
         // we use a capture with self here so the object isn't destructed if we have outstanding refs
         auto buffer = std::shared_ptr<ResizableBuffer>(
             (ResizableBuffer *)v4l2_resizable_buffer, [](ResizableBuffer *) {}
+        );
+        return std::move(buffer);
+    }
+
+    [[nodiscard]] std::shared_ptr<V4l2ResizableBuffer> V4l2Decoder::GetResizableBufferRaw() {
+        V4l2ResizableBuffer *v4l2_resizable_buffer;
+        {
+            std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
+            v4l2_resizable_buffer = _available_upstream_buffers.front();
+            if (v4l2_resizable_buffer) {
+                _available_upstream_buffers.pop();
+            }
+        }
+        if (!v4l2_resizable_buffer) {
+            std::cout << "returning leaky" << std::endl;
+            return nullptr
+        }
+        // we use a capture with self here so the object isn't destructed if we have outstanding refs
+        auto buffer = std::shared_ptr<V4l2ResizableBuffer>(
+                (V4l2ResizableBuffer *)v4l2_resizable_buffer, [](V4l2ResizableBuffer *) {}
         );
         return std::move(buffer);
     }
