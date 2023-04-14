@@ -66,16 +66,17 @@ namespace infrastructure {
         int ctr = 0;
 
         for (int i = 0; i < 300; i++) {
-            V4l2ResizableBuffer *v4l2_resizable_buffer;
+            V4l2ResizableBuffer *v4l2_rz_buffer;
             {
                 std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
-                v4l2_resizable_buffer = _available_upstream_buffers.front();
-                if (v4l2_resizable_buffer) {
+                v4l2_rz_buffer = _available_upstream_buffers.front();
+                if (v4l2_rz_buffer) {
                     _available_upstream_buffers.pop();
                 }
             }
+            std::cout << v4l2_rz_buffer->GetMemory() << ", " << v4l2_rz_buffer->GetSize() << ", " << v4l2_rz_buffer->GetIndex() << std::endl;
             // we use a capture with self here so the object isn't destructed if we have outstanding refs
-            auto buffer = std::shared_ptr<ResizableBuffer>(v4l2_resizable_buffer, [](ResizableBuffer *){});
+            auto buffer = std::shared_ptr<ResizableBuffer>(v4l2_rz_buffer, [](ResizableBuffer *){});
 
             memcpy(buffer->GetMemory(), (void *) in_buf.data(), input_size);
             buffer->SetSize(input_size);
@@ -169,6 +170,8 @@ namespace infrastructure {
             _available_upstream_buffers.push(v4l2_rz_buffer.get());
             return;
         }
+
+        std::cout << v4l2_rz_buffer->GetMemory() << ", " << v4l2_rz_buffer->GetSize() << ", " << v4l2_rz_buffer->GetIndex() << std::endl;
 
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
