@@ -79,8 +79,10 @@ namespace infrastructure {
             v4l2_resizable_buffer->SetSize(input_size);
 
             std::this_thread::sleep_for(30ms);
-
-            PostResizableBuffers(v4l2_resizable_buffer);
+            auto out_buffer = std::shared_ptr<ResizableBuffer>(
+                (ResizableBuffer *) v4l2_resizable_buffer, [](ResizableBuffer *) {}
+            );
+            PostResizableBuffer(std::move(out_buffer));
 
             std::this_thread::sleep_for(30ms);
         }
