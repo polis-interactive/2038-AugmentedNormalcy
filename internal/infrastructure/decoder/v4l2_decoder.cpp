@@ -79,7 +79,7 @@ namespace infrastructure {
             v4l2_resizable_buffer->SetSize(input_size);
 
 
-            std::cout << v4l2_resizable_buffer->GetIndex() << ", " << v4l2_resizable_buffer->GetSize() << std::endl;
+            std::cout << v4l2_resizable_buffer->GetIndex() << ", " << v4l2_resizable_buffer->GetSize() << ", " << v4l2_resizable_buffer->GetMemory() << std::endl;
 
             std::this_thread::sleep_for(30ms);
             auto out_buffer = std::shared_ptr<void>(
@@ -201,9 +201,9 @@ namespace infrastructure {
 
     void V4l2Decoder::PostVoidBuffer(std::shared_ptr<void> &&buffer) {
 
-        auto v4l2_ptr = (V4l2ResizableBuffer *) buffer.get();
+        auto v4l2_ptr = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
 
-        std::cout << v4l2_ptr->GetIndex() << ", " << v4l2_ptr->GetSize() << std::endl;
+        std::cout << v4l2_ptr->GetIndex() << ", " << v4l2_ptr->GetSize() << ", " << v4l2_ptr->GetMemory() << std::endl;
 
         static int i = 0;
 
