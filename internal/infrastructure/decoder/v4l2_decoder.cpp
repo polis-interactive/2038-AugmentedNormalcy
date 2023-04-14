@@ -66,7 +66,19 @@ namespace infrastructure {
         int ctr = 0;
 
         for (int i = 0; i < 300; i++) {
-            auto buffer = GetResizableBuffer();
+            // auto buffer = GetResizableBuffer();
+            V4l2ResizableBuffer *v4l2_rz_buffer;
+            {
+                std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
+                v4l2_rz_buffer = _available_upstream_buffers.front();
+                if (v4l2_rz_buffer) {
+                    _available_upstream_buffers.pop();
+                }
+            }
+
+            std::cout << v4l2_rz_buffer->GetMemory() << ", " << v4l2_rz_buffer->GetSize() << ", " << v4l2_rz_buffer->GetIndex() << std::endl;
+            // we use a capture with self here so the object isn't destructed if we have outstanding refs
+            auto buffer = std::shared_ptr<ResizableBuffer>(v4l2_rz_buffer, [](ResizableBuffer *){});
 
             memcpy(buffer->GetMemory(), (void *) in_buf.data(), input_size);
             buffer->SetSize(input_size);
@@ -197,7 +209,7 @@ namespace infrastructure {
         while (_decoder_running) {
             const auto decoder_ready = waitForDecoder();
             {
-                std::cout << "we get here?" << std::endl;
+                std::cout << decoder_ready << ", " << errno << std::endl;
                 std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
                 if (_available_upstream_buffers.size() == _upstream_buffers.size()) {
                     continue;
