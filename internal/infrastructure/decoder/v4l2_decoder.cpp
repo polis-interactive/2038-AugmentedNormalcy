@@ -75,9 +75,10 @@ namespace infrastructure {
                 }
             }
 
-            memcpy(v4l2_resizable_buffer->GetMemory(), (void *) in_buf.data(), input_size);
-            v4l2_resizable_buffer->SetSize(input_size);
             auto buffer = std::shared_ptr<ResizableBuffer>(v4l2_resizable_buffer, [](ResizableBuffer *){});
+
+            memcpy(buffer->GetMemory(), (void *) in_buf.data(), input_size);
+            buffer->SetSize(input_size);
 
             std::this_thread::sleep_for(30ms);
             PostResizableBuffer(std::move(buffer));
