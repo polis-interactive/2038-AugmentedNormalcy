@@ -69,6 +69,7 @@ namespace infrastructure {
             auto buffer = GetResizableBuffer();
 
             auto v4l2_rz_buffer = (V4l2ResizableBuffer *)buffer.get();
+            buffer.reset();
 
             memcpy((void *)v4l2_rz_buffer->GetMemory(), (void *) in_buf.data(), input_size);
             v4l2_rz_buffer->SetSize(input_size);
@@ -534,6 +535,7 @@ namespace infrastructure {
     }
 
     V4l2Decoder::~V4l2Decoder() {
+        std::cout << "WE DECONSTRUCT" << std::endl;
         Stop();
         teardownUpstreamBuffers();
         teardownDownstreamBuffers();
