@@ -197,6 +197,7 @@ namespace infrastructure {
         while (_decoder_running) {
             const auto decoder_ready = waitForDecoder();
             {
+                std::cout << "we get here?" << std::endl;
                 std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
                 if (_available_upstream_buffers.size() == _upstream_buffers.size()) {
                     continue;
