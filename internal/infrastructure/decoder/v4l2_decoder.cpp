@@ -222,11 +222,11 @@ namespace infrastructure {
 
         if (i == 0) {
             if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
-                throw std::runtime_error("failed to queue output buffer");
+                throw std::runtime_error("failed to dequeue output buffer");
 
 
             if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-                throw std::runtime_error("failed to queue output buffer");
+                throw std::runtime_error("failed to requeue output buffer");
             i++;
         }
     }
