@@ -78,6 +78,9 @@ namespace infrastructure {
             memcpy((void *)v4l2_resizable_buffer->GetMemory(), (void *) in_buf.data(), input_size);
             v4l2_resizable_buffer->SetSize(input_size);
 
+
+            std::cout << v4l2_resizable_buffer->GetIndex() << ", " << v4l2_resizable_buffer->GetSize() << std::endl;
+
             std::this_thread::sleep_for(30ms);
             auto out_buffer = std::shared_ptr<void>(
                 (void *) v4l2_resizable_buffer, [](void *) {}
@@ -197,6 +200,8 @@ namespace infrastructure {
     void V4l2Decoder::PostVoidBuffer(std::shared_ptr<void> &&buffer) {
 
         auto v4l2_ptr = (V4l2ResizableBuffer *) buffer.get();
+
+        std::cout << v4l2_ptr->GetIndex() << ", " << v4l2_ptr->GetSize() << std::endl;
 
         static int i = 0;
 
