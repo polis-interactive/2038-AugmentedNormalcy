@@ -23,12 +23,7 @@ namespace infrastructure {
         [[nodiscard]] virtual std::pair<int, int> get_decoder_width_height() const = 0;
     };
 
-    class V4l2UpstreamBuffer: public ResizableBuffer {
-    public:
-        [[nodiscard]] virtual bool IsLeakyBuffer() = 0;
-    };
-
-    class V4l2ResizableBuffer: public V4l2UpstreamBuffer {
+    class V4l2ResizableBuffer: public ResizableBuffer {
     public:
         V4l2ResizableBuffer(void *memory, unsigned int index, std::size_t max_size):
             _memory(memory), _index(index), _max_size(max_size), _used_size(max_size) {}
@@ -57,7 +52,7 @@ namespace infrastructure {
         std::size_t _used_size;
     };
 
-    class V4l2LeakyUpstreamBuffer: public V4l2UpstreamBuffer {
+    class V4l2LeakyUpstreamBuffer: public ResizableBuffer {
     public:
         explicit V4l2LeakyUpstreamBuffer(const std::size_t buffer_size):
             _max_size(buffer_size)
@@ -97,7 +92,7 @@ namespace infrastructure {
         [[nodiscard]] std::shared_ptr<V4l2ResizableBuffer> GetResizableBufferRaw();
         void PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&buffer) override;
         void PostResizableBuffers(V4l2ResizableBuffer *buffer);
-        void PostVoidBuffer(std::shared_ptr<V4l2ResizableBuffer> &&buffer);
+        void PostV4l2Buffer(std::shared_ptr<V4l2ResizableBuffer> &&buffer);
         void Start();
         void Stop();
         void Dummy();

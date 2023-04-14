@@ -211,9 +211,7 @@ namespace infrastructure {
         }
     }
 
-    void V4l2Decoder::PostVoidBuffer(std::shared_ptr<V4l2ResizableBuffer> &&buffer) {
-
-        std::cout << buffer->GetIndex() << ", " << buffer->GetSize() << ", " << buffer->GetMemory() << std::endl;
+    void V4l2Decoder::PostV4l2Buffer(std::shared_ptr<V4l2ResizableBuffer> &&buffer) {
 
         static int i = 0;
 
