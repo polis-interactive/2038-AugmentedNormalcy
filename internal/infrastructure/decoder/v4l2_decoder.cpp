@@ -68,8 +68,7 @@ namespace infrastructure {
         for (int i = 0; i < 300; i++) {
             auto buffer = GetResizableBuffer();
 
-            auto v4l2_rz_buffer = (V4l2ResizableBuffer *)buffer.get();
-            buffer.reset();
+            auto v4l2_rz_buffer = std::dynamic_pointer_cast<V4l2ResizableBuffer>(buffer);
 
             memcpy((void *)v4l2_rz_buffer->GetMemory(), (void *) in_buf.data(), input_size);
             v4l2_rz_buffer->SetSize(input_size);
@@ -77,7 +76,7 @@ namespace infrastructure {
 
 
             std::this_thread::sleep_for(30ms);
-            PostResizableBuffers(v4l2_rz_buffer);
+            PostResizableBuffers(v4l2_rz_buffer.get());
 
             std::this_thread::sleep_for(30ms);
         }
@@ -153,9 +152,8 @@ namespace infrastructure {
             return _leaky_upstream_buffer;
         }
         // we use a capture with self here so the object isn't destructed if we have outstanding refs
-        auto self(shared_from_this());
         auto buffer = std::shared_ptr<ResizableBuffer>(
-            v4l2_resizable_buffer, [s = std::move(self)](V4l2ResizableBuffer *) {}
+            (ResizableBuffer *)v4l2_resizable_buffer, [](ResizableBuffer *) {}
         );
         return std::move(buffer);
     }
