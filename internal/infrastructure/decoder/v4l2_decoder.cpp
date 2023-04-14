@@ -81,7 +81,7 @@ namespace infrastructure {
             auto out_buffer = std::shared_ptr<V4l2ResizableBuffer>(v4l2_resizable_buffer, [](V4l2ResizableBuffer *){});
 
             std::this_thread::sleep_for(30ms);
-            PostVoidBuffer(std::move(out_buffer));
+            PostResizableBuffer(std::move(out_buffer));
 
             std::this_thread::sleep_for(30ms);
         }
