@@ -66,16 +66,7 @@ namespace infrastructure {
         int ctr = 0;
 
         for (int i = 0; i < 300; i++) {
-            V4l2ResizableBuffer *v4l2_resizable_buffer;
-            {
-                std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
-                v4l2_resizable_buffer = _available_upstream_buffers.front();
-                if (v4l2_resizable_buffer) {
-                    _available_upstream_buffers.pop();
-                }
-            }
-            // we use a capture with self here so the object isn't destructed if we have outstanding refs
-            auto buffer = std::shared_ptr<ResizableBuffer>(v4l2_resizable_buffer, [](ResizableBuffer *){});
+            auto buffer = GetResizableBuffer();
 
             std::cout << typeid(*buffer).name() << std::endl;
 
