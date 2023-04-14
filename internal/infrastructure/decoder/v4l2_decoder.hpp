@@ -26,6 +26,7 @@ namespace infrastructure {
     class V4l2UpstreamBuffer: public ResizableBuffer {
     public:
         [[nodiscard]] virtual bool IsLeakyBuffer() = 0;
+        virtual ~V4l2UpstreamBuffer() = default;
     };
 
     class V4l2ResizableBuffer: public V4l2UpstreamBuffer {
