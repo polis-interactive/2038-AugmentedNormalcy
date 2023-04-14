@@ -77,6 +77,8 @@ namespace infrastructure {
             // we use a capture with self here so the object isn't destructed if we have outstanding refs
             auto buffer = std::shared_ptr<ResizableBuffer>(v4l2_resizable_buffer, [](ResizableBuffer *){});
 
+            std::cout << typeid(*buffer).name() << std::endl;
+
             memcpy(buffer->GetMemory(), (void *) in_buf.data(), input_size);
             buffer->SetSize(input_size);
 
