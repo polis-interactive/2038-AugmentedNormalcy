@@ -213,15 +213,7 @@ namespace infrastructure {
 
          */
 
-        auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(rz_buffer);
-
-        std::cout << v4l2_rz_buffer->GetMemory() << ", " << v4l2_rz_buffer->GetSize() << ", " << v4l2_rz_buffer->GetIndex() << std::endl;
-
-        const unsigned char *bytes = static_cast<const unsigned char *>(v4l2_rz_buffer->GetMemory());
-        for (int i = 0; i < 5; ++i) {
-            std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(bytes[i]) << ' ';
-        }
-        std::cout << std::endl;
+        auto v4l2_rz_buffer = (V4l2ResizableBuffer *) rz_buffer.get();
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buf = {};
