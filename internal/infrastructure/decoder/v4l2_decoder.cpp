@@ -149,13 +149,10 @@ namespace infrastructure {
             std::cout << "returning leaky" << std::endl;
             return _leaky_upstream_buffer;
         }
-        std::cout << v4l2_resizable_buffer->GetIndex() << ", " << v4l2_resizable_buffer->GetMemory() << std::endl;
         // we use a capture with self here so the object isn't destructed if we have outstanding refs
         auto self(shared_from_this());
-        auto buffer = std::shared_ptr<V4l2ResizableBuffer>(
-            v4l2_resizable_buffer, [](V4l2ResizableBuffer *) {
-                std::cout << "ima deconstructing boy" << std::endl;
-            }
+        auto buffer = std::shared_ptr<ResizableBuffer>(
+            v4l2_resizable_buffer, [s = std::move(self)](V4l2ResizableBuffer *) {}
         );
         return std::move(buffer);
     }
