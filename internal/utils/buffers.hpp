@@ -32,7 +32,6 @@ struct ResizableBuffer {
     [[nodiscard]] virtual void *GetMemory() = 0;
     [[nodiscard]] virtual std::size_t GetSize() = 0;
     virtual void SetSize(std::size_t used_size) = 0;
-    virtual ~ResizableBuffer() = default;
 };
 
 class ResizableBufferPool {

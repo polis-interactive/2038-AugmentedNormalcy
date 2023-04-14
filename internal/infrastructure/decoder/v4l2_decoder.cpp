@@ -229,24 +229,21 @@ namespace infrastructure {
 
     void V4l2Decoder::PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&rz_buffer) {
 
-        /*
-        auto upstream_buffer = (V4l2UpstreamBuffer *) rz_buffer.get();
+        auto upstream_buffer = dynamic_cast<V4l2UpstreamBuffer *>(rz_buffer.get());
 
-        if (upstream_buffer->IsLeakyBuffer()) {
+        if (upstream_buffer == nullptr || upstream_buffer->IsLeakyBuffer()) {
             return;
         }
 
-        auto v4l2_rz_buffer = (V4l2ResizableBuffer *) upstream_buffer;
-
-        if (!_decoder_running) {
+        auto v4l2_rz_buffer = dynamic_cast<V4l2ResizableBuffer *>(upstream_buffer);
+        if (v4l2_rz_buffer == nullptr) {
+            throw std::runtime_error("Failed to downcast to V4l2ResizableBuffer");
+        } else if (!_decoder_running) {
             std::unique_lock<std::mutex> lock(_available_upstream_buffers_mutex);
             _available_upstream_buffers.push(v4l2_rz_buffer);
             return;
         }
 
-         */
-
-        auto v4l2_rz_buffer = (V4l2ResizableBuffer *) rz_buffer.get();
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buf = {};

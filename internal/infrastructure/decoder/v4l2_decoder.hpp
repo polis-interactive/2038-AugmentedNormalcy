@@ -26,7 +26,6 @@ namespace infrastructure {
     class V4l2UpstreamBuffer: public ResizableBuffer {
     public:
         [[nodiscard]] virtual bool IsLeakyBuffer() = 0;
-        virtual ~V4l2UpstreamBuffer() = default;
     };
 
     class V4l2ResizableBuffer: public V4l2UpstreamBuffer {
@@ -51,9 +50,6 @@ namespace infrastructure {
         [[nodiscard]] bool IsLeakyBuffer() final {
             return false;
         };
-        ~V4l2ResizableBuffer() {
-            std::cout << "AGH MAJOR PANIC" << std::endl;
-        }
     private:
         void *_memory;
         const unsigned int _index;
