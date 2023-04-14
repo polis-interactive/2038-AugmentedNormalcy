@@ -68,7 +68,7 @@ namespace infrastructure {
         for (int i = 0; i < 300; i++) {
             auto buffer = GetResizableBuffer();
 
-            memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+            memcpy(buffer->GetMemory(), (void *) in_buf.data(), input_size);
             buffer->SetSize(input_size);
 
             std::this_thread::sleep_for(30ms);
