@@ -145,10 +145,6 @@ namespace infrastructure {
                 _available_upstream_buffers.pop();
             }
         }
-        if (!v4l2_resizable_buffer) {
-            std::cout << "returning leaky" << std::endl;
-            return _leaky_upstream_buffer;
-        }
         // we use a capture with self here so the object isn't destructed if we have outstanding refs
         auto buffer = std::shared_ptr<ResizableBuffer>(v4l2_resizable_buffer, [](ResizableBuffer *){});
         return buffer;
