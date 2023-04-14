@@ -250,6 +250,8 @@ namespace infrastructure {
             std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
             auto v4l2_rz_buffer = _upstream_buffers.at(buf.index);
             _available_upstream_buffers.push(v4l2_rz_buffer);
+        } else {
+            std::cout << "FAILED TO DECODE output " << ret << std::endl;
         }
         /*
          * dequeue downstream buffer; wrap it and return it
@@ -273,6 +275,7 @@ namespace infrastructure {
             );
             return std::move(wrapped_buffer);
         } else {
+            std::cout << "FAILED TO DECODE capture " << ret << std::endl;
             return nullptr;
         }
     }
