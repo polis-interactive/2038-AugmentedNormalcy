@@ -89,10 +89,7 @@ namespace infrastructure {
             return std::move(decoder);
         }
         [[nodiscard]] std::shared_ptr<ResizableBuffer> GetResizableBuffer() override;
-        [[nodiscard]] std::shared_ptr<V4l2ResizableBuffer> GetResizableBufferRaw();
         void PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&buffer) override;
-        void PostResizableBuffers(V4l2ResizableBuffer *buffer);
-        void PostV4l2Buffer(std::shared_ptr<V4l2ResizableBuffer> &&buffer);
         void Start();
         void Stop();
         void Dummy();

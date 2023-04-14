@@ -163,89 +163,13 @@ namespace infrastructure {
         return std::move(buffer);
     }
 
-    [[nodiscard]] std::shared_ptr<V4l2ResizableBuffer> V4l2Decoder::GetResizableBufferRaw() {
-        V4l2ResizableBuffer *v4l2_resizable_buffer;
-        {
-            std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
-            v4l2_resizable_buffer = _available_upstream_buffers.front();
-            if (v4l2_resizable_buffer) {
-                _available_upstream_buffers.pop();
-            }
-        }
-        if (!v4l2_resizable_buffer) {
-            std::cout << "returning leaky" << std::endl;
-            return nullptr;
-        }
-        // we use a capture with self here so the object isn't destructed if we have outstanding refs
-        auto buffer = std::shared_ptr<V4l2ResizableBuffer>(
-                (V4l2ResizableBuffer *)v4l2_resizable_buffer, [](V4l2ResizableBuffer *) {}
-        );
-        return std::move(buffer);
-    }
-
-    void V4l2Decoder::PostResizableBuffers(V4l2ResizableBuffer *v4l2_ptr) {
-
-        static int i = 0;
-
-        v4l2_plane planes[VIDEO_MAX_PLANES];
-        v4l2_buffer buf = {};
-        buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buf.index = v4l2_ptr->GetIndex();
-        buf.memory = V4L2_MEMORY_MMAP;
-        buf.length = 1;
-        buf.m.planes = planes;
-        buf.m.planes[0].bytesused = v4l2_ptr->GetSize();
-        if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0) {
-            std::cout << errno << std::endl;
-            throw std::runtime_error("failed to queue output buffer");
-        }
-
-        if (i == 0) {
-            if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
-                throw std::runtime_error("failed to queue output buffer");
-
-
-            if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-                throw std::runtime_error("failed to queue output buffer");
-            i++;
-        }
-    }
-
-    void V4l2Decoder::PostV4l2Buffer(std::shared_ptr<V4l2ResizableBuffer> &&buffer) {
-
-        static int i = 0;
-
-        v4l2_plane planes[VIDEO_MAX_PLANES];
-        v4l2_buffer buf = {};
-        buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buf.index = buffer->GetIndex();
-        buf.memory = V4L2_MEMORY_MMAP;
-        buf.length = 1;
-        buf.m.planes = planes;
-        buf.m.planes[0].bytesused = buffer->GetSize();
-        if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0) {
-            std::cout << errno << std::endl;
-            throw std::runtime_error("failed to queue output buffer");
-        }
-
-        if (i == 0) {
-            if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
-                throw std::runtime_error("failed to dequeue output buffer");
-
-
-            if (xioctl(_decoder_fd, VIDIOC_QBUF, &buf) < 0)
-                throw std::runtime_error("failed to requeue output buffer");
-            i++;
-        }
-    }
-
     void V4l2Decoder::PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&rz_buffer) {
 
         if (rz_buffer == nullptr || rz_buffer->IsLeakyBuffer()) {
             return;
         }
 
-        auto v4l2_rz_buffer = std::dynamic_pointer_cast<V4l2ResizableBuffer>(rz_buffer);
+        auto v4l2_rz_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(rz_buffer);
         if (v4l2_rz_buffer == nullptr) {
             throw std::runtime_error("Failed to downcast to V4l2ResizableBuffer");
         } else if (!_decoder_running) {
