@@ -52,8 +52,6 @@ namespace infrastructure {
 
         Start();
 
-        std::this_thread::sleep_for(30s);
-
         std::filesystem::path this_dir = THIS_DIR;
         auto in_frame = this_dir;
         in_frame /= "in.jpeg";
