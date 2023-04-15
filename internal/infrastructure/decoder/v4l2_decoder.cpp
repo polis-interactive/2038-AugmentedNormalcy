@@ -218,6 +218,7 @@ namespace infrastructure {
                 }
             }
             if (!decoder_ready) {
+                std::cout << "nothing to do" << std::endl;
                 continue;
             }
             auto downstream_buffer = getDownstreamBuffer();
