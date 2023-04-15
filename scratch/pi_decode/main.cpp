@@ -277,8 +277,6 @@ int main(int argc, char *argv[]) {
         capture_params.emplace_back( capture_size, capture_offset, capture_mem );
     }
 
-    std::this_thread::sleep_for(5s);
-
     /*
      * START DECODER
      */
