@@ -348,6 +348,9 @@ int main(int argc, char *argv[]) {
             test_file_out.close();
         }
 
+        if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+            throw std::runtime_error("failed to requeue capture buffer");
+
         buffer = {};
         memset(planes, 0, sizeof(planes));
         buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
