@@ -82,7 +82,7 @@ namespace infrastructure {
             memcpy(buffer->GetMemory(), (void *) in_buf.data(), input_size);
             buffer->SetSize(input_size);
 
-            // std::this_thread::sleep_for(30ms);
+            std::this_thread::sleep_for(30ms);
             PostResizableBuffer(std::move(buffer));
 
             std::this_thread::sleep_for(30ms);
@@ -115,8 +115,6 @@ namespace infrastructure {
         _downstream_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
             handleDownstream();
         });
-
-        std::this_thread::sleep_for(100ms);
 
     }
 
@@ -232,6 +230,7 @@ namespace infrastructure {
         while (attempts > 0) {
             pollfd p = { _decoder_fd, POLLIN, 0 };
             int ret = poll(&p, 1, 200);
+            std::cout << "do i make it here" << std::endl;
             if (ret == -1) {
                 if (errno == EINTR)
                     continue;
