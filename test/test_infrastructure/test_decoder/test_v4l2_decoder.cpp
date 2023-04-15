@@ -167,7 +167,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
             {
                 memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
             }
-            catch (std::exception& e)
+            catch (...)
             {
                 std::cout << "WHAT" << std::endl;
                 std::this_thread::sleep_for(1s);
