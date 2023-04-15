@@ -176,7 +176,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
                         std::cout << "the leaker is segfaulting?" << std::endl;
                     } else {
 
-                        auto v4l2_buffer = std::static_pointer_cast<V4l2ResizableBuffer>(buffer);
+                        auto v4l2_buffer = std::static_pointer_cast<infrastructure::V4l2ResizableBuffer>(buffer);
                         std::cout << "Why you segfault? " << v4l2_buffer->GetIndex() << std::endl;
                     }
                 } else {
