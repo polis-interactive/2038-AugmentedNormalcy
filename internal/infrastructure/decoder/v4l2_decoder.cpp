@@ -114,11 +114,6 @@ namespace infrastructure {
         _is_primed = false;
         _decoder_running = true;
 
-        auto self(shared_from_this());
-        _downstream_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
-            handleDownstream();
-        });
-
     }
 
     void V4l2Decoder::Stop() {
@@ -205,6 +200,10 @@ namespace infrastructure {
                 throw std::runtime_error("failed to queue output buffer during priming");
 
             _is_primed = true;
+            auto self(shared_from_this());
+            _downstream_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
+                handleDownstream();
+            });
         }
 
     }
