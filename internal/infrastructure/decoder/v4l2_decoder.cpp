@@ -143,7 +143,6 @@ namespace infrastructure {
             }
         }
         if (v4l2_rz_buffer == nullptr) {
-            std::cout << "leaky" << std::endl;
             return _leaky_upstream_buffer;
         }
 
