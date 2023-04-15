@@ -183,7 +183,6 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
                     std::cout << "I was a nothing?" << std::endl;
                 }
 
-                std::cerr << "Exception caught : " << e.what() << std::endl;
                 std::this_thread::sleep_for(10s);
             }
             buffer->SetSize(input_size);
