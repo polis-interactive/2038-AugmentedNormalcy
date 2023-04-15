@@ -134,15 +134,15 @@ namespace infrastructure {
     }
 
     [[nodiscard]] std::shared_ptr<ResizableBuffer> V4l2Decoder::GetResizableBuffer() {
-        V4l2ResizableBuffer *v4l2_rz_buffer;
+        V4l2ResizableBuffer *v4l2_rz_buffer = nullptr;
         {
             std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
-            v4l2_rz_buffer = _available_upstream_buffers.front();
-            if (v4l2_rz_buffer) {
+            if (!_available_upstream_buffers.empty()) {
+                v4l2_rz_buffer = _available_upstream_buffers.front();
                 _available_upstream_buffers.pop();
             }
         }
-        if (!v4l2_rz_buffer) {
+        if (v4l2_rz_buffer == nullptr) {
             std::cout << "leaky" << std::endl;
             return _leaky_upstream_buffer;
         }
