@@ -112,6 +112,11 @@ namespace infrastructure {
         _is_primed = false;
         _decoder_running = true;
 
+        auto self(shared_from_this());
+        _downstream_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
+            handleDownstream();
+        });
+
     }
 
     void V4l2Decoder::Stop() {
@@ -198,27 +203,18 @@ namespace infrastructure {
                 throw std::runtime_error("failed to queue output buffer during priming");
 
             _is_primed = true;
-            auto self(shared_from_this());
-            _downstream_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
-                handleDownstream();
-            });
         }
 
     }
 
     void V4l2Decoder::handleDownstream() {
         while (true) {
-            const auto decoder_ready = waitForDecoder();
+            // const auto decoder_ready = waitForDecoder();
             {
-                std::cout << decoder_ready << ", " << errno << std::endl;
                 std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
                 if (!_decoder_running && _available_upstream_buffers.size() == _upstream_buffers.size()) {
                     break;
                 }
-            }
-            if (!decoder_ready) {
-                std::cout << "nothing to do" << std::endl;
-                continue;
             }
             auto downstream_buffer = getDownstreamBuffer();
             if (downstream_buffer) {
@@ -250,16 +246,44 @@ namespace infrastructure {
     std::shared_ptr<DecoderBuffer> V4l2Decoder::getDownstreamBuffer() {
 
         /*
-         * dequeue upstream buffer, return it to the pool
+         * dequeue downstream buffer; wrap it and return it
          */
 
         v4l2_buffer buf = {};
         v4l2_plane planes[VIDEO_MAX_PLANES] = {};
-        buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        std::shared_ptr<DecoderBuffer> downstream = nullptr;
+
+        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
         buf.memory = V4L2_MEMORY_MMAP;
         buf.length = 1;
         buf.m.planes = planes;
         int ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
+        if (ret == 0) {
+            std::cout << "Sending downstream" << std::endl;
+            auto downstream_buffer = _downstream_buffers.at(buf.index);
+            auto self(shared_from_this());
+            auto wrapped_buffer = std::shared_ptr<DecoderBuffer>(
+                    downstream_buffer,
+                    [this, s = std::move(self)](DecoderBuffer *d) {
+                        queueDownstreamBuffer(d);
+                    }
+            );
+            downstream = wrapped_buffer;
+        } else {
+            std::cout << "FAILED TO DECODE capture " << ret << std::endl;
+        }
+
+        /*
+         * dequeue upstream buffer, return it to the pool
+         */
+
+        buf = {};
+        memset(planes, 0, sizeof(planes));
+        buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buf.memory = V4L2_MEMORY_MMAP;
+        buf.length = 1;
+        buf.m.planes = planes;
+        ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
         if (ret == 0) {
             std::cout << "Reclaiming buffer" << std::endl;
             std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
@@ -268,32 +292,10 @@ namespace infrastructure {
         } else {
             std::cout << "FAILED TO DECODE output " << ret << std::endl;
         }
-        /*
-         * dequeue downstream buffer; wrap it and return it
-         */
 
-        buf = {};
-        memset(planes, 0, sizeof(planes));
-        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        buf.memory = V4L2_MEMORY_MMAP;
-        buf.length = 1;
-        buf.m.planes = planes;
-        ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
-        if (ret == 0) {
-            std::cout << "Sending downstream" << std::endl;
-            auto downstream_buffer = _downstream_buffers.at(buf.index);
-            auto self(shared_from_this());
-            auto wrapped_buffer = std::shared_ptr<DecoderBuffer>(
-                downstream_buffer,
-                [this, s = std::move(self)](DecoderBuffer *d) {
-                    queueDownstreamBuffer(d);
-                }
-            );
-            return std::move(wrapped_buffer);
-        } else {
-            std::cout << "FAILED TO DECODE capture " << ret << std::endl;
-            return nullptr;
-        }
+        return downstream;
+
+
     }
 
     void V4l2Decoder::queueDownstreamBuffer(DecoderBuffer *d) const {
