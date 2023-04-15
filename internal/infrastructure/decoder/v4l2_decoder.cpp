@@ -82,6 +82,7 @@ namespace infrastructure {
             memcpy(buffer->GetMemory(), (void *) in_buf.data(), input_size);
             buffer->SetSize(input_size);
 
+            std::this_thread::sleep_for(30ms);
             PostResizableBuffer(std::move(buffer));
 
             std::this_thread::sleep_for(30ms);
