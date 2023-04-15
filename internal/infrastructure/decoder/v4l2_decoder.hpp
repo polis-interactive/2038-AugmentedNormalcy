@@ -12,6 +12,7 @@
 #include <atomic>
 #include <thread>
 #include <iostream>
+#include <condition_variable>
 
 #include "utils/buffers.hpp"
 
@@ -96,10 +97,11 @@ namespace infrastructure {
         V4l2Decoder(const DecoderConfig &config, DecoderBufferCallback output_callback);
         ~V4l2Decoder();
     private:
-        void setupDecoder(unsigned int request_upstream_buffers, unsigned int request_downstream_buffers);
+        void setupDecoder();
         void setupUpstreamBuffers(unsigned int request_upstream_buffers);
         void setupDownstreamBuffers(unsigned int request_downstream_buffers);
-        void handleDownstream();
+        void run();
+        void decodeBuffer(std::shared_ptr<V4l2ResizableBuffer> &&buffer);
         bool waitForDecoder();
         std::shared_ptr<DecoderBuffer> getDownstreamBuffer();
         void queueDownstreamBuffer(DecoderBuffer *d) const;
@@ -112,7 +114,6 @@ namespace infrastructure {
         const std::pair<int, int> _width_height;
 
         int _decoder_fd = -1;
-        std::atomic<bool> _decoder_running = false;
         std::atomic<bool> _is_primed = false;
         std::atomic<unsigned long> _timestamp = 0;
 
@@ -120,7 +121,11 @@ namespace infrastructure {
         std::queue<V4l2ResizableBuffer *> _available_upstream_buffers;
         std::map<unsigned int, V4l2ResizableBuffer *> _upstream_buffers;
 
-        std::unique_ptr<std::thread> _downstream_thread;
+        std::mutex _work_mutex;
+        std::condition_variable _work_cv;
+        std::queue<std::shared_ptr<V4l2ResizableBuffer>> _work_queue;
+        std::unique_ptr<std::thread> _work_thread;
+        std::atomic<bool> _work_stop = { true };
         std::map<unsigned int, DecoderBuffer *> _downstream_buffers;
 
         std::shared_ptr<V4l2LeakyUpstreamBuffer> _leaky_upstream_buffer;
