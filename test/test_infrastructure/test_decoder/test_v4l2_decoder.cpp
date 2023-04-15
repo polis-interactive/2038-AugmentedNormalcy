@@ -161,7 +161,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
             std::cout << i << std::endl;
             auto buffer = decoder->GetResizableBuffer();
             if (buffer->IsLeakyBuffer()) {
-                std::cout << "we're leaking" << std::endl;
+                std::this_thread::sleep_for(30ms);
             }
             memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
             buffer->SetSize(input_size);
