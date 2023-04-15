@@ -260,6 +260,7 @@ namespace infrastructure {
         buf.m.planes = planes;
         int ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
         if (ret == 0) {
+            std::cout << "Reclaiming buffer" << std::endl;
             std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
             auto v4l2_rz_buffer = _upstream_buffers.at(buf.index);
             _available_upstream_buffers.push(v4l2_rz_buffer);
@@ -278,6 +279,7 @@ namespace infrastructure {
         buf.m.planes = planes;
         ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
         if (ret == 0) {
+            std::cout << "Sending downstream" << std::endl;
             auto downstream_buffer = _downstream_buffers.at(buf.index);
             auto self(shared_from_this());
             auto wrapped_buffer = std::shared_ptr<DecoderBuffer>(
