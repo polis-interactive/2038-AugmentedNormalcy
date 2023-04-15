@@ -294,109 +294,73 @@ int main(int argc, char *argv[]) {
     std::cout << "v4l2 decoder started!" << std::endl;
 
     /*
-     * QUEUE OUTPUT BUFFER
+     * run a bunch of cycles
      */
 
-    std::this_thread::sleep_for(5s);
+    for (int i = 0; i < 300; i++) {
 
-    memcpy(std::get<2>(output_params[3]), in_buf.data(), input_size);
+        /*
+         * queue
+         */
 
-    buffer = {};
-    memset(planes, 0, sizeof(planes));
-    buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.index = 3;
-    buffer.memory = V4L2_MEMORY_MMAP;
-    buffer.length = 1;
-    buffer.m.planes = planes;
-    buffer.m.planes[0].bytesused = input_size;
-    if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
-        throw std::runtime_error("failed to queue output buffer");
+        memcpy(std::get<2>(output_params[i % 4]), in_buf.data(), input_size);
 
-    std::cout << "v4l2 decoder queued output buffer" << std::endl;
+        buffer = {};
+        memset(planes, 0, sizeof(planes));
+        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buffer.index = i % 4;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.length = 1;
+        buffer.m.planes = planes;
+        buffer.m.planes[0].bytesused = input_size;
+        if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+            throw std::runtime_error("failed to queue output buffer");
+
+        std::cout << "v4l2 decoder queued output buffer" << std::endl;
+        if (i == 0) {
+            if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+                throw std::runtime_error("failed to queue output buffer");
 
 
-    if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
-        throw std::runtime_error("failed to queue output buffer");
+            if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
+                throw std::runtime_error("failed to queue output buffer");
+        }
+
+        /* dequeue output */
+        if (!PollFd(decoder_fd)) {
+            std::cout << "failed D:" << std::endl;
+        }
+
+        buffer = {};
+        memset(planes, 0, sizeof(planes));
+        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.length = 1;
+        buffer.m.planes = planes;
+
+        if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+            throw std::runtime_error("failed to dequeue capture buffer");
+
+        if (i == 280) {
+            memcpy((void *)out_buf.data(), (void *) std::get<2>(capture_params[buffer.index]), std::get<0>(capture_params[buffer.index]));
+
+            std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+            test_file_out.write(out_buf.data(), std::get<0>(capture_params[buffer.index]));
+            test_file_out.flush();
+            test_file_out.close();
+        }
+
+        buffer = {};
+        memset(planes, 0, sizeof(planes));
+        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.length = 1;
+        buffer.m.planes = planes;
+        if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+            throw std::runtime_error("failed to dequeue output buffer (again)");
 
 
-    if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
-        throw std::runtime_error("failed to queue output buffer");
-
-    in_time = Clock::now();
-    std::cout << "did multiple cycles" << std::endl;
-
-    if (!PollFd(decoder_fd)) {
-        std::cout << "failed D:" << std::endl;
-    } else {
-        std::cout << "SUCCESS" << std::endl;
     }
-
-    /*
-     * Dequeue the capture buffer
-     */
-
-
-    /*
-    buffer = {};
-    memset(planes, 0, sizeof(planes));
-    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    buffer.memory = V4L2_MEMORY_MMAP;
-    buffer.length = 1;
-    buffer.m.planes = planes;
-
-    if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
-        throw std::runtime_error("failed to dequeue capture buffer");
-
-    out_time = Clock::now();
-
-    std::cout << "v4l2 decoder dequeued capture buffer" << std::endl;
-
-    memcpy((void *)out_buf.data(), (void *) std::get<2>(capture_params[buffer.index]), std::get<0>(capture_params[buffer.index]));
-
-    std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-    test_file_out.write(out_buf.data(), std::get<0>(capture_params[buffer.index]));
-    test_file_out.flush();
-    test_file_out.close();
-     */
-
-
-    memcpy(std::get<2>(output_params[0]), in_buf.data(), input_size);
-
-    buffer = {};
-    memset(planes, 0, sizeof(planes));
-    buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.index = 0;
-    buffer.memory = V4L2_MEMORY_MMAP;
-    buffer.length = 1;
-    buffer.m.planes = planes;
-    buffer.m.planes[0].bytesused = input_size;
-    if (xioctl(decoder_fd, VIDIOC_QBUF, &buffer) < 0)
-        throw std::runtime_error("failed to queue output buffer again");
-
-
-    if (!PollFd(decoder_fd)) {
-        std::cout << "failed D:" << std::endl;
-    } else {
-        std::cout << "SUCCESS" << std::endl;
-    }
-
-    buffer = {};
-    memset(planes, 0, sizeof(planes));
-    buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.memory = V4L2_MEMORY_MMAP;
-    buffer.length = 1;
-    buffer.m.planes = planes;
-    if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
-        throw std::runtime_error("failed to dequeue output buffer (again)");
-
-    buffer = {};
-    memset(planes, 0, sizeof(planes));
-    buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.memory = V4L2_MEMORY_MMAP;
-    buffer.length = 1;
-    buffer.m.planes = planes;
-    if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
-        throw std::runtime_error("failed to dequeue output buffer (again)");
 
 
 
