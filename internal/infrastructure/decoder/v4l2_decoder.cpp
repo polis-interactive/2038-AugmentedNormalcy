@@ -148,7 +148,7 @@ namespace infrastructure {
 
     }
 
-    [[nodiscard]] std::shared_ptr<ResizableBuffer> V4l2Decoder::GetResizableBuffer() {
+    [[nodiscard]] inline std::shared_ptr<ResizableBuffer> V4l2Decoder::GetResizableBuffer() {
         V4l2ResizableBuffer *v4l2_rz_buffer;
         {
             std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
@@ -158,7 +158,6 @@ namespace infrastructure {
             }
         }
         if (!v4l2_rz_buffer) {
-            std::cout << "Giving leaky buffer" << std::endl;
             return _leaky_upstream_buffer;
         }
 
@@ -171,7 +170,6 @@ namespace infrastructure {
     void V4l2Decoder::PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&rz_buffer) {
 
         if (rz_buffer == nullptr || rz_buffer->IsLeakyBuffer()) {
-            std::cout << "returning leaker" << std::endl;
             return;
         }
 
@@ -197,7 +195,6 @@ namespace infrastructure {
             throw std::runtime_error("failed to queue output buffer");
 
 
-        /*
         if (!_is_primed) {
             if (xioctl(_decoder_fd, VIDIOC_DQBUF, &buf) < 0)
                 throw std::runtime_error("failed to dequeue output buffer primer");
@@ -207,7 +204,7 @@ namespace infrastructure {
 
             _is_primed = true;
         }
-*/
+
     }
 
     void V4l2Decoder::handleDownstream() {
