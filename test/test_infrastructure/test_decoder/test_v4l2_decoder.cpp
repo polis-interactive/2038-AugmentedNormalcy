@@ -160,36 +160,11 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
         for (int i = 0; i < 500; i++){
             std::cout << i << std::endl;
             auto buffer = decoder->GetResizableBuffer();
-            if (buffer->IsLeakyBuffer()) {
-                std::this_thread::sleep_for(30ms);
-            }
-            try
-            {
-                memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
-            }
-            catch (...)
-            {
-                std::cout << "WHAT" << std::endl;
-                std::this_thread::sleep_for(1s);
-                if (buffer) {
-                    if (buffer->IsLeakyBuffer()) {
-                        std::cout << "the leaker is segfaulting?" << std::endl;
-                    } else {
-
-                        auto v4l2_buffer = std::static_pointer_cast<infrastructure::V4l2ResizableBuffer>(buffer);
-                        std::cout << "Why you segfault? " << v4l2_buffer->GetIndex() << std::endl;
-                    }
-                } else {
-                    std::cout << "I was a nothing?" << std::endl;
-                }
-
-                std::this_thread::sleep_for(10s);
-            }
+            memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
             buffer->SetSize(input_size);
             decoder->PostResizableBuffer(std::move(buffer));
-            std::this_thread::sleep_for(10ms);
+            std::this_thread::sleep_for(30ms);
         }
-
 
         std::this_thread::sleep_for(100ms);
         decoder->Stop();
