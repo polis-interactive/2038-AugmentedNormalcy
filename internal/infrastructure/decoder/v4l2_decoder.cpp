@@ -71,7 +71,7 @@ namespace infrastructure {
             buffer->SetSize(input_size);
 
             PostResizableBuffer(std::move(buffer));
-
+            std::this_thread::sleep_for(30ms);
         }
 
         std::this_thread::sleep_for(1s);
@@ -146,7 +146,6 @@ namespace infrastructure {
             return _leaky_upstream_buffer;
         }
 
-        std::cout << v4l2_rz_buffer->GetMemory() << ", " << v4l2_rz_buffer->GetSize() << ", " << v4l2_rz_buffer->GetIndex() << std::endl;
         // we use a capture with self here so the object isn't destructed if we have outstanding refs
         auto buffer = std::shared_ptr<ResizableBuffer>(v4l2_rz_buffer, [](ResizableBuffer *){});
         return buffer;
@@ -263,7 +262,6 @@ namespace infrastructure {
         buffer.m.planes = planes;
         ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buffer);
         if (ret == 0) {
-            std::cout << "Reclaiming buffer" << std::endl;
             std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
             auto rq_buffer = _upstream_buffers.at(buffer.index);
             _available_upstream_buffers.push(rq_buffer);
@@ -276,7 +274,6 @@ namespace infrastructure {
         while (attempts > 0) {
             pollfd p = { _decoder_fd, POLLIN, 0 };
             int ret = poll(&p, 1, 100);
-            std::cout << "do i make it here" << std::endl;
             if (ret == -1) {
                 if (errno == EINTR)
                     continue;
@@ -289,61 +286,6 @@ namespace infrastructure {
             attempts--;
         }
         return false;
-    }
-
-    std::shared_ptr<DecoderBuffer> V4l2Decoder::getDownstreamBuffer() {
-
-        /*
-         * dequeue downstream buffer; wrap it and return it
-         */
-
-        v4l2_buffer buf = {};
-        v4l2_plane planes[VIDEO_MAX_PLANES] = {};
-        std::shared_ptr<DecoderBuffer> downstream = nullptr;
-
-        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        buf.memory = V4L2_MEMORY_MMAP;
-        buf.length = 1;
-        buf.m.planes = planes;
-        int ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
-        if (ret == 0) {
-            std::cout << "Sending downstream" << std::endl;
-            auto downstream_buffer = _downstream_buffers.at(buf.index);
-            auto self(shared_from_this());
-            auto wrapped_buffer = std::shared_ptr<DecoderBuffer>(
-                    downstream_buffer,
-                    [this, s = std::move(self)](DecoderBuffer *d) {
-                        queueDownstreamBuffer(d);
-                    }
-            );
-            downstream = wrapped_buffer;
-        } else {
-            std::cout << "FAILED TO DECODE capture " << ret << std::endl;
-        }
-
-        /*
-         * dequeue upstream buffer, return it to the pool
-         */
-
-        buf = {};
-        memset(planes, 0, sizeof(planes));
-        buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buf.memory = V4L2_MEMORY_MMAP;
-        buf.length = 1;
-        buf.m.planes = planes;
-        ret = xioctl(_decoder_fd, VIDIOC_DQBUF, &buf);
-        if (ret == 0) {
-            std::cout << "Reclaiming buffer" << std::endl;
-            std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
-            auto v4l2_rz_buffer = _upstream_buffers.at(buf.index);
-            _available_upstream_buffers.push(v4l2_rz_buffer);
-        } else {
-            std::cout << "FAILED TO DECODE output " << ret << std::endl;
-        }
-
-        return downstream;
-
-
     }
 
     void V4l2Decoder::queueDownstreamBuffer(DecoderBuffer *d) const {
@@ -536,7 +478,6 @@ namespace infrastructure {
     }
 
     V4l2Decoder::~V4l2Decoder() {
-        std::cout << "WE DECONSTRUCT" << std::endl;
         Stop();
         teardownUpstreamBuffers();
         teardownDownstreamBuffers();
