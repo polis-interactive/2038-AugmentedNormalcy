@@ -116,6 +116,8 @@ namespace infrastructure {
             handleDownstream();
         });
 
+        std::this_thread::sleep_for(100ms);
+
     }
 
     void V4l2Decoder::Stop() {
