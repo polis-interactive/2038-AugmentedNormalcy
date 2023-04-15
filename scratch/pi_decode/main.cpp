@@ -301,6 +301,7 @@ int main(int argc, char *argv[]) {
          * queue
          */
 
+        in_time = Clock::now();
         memcpy(std::get<2>(output_params[i % 4]), in_buf.data(), input_size);
 
         buffer = {};
@@ -338,6 +339,10 @@ int main(int argc, char *argv[]) {
 
         if (xioctl(decoder_fd, VIDIOC_DQBUF, &buffer) < 0)
             throw std::runtime_error("failed to dequeue capture buffer");
+
+        out_time = Clock::now();
+        auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
+        std::cout << "Time to decode: " << d1.count() << std::endl;
 
         if (i == 280) {
             memcpy((void *)out_buf.data(), (void *) std::get<2>(capture_params[buffer.index]), std::get<0>(capture_params[buffer.index]));
