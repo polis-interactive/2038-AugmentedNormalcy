@@ -93,7 +93,6 @@ namespace infrastructure {
         void PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&buffer) override;
         void Start();
         void Stop();
-        void Dummy();
         V4l2Decoder(const DecoderConfig &config, DecoderBufferCallback output_callback);
         ~V4l2Decoder();
     private:
@@ -103,7 +102,6 @@ namespace infrastructure {
         void run();
         void decodeBuffer(std::shared_ptr<V4l2ResizableBuffer> &&buffer);
         bool waitForDecoder();
-        std::shared_ptr<DecoderBuffer> getDownstreamBuffer();
         void queueDownstreamBuffer(DecoderBuffer *d) const;
         void teardownUpstreamBuffers();
         void teardownDownstreamBuffers();
@@ -115,7 +113,6 @@ namespace infrastructure {
 
         int _decoder_fd = -1;
         std::atomic<bool> _is_primed = false;
-        std::atomic<unsigned long> _timestamp = 0;
 
         std::mutex _available_upstream_buffers_mutex;
         std::queue<V4l2ResizableBuffer *> _available_upstream_buffers;

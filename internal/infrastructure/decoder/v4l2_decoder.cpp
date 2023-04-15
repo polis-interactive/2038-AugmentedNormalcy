@@ -14,11 +14,9 @@
 #include <linux/videodev2.h>
 #include <filesystem>
 
-#include <sstream>
 #include <cstring>
 
 
-#include <fstream>
 #include <chrono>
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
@@ -46,38 +44,6 @@ namespace infrastructure {
         setupDecoder();
         setupUpstreamBuffers(upstream_count);
         setupDownstreamBuffers(downstream_count);
-    }
-
-    void V4l2Decoder::Dummy() {
-
-        Start();
-
-        std::filesystem::path this_dir = THIS_DIR;
-        auto in_frame = this_dir;
-        in_frame /= "in.jpeg";
-
-        std::ifstream test_in_file(in_frame, std::ios::in | std::ios::binary);
-        test_in_file.seekg(0, std::ios::end);
-        size_t input_size = test_in_file.tellg();
-        test_in_file.seekg(0, std::ios::beg);
-        std::array<char, 1990656> in_buf = {};
-        test_in_file.read(in_buf.data(), input_size);
-
-        int ctr = 0;
-
-        for (int i = 0; i < 300; i++) {
-            auto buffer = GetResizableBuffer();
-            memcpy(buffer->GetMemory(), (void *) in_buf.data(), input_size);
-            buffer->SetSize(input_size);
-
-            PostResizableBuffer(std::move(buffer));
-            std::this_thread::sleep_for(30ms);
-        }
-
-        std::this_thread::sleep_for(1s);
-
-        Stop();
-
     }
 
     void V4l2Decoder::Start() {

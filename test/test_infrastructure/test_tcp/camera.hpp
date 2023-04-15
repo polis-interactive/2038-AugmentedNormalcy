@@ -52,10 +52,9 @@ public:
     void DestroyHeadsetServerConnection(std::shared_ptr<infrastructure::WritableTcpSession> session) override {}
 
     /* dummy for headset client */
-    std::shared_ptr<SizedBufferPool> CreateHeadsetClientConnection() override {
+    std::shared_ptr<ResizableBufferPool> CreateHeadsetClientConnection() override {
         return nullptr;
     };
-    void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) override {};
     void DestroyHeadsetClientConnection() override {};
 };
 

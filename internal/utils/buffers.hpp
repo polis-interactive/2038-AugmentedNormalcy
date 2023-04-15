@@ -35,6 +35,8 @@ struct ResizableBuffer {
     [[nodiscard]] virtual bool IsLeakyBuffer() = 0;
 };
 
+using ResizableBufferCallback = std::function<void(std::shared_ptr<ResizableBuffer>&&)>;
+
 class ResizableBufferPool {
 public:
     [[nodiscard]] virtual std::shared_ptr<ResizableBuffer> GetResizableBuffer() = 0;

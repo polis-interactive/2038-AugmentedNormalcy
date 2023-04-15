@@ -8,6 +8,7 @@
 #include <utility>
 #include <string>
 #include <memory>
+#include <queue>
 
 #include "utils/buffers.hpp"
 #include "tcp_context.hpp"
@@ -31,8 +32,7 @@ namespace infrastructure {
         virtual void DestroyCameraClientConnection() = 0;
 
         // headset session
-        virtual std::shared_ptr<SizedBufferPool> CreateHeadsetClientConnection() = 0;
-        virtual void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) = 0;
+        virtual std::shared_ptr<ResizableBufferPool> CreateHeadsetClientConnection() = 0;
         virtual void DestroyHeadsetClientConnection() = 0;
     };
 
@@ -57,7 +57,8 @@ namespace infrastructure {
         void startConnection(bool is_initial_connection);
         void startWrite();
         void startRead();
-        void read();
+        void readHeader();
+        void readBody();
         void disconnect(error_code ec);
         void reconnect(error_code ec);
         const bool _is_camera;
@@ -67,7 +68,9 @@ namespace infrastructure {
         tcp::endpoint _remote_endpoint;
         tcp::socket _socket;
         std::shared_ptr<TcpClientManager> _manager;
-        std::shared_ptr<SizedBufferPool> _buffer_pool = nullptr;
+        std::shared_ptr<ResizableBufferPool> _buffer_pool = nullptr;
+
+        TcpReaderMessage _header;
     };
 
 }

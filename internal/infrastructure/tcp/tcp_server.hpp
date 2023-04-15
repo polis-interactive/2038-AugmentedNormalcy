@@ -6,6 +6,7 @@
 #define AUGMENTEDNORMALCY_INFRASTRUCTURE_TCP_SERVER_HPP
 
 #include <memory>
+#include <queue>
 
 #include "tcp_context.hpp"
 #include "utils/buffers.hpp"
@@ -105,11 +106,15 @@ namespace infrastructure {
         TcpHeadsetSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager);
         void ConnectAndWait();
     private:
+        void writeHeader();
+        void writeBody();
         tcp::socket _socket;
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
         std::shared_ptr<TcpServerManager> &_manager;
         std::atomic<bool> _is_live;
         unsigned long _session_id = -1;
+        std::mutex _message_mutex;
+        std::queue<TcpWriterMessage> _message_queue;
     };
 
     struct TcpServerConfig {

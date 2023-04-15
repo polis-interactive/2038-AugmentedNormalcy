@@ -14,22 +14,17 @@ class TcpHeadsetClientServerManager:
 {
 public:
     explicit TcpHeadsetClientServerManager(
-        std::shared_ptr<SizedBufferPool> buffer_pool,
-        std::function<void(std::shared_ptr<SizedBuffer> &&)> callback
+        std::shared_ptr<ResizableBufferPool> buffer_pool
     ) :
-        _buffer_pool(std::move(buffer_pool)),
-        _callback(std::move(callback))
+        _buffer_pool(std::move(buffer_pool))
     {}
 
     /* headset client */
-    std::shared_ptr<SizedBufferPool> CreateHeadsetClientConnection() override {
+    std::shared_ptr<ResizableBufferPool> CreateHeadsetClientConnection() override {
         client_is_connected = true;
         return _buffer_pool;
     };
 
-    void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) override {
-        _callback(std::move(buffer));
-    };
     void DestroyHeadsetClientConnection() override {
         client_is_connected = false;
     };
@@ -37,8 +32,7 @@ public:
         return client_is_connected;
     }
     std::atomic_bool client_is_connected = false;
-    std::shared_ptr<SizedBufferPool> _buffer_pool;
-    std::function<void(std::shared_ptr<SizedBuffer> &&)> _callback;
+    std::shared_ptr<ResizableBufferPool> _buffer_pool;
 
     /* headset server */
     [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp::endpoint endpoint) override {
