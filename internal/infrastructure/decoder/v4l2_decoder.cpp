@@ -158,6 +158,7 @@ namespace infrastructure {
             }
         }
         if (!v4l2_rz_buffer) {
+            std::cout << "Giving leaky buffer" << std::endl;
             return _leaky_upstream_buffer;
         }
 
@@ -170,6 +171,7 @@ namespace infrastructure {
     void V4l2Decoder::PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&rz_buffer) {
 
         if (rz_buffer == nullptr || rz_buffer->IsLeakyBuffer()) {
+            std::cout << "returning leaker" << std::endl;
             return;
         }
 
