@@ -31,7 +31,9 @@ namespace service {
             std::shared_ptr<infrastructure::TcpSession> camera_session
     ) {
         {
+            std::cout << "Is someone hanging onto the mutex?" << std::endl;
             std::unique_lock<std::mutex> lock(_camera_mutex);
+            std::cout << "no..." << std::endl;
             if (_camera_session) {
                 std::cout << "cpp about to hang" << std::endl;
                 _camera_session->TryClose();
