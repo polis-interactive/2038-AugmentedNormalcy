@@ -41,6 +41,6 @@ $ dmesg
 - Basic set up pi
 - install vim, git, cmake, build-essential, libcamera-dev
 - install boost (see guide)
-- install glfw (headset only, see guide)
+- install glfw (headset only, see guide), weston
 - 
 
