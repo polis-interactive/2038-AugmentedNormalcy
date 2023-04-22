@@ -18,15 +18,10 @@ namespace service {
     }
 
     infrastructure::TcpConnectionType ServerEncoder::GetConnectionType(tcp::endpoint endpoint) {
-        std::unique_lock<std::mutex> camera_lock(_camera_mutex, std::defer_lock);
-        std::unique_lock<std::mutex> headset_lock(_headset_mutex, std::defer_lock);
-        std::lock(_camera_mutex, _headset_mutex);
-        /*
-         * for now, we just assume camera connects first, and then headset
-         */
-        if (!_camera_session) {
+        auto addr = endpoint.address().to_string();
+        if (addr == "192.168.1.110") {
             return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
-        } else if (!_headset_session) {
+        } else if (addr == "192.168.1.100") {
             return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
         }
         return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;

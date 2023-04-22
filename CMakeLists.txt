@@ -73,3 +73,4 @@ add_subdirectory(${internal_dir}/service)
 
 add_subdirectory(test)
 
+add_subdirectory(application)

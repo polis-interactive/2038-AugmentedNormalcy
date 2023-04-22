@@ -87,6 +87,10 @@ namespace service {
             _tcp_context->Stop();
             _is_started = false;
         }
+        void Unset() {
+            _tcp_server.reset();
+            _tcp_context.reset();
+        }
         // tcp server
         [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp::endpoint endpoint) override;
         // camera session
