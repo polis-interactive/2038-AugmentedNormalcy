@@ -34,7 +34,7 @@ namespace service {
             std::cout << "Is someone hanging onto the mutex?" << std::endl;
             std::unique_lock<std::mutex> lock(_camera_mutex);
             std::cout << "no..." << std::endl;
-            if (_camera_session) {
+            if (_camera_session != nullptr) {
                 std::cout << "cpp about to hang" << std::endl;
                 _camera_session->TryClose();
                 std::cout << "cpp not hung" << std::endl;
@@ -42,6 +42,7 @@ namespace service {
             }
             _camera_session = camera_session;
         }
+        std::cout << "make it here" << std::endl;
         auto self(shared_from_this());
         auto enc = infrastructure::Encoder::Create(
             _conf, [this, s = std::move(self)] (std::shared_ptr<SizedBuffer> &&buffer) {
@@ -55,6 +56,7 @@ namespace service {
                 }
             }
         );
+        std::cout << "make it out" << std::endl;
         return { ++_last_session_number, enc };
     }
 
