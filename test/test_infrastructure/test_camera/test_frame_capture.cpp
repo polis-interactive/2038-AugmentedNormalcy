@@ -95,8 +95,8 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Start_And_Stop_And") {
     auto cam = infrastructure::Camera::Create(config, [](std::shared_ptr<void> &&ptr){});
     for (int i = 0; i <= 10; i++) {
         cam->Start();
-        std::this_thread::sleep_for(250ms);
+        std::this_thread::sleep_for(1s);
         cam->Stop();
-        std::this_thread::sleep_for(250ms);
+        std::this_thread::sleep_for(1s);
     }
 }
