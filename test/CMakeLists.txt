@@ -33,18 +33,11 @@ if (FEATURE_ENCODER)
     set(tests_link_libraries ${tests_link_libraries} encoder service)
 endif()
 
-if (FEATURE_DECODER)
+if (FEATURE_DECODER AND AN_PLATFORM_TYPE STREQUAL RPI)
     set(tests ${tests}
             test_infrastructure/test_decoder/test_v4l2_decoder.cpp
     )
     set(tests_link_libraries ${tests_link_libraries} decoder)
-endif()
-
-if (FEATURE_LOCATION)
-    set(tests ${tests}
-            test_infrastructure/test_location/test_location.cpp
-            )
-    set(tests_link_libraries ${tests_link_libraries} location)
 endif()
 
 

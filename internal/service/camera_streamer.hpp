@@ -82,6 +82,11 @@ namespace service {
             _camera->Stop();
             _is_started = false;
         }
+        void Unset() {
+            _tcp_client.reset();
+            _tcp_context.reset();
+            _camera.reset();
+        }
         // currently, we are just trying to get this thing streaming; we don't care about
         // holding sessions client side
         void CreateCameraClientConnection() override {};

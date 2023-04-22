@@ -25,5 +25,5 @@ if (
 endif()
 
 if (NOT AN_PLATFORM_TYPE STREQUAL JETSON)
-    set(FEATURE_LOCATION true)
+    # set(FEATURE_LOCATION true)
 endif()

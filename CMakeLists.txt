@@ -36,7 +36,7 @@ include(cmake/camera.cmake)
 include(cmake/encoder.cmake)
 include(cmake/decoder.cmake)
 include(cmake/display.cmake)
-include(cmake/location.cmake)
+# include(cmake/location.cmake)
 
 
 set(root_dir ${CMAKE_CURRENT_LIST_DIR})
