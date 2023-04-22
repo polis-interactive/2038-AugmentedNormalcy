@@ -101,28 +101,44 @@ namespace infrastructure {
         net::dispatch(
             _socket.get_executor(),
             [this, s = std::move(self)]() {
-                read();
+                readHeader();
             }
         );
     }
 
-    void TcpClient::read() {
+    void TcpClient::readHeader() {
         if (_is_stopped || !_is_connected) return;
-        auto buffer = _buffer_pool->GetSizedBuffer();
-        auto buffer_memory = buffer->GetMemory();
-        auto buffer_size = buffer->GetSize();
         auto self(shared_from_this());
         _socket.async_receive(
-            net::buffer(buffer_memory, buffer_size),
-            [this, s = std::move(self), camera_buffer = std::move(buffer)] (error_code ec, std::size_t bytes_written) mutable {
-                if (!ec && bytes_written == camera_buffer->GetSize() && !_is_stopped) {
-                    _manager->PostHeadsetClientBuffer(std::move(camera_buffer));
-                    read();
+            net::buffer(_header.Data(), TcpReaderMessage::header_length),
+            [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
+                if (!ec && bytes_written == TcpReaderMessage::header_length && _header.DecodeHeader() && !_is_stopped) {
+                    readBody();
                 } else {
                     reconnect(ec);
                 }
             }
         );
+    }
+
+    void TcpClient::readBody() {
+        if (_is_stopped || !_is_connected) return;
+        auto buffer = _buffer_pool->GetResizableBuffer();
+        auto buffer_memory = buffer->GetMemory();
+        auto self(shared_from_this());
+        _socket.async_receive(
+            net::buffer(buffer_memory, _header.BodyLength()),
+            [this, s = std::move(self), camera_buffer = std::move(buffer)] (error_code ec, std::size_t bytes_written) mutable {
+                if (!ec && bytes_written == _header.BodyLength() && !_is_stopped) {
+                    camera_buffer->SetSize(bytes_written);
+                    _buffer_pool->PostResizableBuffer(std::move(camera_buffer));
+                    readHeader();
+                } else {
+                    reconnect(ec);
+                }
+            }
+        );
+
     }
 
     void TcpClient::reconnect(error_code ec) {

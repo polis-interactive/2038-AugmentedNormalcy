@@ -86,9 +86,8 @@ namespace service {
         // holding sessions client side
         void CreateCameraClientConnection() override {};
         void DestroyCameraClientConnection() override {};
-        std::shared_ptr<SizedBufferPool> CreateHeadsetClientConnection() override { return nullptr; };
+        std::shared_ptr<ResizableBufferPool> CreateHeadsetClientConnection() override { return nullptr; };
         void DestroyHeadsetClientConnection() override {};
-        void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) override {};
     private:
         void initialize(const CameraStreamerConfig &config);
         std::atomic_bool _is_started = false;

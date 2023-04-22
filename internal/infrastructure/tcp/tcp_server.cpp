@@ -240,16 +240,51 @@ namespace infrastructure {
         if (!_is_live) {
             return;
         }
-        auto buffer_memory = buffer->GetMemory();
-        auto buffer_size = buffer->GetSize();
+        auto msg = TcpWriterMessage(std::move(buffer));
+        bool write_in_progress = false;
+        {
+            std::unique_lock<std::mutex> lock(_message_mutex);
+            write_in_progress = !_message_queue.empty();
+            _message_queue.push(msg);
+        }
+        if (!write_in_progress) {
+            writeHeader();
+        }
+    }
+
+    void TcpHeadsetSession::writeHeader() {
         auto self(shared_from_this());
         _socket.async_send(
-            net::buffer(buffer_memory, buffer_size),
-            [this, s = std::move(self), send_buffer = std::move(buffer)](error_code ec, std::size_t bytes_written) mutable {
-                if (ec || bytes_written != send_buffer->GetSize()) {
-                    TryClose();
+                net::buffer(_message_queue.front().Data(), _message_queue.front().Length()),
+                [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
+                    if (ec || bytes_written != _message_queue.front().Length()) {
+                        TryClose();
+                    } else {
+                        writeBody();
+                    }
                 }
-            }
+        );
+    }
+    void TcpHeadsetSession::writeBody() {
+        auto &buffer = _message_queue.front().GetBuffer();
+        auto self(shared_from_this());
+        _socket.async_send(
+                net::buffer(buffer->GetMemory(), buffer->GetSize()),
+                [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
+                    if (ec || bytes_written != _message_queue.front().GetBuffer()->GetSize()) {
+                        TryClose();
+                        return;
+                    }
+                    bool messages_remaining = false;
+                    {
+                        std::unique_lock<std::mutex> lock(_message_mutex);
+                        _message_queue.pop();
+                        messages_remaining = !_message_queue.empty();
+                    }
+                    if (messages_remaining) {
+                        writeHeader();
+                    }
+                }
         );
     }
 
@@ -259,6 +294,12 @@ namespace infrastructure {
         if (_socket.is_open()) {
             error_code ec;
             _socket.shutdown(tcp::socket::shutdown_send, ec);
+        }
+        {
+            std::unique_lock<std::mutex> lock(_message_mutex);
+            while(!_message_queue.empty()) {
+                _message_queue.pop();
+            }
         }
         auto self(shared_from_this());
         _manager->DestroyHeadsetServerConnection(self);
