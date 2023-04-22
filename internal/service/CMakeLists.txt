@@ -7,14 +7,18 @@ include_directories(${BOOST_INCLUDEDIR})
 
 if (FEATURE_CAMERA)
     set(SOURCES ${SOURCES} camera_streamer.cpp)
-# for now, putting this here so non camera services don't get boned
-    add_library(service STATIC ${SOURCES})
-    target_link_libraries(service PRIVATE ${TARGET_LIBS} camera)
+    set(TARGET_LIBS ${TARGET_LIBS} camera)
 endif()
 
 if (FEATURE_ENCODER)
     set(SOURCES ${SOURCES} server_encoder.cpp)
-    # for now, putting this here so non camera services don't get boned
-    add_library(service STATIC ${SOURCES})
-    target_link_libraries(service PRIVATE ${TARGET_LIBS} encoder)
+    set(TARGET_LIBS ${TARGET_LIBS} encoder)
 endif()
+
+if (FEATURE_DISPLAY)
+    set(SOURCES ${SOURCES} headset_streamer.cpp)
+    set(TARGET_LIBS ${TARGET_LIBS} decoder graphics)
+endif()
+
+add_library(service STATIC ${SOURCES})
+target_link_libraries(service PRIVATE ${TARGET_LIBS})
