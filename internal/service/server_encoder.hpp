@@ -74,7 +74,7 @@ namespace service {
                 std::unique_lock<std::mutex> lock(_camera_mutex);
                 std::cout << "I hung" << std::endl;
                 if (_camera_session) {
-                    _camera_session->TryClose();
+                    _camera_session->TryClose(false);
                     _camera_session.reset();
                 }
                 std::cout << "maybe?" << std::endl;
@@ -82,7 +82,7 @@ namespace service {
             {
                 std::unique_lock<std::mutex> lock(_headset_mutex);
                 if (_headset_session) {
-                    _headset_session->TryClose();
+                    _headset_session->TryClose(false);
                     _headset_session.reset();
                 }
             }

@@ -36,7 +36,7 @@ namespace service {
             std::cout << "no..." << std::endl;
             if (_camera_session != nullptr) {
                 std::cout << "cpp about to hang" << std::endl;
-                _camera_session->TryClose();
+                _camera_session->TryClose(false);
                 std::cout << "cpp not hung" << std::endl;
                 _camera_session.reset();
             }
@@ -63,7 +63,6 @@ namespace service {
     void ServerEncoder::DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> camera_session) {
         std::unique_lock<std::mutex> lock(_camera_mutex);
         if (_camera_session && _camera_session->GetSessionId() == camera_session->GetSessionId()) {
-            _camera_session->TryClose();
             _camera_session.reset();
         }
     }
@@ -74,7 +73,7 @@ namespace service {
         {
             std::unique_lock<std::mutex> lock(_headset_mutex);
             if (_headset_session) {
-                _headset_session->TryClose();
+                _headset_session->TryClose(false);
                 _headset_session.reset();
             }
             _headset_session = headset_session;
@@ -87,7 +86,6 @@ namespace service {
     ) {
         std::unique_lock<std::mutex> lock(_headset_mutex);
         if (_headset_session && _headset_session->GetSessionId() == headset_session->GetSessionId()) {
-            _headset_session->TryClose();
             _headset_session.reset();
         }
     }

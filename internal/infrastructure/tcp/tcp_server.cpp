@@ -148,7 +148,7 @@ namespace infrastructure {
                 } else if (!ec) {
                     continueReadPlane(std::move(camera_pool), std::move(camera_buffer), bytes_written);
                 } else {
-                    TryClose();
+                    TryClose(true);
                 }
             }
         );
@@ -175,7 +175,7 @@ namespace infrastructure {
                 } else if (!ec) {
                     continueReadPlane(std::move(camera_pool), std::move(camera_buffer), bytes_written);
                 } else {
-                    TryClose();
+                    TryClose(true);
                 }
             }
         );
@@ -208,19 +208,21 @@ namespace infrastructure {
                             std::move(camera_pool), std::move(camera_buffer), bytes_written + current_bytes
                         );
                     } else {
-                        TryClose();
+                        TryClose(true);
                     }
                 }
         );
     }
 
-    void TcpCameraSession::TryClose() {
+    void TcpCameraSession::TryClose(bool is_self_close) {
         if (_socket.is_open()) {
             error_code ec;
             _socket.shutdown(tcp::socket::shutdown_send, ec);
         }
-        auto self(shared_from_this());
-        _manager->DestroyCameraServerConnection(self);
+        if (is_self_close) {
+            auto self(shared_from_this());
+            _manager->DestroyCameraServerConnection(self);
+        }
     }
 
     TcpHeadsetSession::TcpHeadsetSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager):
@@ -258,7 +260,7 @@ namespace infrastructure {
                 net::buffer(_message_queue.front().Data(), _message_queue.front().Length()),
                 [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
                     if (ec || bytes_written != _message_queue.front().Length()) {
-                        TryClose();
+                        TryClose(true);
                     } else {
                         writeBody();
                     }
@@ -272,7 +274,7 @@ namespace infrastructure {
                 net::buffer(buffer->GetMemory(), buffer->GetSize()),
                 [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
                     if (ec || bytes_written != _message_queue.front().GetBuffer()->GetSize()) {
-                        TryClose();
+                        TryClose(true);
                         return;
                     }
                     bool messages_remaining = false;
@@ -289,7 +291,7 @@ namespace infrastructure {
     }
 
 
-    void TcpHeadsetSession::TryClose() {
+    void TcpHeadsetSession::TryClose(bool is_self_close) {
         _is_live = false;
         if (_socket.is_open()) {
             error_code ec;
@@ -301,7 +303,9 @@ namespace infrastructure {
                 _message_queue.pop();
             }
         }
-        auto self(shared_from_this());
-        _manager->DestroyHeadsetServerConnection(self);
+        if (is_self_close) {
+            auto self(shared_from_this());
+            _manager->DestroyHeadsetServerConnection(self);
+        }
     }
 }

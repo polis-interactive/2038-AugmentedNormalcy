@@ -27,7 +27,7 @@ namespace infrastructure {
 
     class TcpSession {
     public:
-        virtual void TryClose() = 0;
+        virtual void TryClose(bool is_self_close) = 0;
         virtual tcp::endpoint GetEndpoint() = 0;
         virtual unsigned long GetSessionId() = 0;
     };
@@ -62,7 +62,7 @@ namespace infrastructure {
         TcpCameraSession (const TcpCameraSession&) = delete;
         TcpCameraSession& operator= (const TcpCameraSession&) = delete;
         // TODO: don't know a better way of doing this. Essentially, TcpServerManager needs to be able to call this
-        void TryClose() override;
+        void TryClose(bool is_self_close) override;
         tcp::endpoint GetEndpoint() override {
             return _socket.remote_endpoint();
         };
@@ -93,7 +93,7 @@ namespace infrastructure {
         TcpHeadsetSession (const TcpHeadsetSession&) = delete;
         TcpHeadsetSession& operator= (const TcpHeadsetSession&) = delete;
         // TODO: don't know a better way of doing this. Essentially, TcpServerManager needs to be able to call this
-        void TryClose() override;
+        void TryClose(bool is_self_close) override;
         tcp::endpoint GetEndpoint() override {
             return _socket.remote_endpoint();
         };
