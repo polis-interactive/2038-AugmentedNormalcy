@@ -34,7 +34,7 @@ $ make -j4
 $ sudo modprobe -r bcm2835-codec
 $ sudo modprobe bcm2835-codec debug=5
 $ dmesg
-```
+
 
 ## Bringing up a pi
 
@@ -43,3 +43,4 @@ $ dmesg
 - install boost (see guide)
 - install glfw (headset only, see guide)
 - 
+

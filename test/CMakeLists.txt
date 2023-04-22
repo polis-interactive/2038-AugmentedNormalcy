@@ -40,6 +40,14 @@ if (FEATURE_DECODER)
     set(tests_link_libraries ${tests_link_libraries} decoder)
 endif()
 
+if (FEATURE_LOCATION)
+    set(tests ${tests}
+            test_infrastructure/test_location/test_location.cpp
+            )
+    set(tests_link_libraries ${tests_link_libraries} location)
+endif()
+
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -D_GLIBCXX_DEBUG -O0 ")
 add_definitions(-DTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_executable(tests ${tests})
