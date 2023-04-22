@@ -22,3 +22,7 @@ if (
     set(FEATURE_DECODER true)
     set(FEATURE_DISPLAY true)
 endif()
+
+if (NOT AN_PLATFORM_TYPE STREQUAL JETSON)
+    set(FEATURE_LOCATION true)
+endif()

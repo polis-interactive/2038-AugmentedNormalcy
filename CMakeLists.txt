@@ -36,6 +36,7 @@ include(cmake/camera.cmake)
 include(cmake/encoder.cmake)
 include(cmake/decoder.cmake)
 include(cmake/display.cmake)
+include(cmake/location.cmake)
 
 set(root_dir ${CMAKE_CURRENT_LIST_DIR})
 set(internal_dir ${root_dir}/internal)
@@ -61,6 +62,11 @@ if (FEATURE_DISPLAY)
     # for some reason, can only get this to build if I directly include glad instead of compiling it as a shared lib
     add_subdirectory(${internal_dir}/infrastructure/graphics)
 endif()
+if (FEATURE_LOCATION)
+    include_directories(${third_party_dir}/libserialport)
+    add_subdirectory(${internal_dir}/infrastructure/location)
+endif()
+
 
 add_subdirectory(${internal_dir}/service)
 
