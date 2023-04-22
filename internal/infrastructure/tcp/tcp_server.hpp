@@ -10,6 +10,7 @@
 
 #include "tcp_context.hpp"
 #include "utils/buffers.hpp"
+#include "tcp_packet_header.hpp"
 
 using boost::asio::ip::tcp;
 using boost::system::error_code;
@@ -27,7 +28,7 @@ namespace infrastructure {
 
     class TcpSession {
     public:
-        virtual void TryClose() = 0;
+        virtual void TryClose(bool is_self_close) = 0;
         virtual tcp::endpoint GetEndpoint() = 0;
         virtual unsigned long GetSessionId() = 0;
     };
@@ -45,7 +46,9 @@ namespace infrastructure {
         [[nodiscard]]  virtual CameraConnectionPayload CreateCameraServerConnection(
             std::shared_ptr<TcpSession> session
         ) = 0;
-        virtual void DestroyCameraServerConnection(std::shared_ptr<TcpSession> session) = 0;
+        virtual void DestroyCameraServerConnection(
+                std::shared_ptr<TcpSession> session
+        ) = 0;
 
         // headset session
         [[nodiscard]]  virtual unsigned long CreateHeadsetServerConnection(
@@ -62,7 +65,7 @@ namespace infrastructure {
         TcpCameraSession (const TcpCameraSession&) = delete;
         TcpCameraSession& operator= (const TcpCameraSession&) = delete;
         // TODO: don't know a better way of doing this. Essentially, TcpServerManager needs to be able to call this
-        void TryClose() override;
+        void TryClose(bool is_self_close) override;
         tcp::endpoint GetEndpoint() override {
             return _socket.remote_endpoint();
         };
@@ -74,17 +77,17 @@ namespace infrastructure {
         TcpCameraSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &_manager);
         void Run();
     private:
-        void readStream();
-        void readStreamPlane(std::shared_ptr<SizedBufferPool> &&pool, std::shared_ptr<SizedBuffer> &&buffer);
-        void continueReadPlane(
-                std::shared_ptr<SizedBufferPool> &&pool, std::shared_ptr<SizedBuffer> &&buffer,
-                std::size_t bytes_written
-        );
+        void readHeader(std::size_t last_bytes);
+        void readBody();
         tcp::socket _socket;
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
         std::shared_ptr<TcpServerManager> &_manager;
         std::shared_ptr<SizedPlaneBufferPool> _plane_buffer_pool = nullptr;
         unsigned long _session_id= -1;
+
+        PacketHeader _header;
+        std::shared_ptr<SizedBufferPool> _plane_buffer = nullptr;
+        std::shared_ptr<SizedBuffer> _buffer = nullptr;
     };
 
     class TcpHeadsetSession : public std::enable_shared_from_this<TcpHeadsetSession>, public WritableTcpSession {
@@ -93,7 +96,7 @@ namespace infrastructure {
         TcpHeadsetSession (const TcpHeadsetSession&) = delete;
         TcpHeadsetSession& operator= (const TcpHeadsetSession&) = delete;
         // TODO: don't know a better way of doing this. Essentially, TcpServerManager needs to be able to call this
-        void TryClose() override;
+        void TryClose(bool is_self_close) override;
         tcp::endpoint GetEndpoint() override {
             return _socket.remote_endpoint();
         };
@@ -106,15 +109,16 @@ namespace infrastructure {
         TcpHeadsetSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager);
         void ConnectAndWait();
     private:
-        void writeHeader();
+        void writeHeader(std::size_t last_bytes);
         void writeBody();
         tcp::socket _socket;
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
         std::shared_ptr<TcpServerManager> &_manager;
         std::atomic<bool> _is_live;
         unsigned long _session_id = -1;
+        PacketHeader _header;
         std::mutex _message_mutex;
-        std::queue<TcpWriterMessage> _message_queue;
+        std::queue<std::shared_ptr<SizedBuffer>> _message_queue;
     };
 
     struct TcpServerConfig {

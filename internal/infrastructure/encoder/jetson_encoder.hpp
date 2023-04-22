@@ -149,8 +149,8 @@ namespace infrastructure {
         }
         [[nodiscard]] std::shared_ptr<SizedBufferPool> GetSizedBufferPool() override;
         void PostSizedBufferPool(std::shared_ptr<SizedBufferPool> &&buffer) override;
-        void Start();
-        void Stop();
+        void Start() final;
+        void Stop() final;
         Encoder(const EncoderConfig &config, SizedBufferCallback output_callback);
         ~Encoder();
     private:

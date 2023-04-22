@@ -199,7 +199,7 @@ namespace infrastructure {
             _camera_buffers.insert(out_buffer);
         }
         auto self(shared_from_this());
-        auto out_ptr = std::shared_ptr<SizedBuffer>(out_buffer, [this, self, out_buffer](SizedBuffer *p) {
+        auto out_ptr = std::shared_ptr<SizedBufferPool>(out_buffer, [this, self, out_buffer](SizedBufferPool *p) {
             this->queueRequest(out_buffer);
         });
         _send_callback(std::move(out_ptr));

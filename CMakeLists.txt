@@ -27,7 +27,7 @@ include(cmake/features.cmake)
 project (
     AugmentedNormalcy
     VERSION 1.0
-    LANGUAGES CXX
+    LANGUAGES C CXX
 )
 
 # post-project cmake files
@@ -36,7 +36,7 @@ include(cmake/camera.cmake)
 include(cmake/encoder.cmake)
 include(cmake/decoder.cmake)
 include(cmake/display.cmake)
-include(cmake/location.cmake)
+# include(cmake/location.cmake)
 
 
 set(root_dir ${CMAKE_CURRENT_LIST_DIR})
@@ -73,3 +73,4 @@ add_subdirectory(${internal_dir}/service)
 
 add_subdirectory(test)
 
+add_subdirectory(application)

@@ -39,6 +39,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Setup-and-teardown") {
         t3 = Clock::now();
         streamer->Stop();
         t4 = Clock::now();
+        streamer->Unset();
     }
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
     auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2);
@@ -63,6 +64,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Holding-pattern") {
         streamer->Start();
         std::this_thread::sleep_for(5s);
         streamer->Stop();
+        streamer->Unset();
     }
 }
 
@@ -99,25 +101,31 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
         if (is_done) {
             return;
         }
-        auto buffer = std::static_pointer_cast<FakePlaneBuffer>(ptr)->_buffer;
         std::cout << "Writing to file" << std::endl;
         is_done = true;
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-        test_file_out.write(reinterpret_cast<char*>(buffer->GetMemory()), buffer->GetSize());
+        std::size_t bytes_written = 0;
+        auto buffer = ptr->GetSizedBuffer();
+        while (buffer != nullptr) {
+            test_file_out.write((char *)buffer->GetMemory(), buffer->GetSize());
+            bytes_written += buffer->GetSize();
+            buffer = ptr->GetSizedBuffer();
+        }
+        std::cout << "Bytes written: " << bytes_written << std::endl;
         test_file_out.flush();
         test_file_out.close();
     };
 
 #if _AN_PLATFORM_ == PLATFORM_RPI
-    int frame_size = 1536 * 864 * 3 / 2;
+    std::vector<unsigned int> frame_sizes = { 1536 * 864, 1536 * 864 / 4, 1536 * 864 / 4 };
 #else
-    int frame_size = 814669;
+    std::vector<unsigned int> frame_sizes = { 814669 };
 #endif
     TestServerConfig srv_conf(3, 6969);
     auto ctx = infrastructure::TcpContext::Create(srv_conf);
     ctx->Start();
-    auto pool = std::make_shared<FakePlaneBufferPool>(frame_size, 5, callback);
+    auto pool = std::make_shared<CameraStreamerBufferPool>(frame_sizes, 5, callback);
     auto manager = std::make_shared<TcpCameraServerManager>(pool);
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
     auto srv = infrastructure::TcpServer::Create(srv_conf, ctx->GetContext(), srv_manager);
@@ -126,8 +134,9 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
         auto streamer = service::CameraStreamer::Create(streamer_conf);
         streamer->Start();
         in_time = Clock::now();
-        std::this_thread::sleep_for(500ms);
+        std::this_thread::sleep_for(1s);
         streamer->Stop();
+        streamer->Unset();
     }
     srv->Stop();
     ctx->Stop();
@@ -139,25 +148,20 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
 
 }
 
+#if _AN_PLATFORM_ == PLATFORM_RPI
+
 TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
     service::CameraStreamerConfig streamer_conf(
             "127.0.0.1", 6969,
-#if _AN_PLATFORM_ == PLATFORM_RPI
             infrastructure::CameraType::LIBCAMERA, { 1536, 864 }
-#elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
-            infrastructure::CameraType::LIBCAMERA, {848, 480}
-#endif
     );
 
     std::filesystem::path test_dir = TEST_DIR;
     test_dir /= "test_service";
 
     std::filesystem::path out_frame = test_dir;
-#if _AN_PLATFORM_ == PLATFORM_RPI
+
     out_frame /= "out_150.yuv";
-#else
-    out_frame /= "out_150.jpeg";
-#endif
 
     if(std::filesystem::remove(out_frame)) {
         std::cout << "Removed output file" << std::endl;
@@ -173,24 +177,31 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
         if (frame_count != 150) {
             return;
         }
-        auto buffer = std::static_pointer_cast<FakePlaneBuffer>(ptr)->_buffer;
         std::cout << "Writing to file" << std::endl;
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-        test_file_out.write(reinterpret_cast<char*>(buffer->GetMemory()), buffer->GetSize());
+        std::size_t bytes_written = 0;
+        auto buffer = ptr->GetSizedBuffer();
+        while (buffer != nullptr) {
+            test_file_out.write((char *)buffer->GetMemory(), buffer->GetSize());
+            bytes_written += buffer->GetSize();
+            buffer = ptr->GetSizedBuffer();
+        }
+        std::cout << "Bytes written: " << bytes_written << std::endl;
         test_file_out.flush();
         test_file_out.close();
     };
 
 #if _AN_PLATFORM_ == PLATFORM_RPI
-    int frame_size = 1536 * 864 * 3 / 2;
+    std::vector<unsigned int> frame_sizes = { 1536 * 864, 1536 * 864 / 4, 1536 * 864 / 4 };
 #else
-    int frame_size = 814669;
+    std::vector<unsigned int> frame_sizes = { 814669 };
 #endif
+
     TestServerConfig srv_conf(3, 6969);
     auto ctx = infrastructure::TcpContext::Create(srv_conf);
     ctx->Start();
-    auto pool = std::make_shared<FakePlaneBufferPool>(frame_size, 5, callback);
+    auto pool = std::make_shared<CameraStreamerBufferPool>(frame_sizes, 5, callback);
     auto manager = std::make_shared<TcpCameraServerManager>(pool);
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
     auto srv = infrastructure::TcpServer::Create(srv_conf, ctx->GetContext(), srv_manager);
@@ -201,6 +212,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
         in_time = Clock::now();
         std::this_thread::sleep_for(6s);
         streamer->Stop();
+        streamer->Unset();
     }
     // give the last frame some time to flush
     std::this_thread::sleep_for(1ms);
@@ -215,3 +227,4 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
     REQUIRE_GT(frame_count, 149);
 
 }
+#endif

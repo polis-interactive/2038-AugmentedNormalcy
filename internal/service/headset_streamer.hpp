@@ -82,11 +82,17 @@ namespace service {
             if (!_is_started) {
                 return;
             }
-            _tcp_client->Start();
+            _tcp_client->Stop();
             _tcp_context->Stop();
             _graphics->Stop();
             _decoder->Stop();
             _is_started = false;
+        }
+        void Unset() {
+            _tcp_client.reset();
+            _tcp_context.reset();
+            _graphics.reset();
+            _decoder.reset();
         }
         // camera isn't an option so no need to initialize it; don't need to hold state, just give whoever asks the
         // decoder; in the future, we'll make sure only one person can "have it at a time"

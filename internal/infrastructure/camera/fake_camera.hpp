@@ -10,7 +10,7 @@
 namespace infrastructure {
     class FakeCamera : public Camera {
     public:
-        FakeCamera(const CameraConfig &config, SizedBufferCallback &&send_callback):
+        FakeCamera(const CameraConfig &config, SizedBufferPoolCallback &&send_callback):
             Camera(config, std::move(send_callback))
         {
             CreateCamera(config);

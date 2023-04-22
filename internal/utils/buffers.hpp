@@ -24,6 +24,9 @@ using SizedBufferPoolCallback = std::function<void(std::shared_ptr<SizedBufferPo
 
 class SizedPlaneBufferPool {
 public:
+    /* TODO: get rid of super hack */
+    virtual void Start() {};
+    virtual void Stop() {};
     [[nodiscard]] virtual std::shared_ptr<SizedBufferPool> GetSizedBufferPool() = 0;
     virtual void PostSizedBufferPool(std::shared_ptr<SizedBufferPool> &&buffer) = 0;
 };
@@ -44,30 +47,6 @@ public:
 };
 
 // nowhere better to put this at the moment
-
-struct CameraBuffer: public SizedBuffer {
-    CameraBuffer(
-        void *request, void *buffer, int fd, std::size_t size, int64_t timestamp_us
-    ): _request(request), _buffer(buffer), _fd(fd), _size(size), _timestamp_us(timestamp_us) {}
-    [[nodiscard]] void *GetMemory() final {
-        return _buffer;
-    }
-    [[nodiscard]] void *GetRequest() const {
-        return _request;
-    }
-    [[nodiscard]] int GetFd() const {
-        return _fd;
-    }
-    [[nodiscard]] std::size_t GetSize() final {
-        return _size;
-    };
-private:
-    void *_request;
-    void *_buffer;
-    int _fd;
-    std::size_t _size;
-    int64_t _timestamp_us;
-};
 
 struct DecoderBuffer: public SizedBuffer {
     DecoderBuffer(unsigned int buffer_index, int fd, void *memory, std::size_t size):
