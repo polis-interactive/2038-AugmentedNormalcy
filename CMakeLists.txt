@@ -27,7 +27,7 @@ include(cmake/features.cmake)
 project (
     AugmentedNormalcy
     VERSION 1.0
-    LANGUAGES CXX
+    LANGUAGES C CXX
 )
 
 # post-project cmake files

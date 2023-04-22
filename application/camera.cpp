@@ -2,7 +2,8 @@
 // Created by brucegoose on 4/22/23.
 //
 
-#include "service/headset_streamer.hpp"
+
+#include "service/camera_streamer.hpp"
 
 #include <csignal>
 #include <chrono>
@@ -12,8 +13,10 @@ std::function<void(int)> shutdown_handler;
 void signal_handler(int signal) { shutdown_handler(signal); }
 
 int main() {
-    const service::HeadsetStreamerConfig conf("192.168.1.10", 6969, { 1536, 864 }, 4, 4);
-    auto service = service::HeadsetStreamer::Create(conf);
+    const service::CameraStreamerConfig conf(
+        "192.168.1.10", 6969, infrastructure::CameraType::LIBCAMERA, { 1536, 864 }
+    );
+    auto service = service::CameraStreamer::Create(conf);
     service->Start();
 
     bool exit = false;

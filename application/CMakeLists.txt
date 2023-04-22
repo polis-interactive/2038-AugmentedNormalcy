@@ -1,6 +1,8 @@
 
 include_directories(${BOOST_INCLUDEDIR})
 
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${root_dir}/bin)
+
 if (
     AN_PLATFORM_TYPE STREQUAL JETSON
 )
@@ -11,6 +13,7 @@ endif()
 if (
     AN_PLATFORM STREQUAL RPI_CAMERA
         OR AN_PLATFORM STREQUAL RPI_CAMERA_CC
+        OR AN_PLATFORM STREQUAL BROOSE_LINUX_LAPTOP
 )
     add_executable(app_camera camera.cpp)
     target_link_libraries(app_camera PRIVATE pthread service)
