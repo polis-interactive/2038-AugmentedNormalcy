@@ -66,7 +66,7 @@ namespace infrastructure {
         std::atomic<bool> _is_connected = {false};
         net::io_context &_context;
         tcp::endpoint _remote_endpoint;
-        tcp::socket _socket;
+        std::shared_ptr<tcp::socket> _socket = nullptr;
         std::shared_ptr<TcpClientManager> _manager;
         std::shared_ptr<ResizableBufferPool> _buffer_pool = nullptr;
 

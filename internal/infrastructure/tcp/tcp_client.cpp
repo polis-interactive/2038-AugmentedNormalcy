@@ -18,7 +18,6 @@ namespace infrastructure {
             net::ip::address::from_string(config.get_tcp_server_host()),
             config.get_tcp_server_port()
         ),
-        _socket(net::make_strand(context)),
         _manager(std::move(manager)),
         _is_camera(config.get_tcp_client_is_camera())
     {
@@ -52,9 +51,12 @@ namespace infrastructure {
             std::this_thread::sleep_for(1s);
         }
         if (_is_stopped) return;
+        if (_socket == nullptr) {
+            _socket = std::make_shared<tcp::socket>(net::make_strand(_context));
+        }
         std::cout << "TcpClient running async connect" << std::endl;
         auto self(shared_from_this());
-        _socket.async_connect(
+        _socket->async_connect(
             _remote_endpoint,
             [this, s = std::move(self)](error_code ec) {
                 std::cout << "TcpClient attempting connection" << std::endl;
@@ -84,7 +86,7 @@ namespace infrastructure {
         auto buffer_size = buffer->GetSize();
         std::string str((char *)buffer_memory);
         auto self(shared_from_this());
-        _socket.async_send(
+        _socket->async_send(
             net::buffer(buffer_memory, buffer_size),
             [this, s = std::move(self), send_buffer = std::move(buffer)](error_code ec, std::size_t bytes_written) {
                 if (ec || bytes_written != send_buffer->GetSize()) {
@@ -99,7 +101,7 @@ namespace infrastructure {
         _buffer_pool = _manager->CreateHeadsetClientConnection();
         auto self(shared_from_this());
         net::dispatch(
-            _socket.get_executor(),
+            _socket->get_executor(),
             [this, s = std::move(self)]() {
                 readHeader();
             }
@@ -109,7 +111,7 @@ namespace infrastructure {
     void TcpClient::readHeader() {
         if (_is_stopped || !_is_connected) return;
         auto self(shared_from_this());
-        _socket.async_receive(
+        _socket->async_receive(
             net::buffer(_header.Data(), TcpReaderMessage::header_length),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
                 if (!ec && bytes_written == TcpReaderMessage::header_length && _header.DecodeHeader() && !_is_stopped) {
@@ -126,7 +128,7 @@ namespace infrastructure {
         auto buffer = _buffer_pool->GetResizableBuffer();
         auto buffer_memory = buffer->GetMemory();
         auto self(shared_from_this());
-        _socket.async_receive(
+        _socket->async_receive(
             net::buffer(buffer_memory, _header.BodyLength()),
             [this, s = std::move(self), camera_buffer = std::move(buffer)] (error_code ec, std::size_t bytes_written) mutable {
                 if (!ec && bytes_written == _header.BodyLength() && !_is_stopped) {
@@ -148,8 +150,11 @@ namespace infrastructure {
 
     void TcpClient::disconnect(error_code ec) {
         _is_connected = false;
-        if (_socket.is_open()) {
-            _socket.shutdown(tcp::socket::shutdown_send, ec);
+        if (_socket->is_open()) {
+            _socket->shutdown(tcp::socket::shutdown_both, ec);
+            _socket->close();
+            _socket.reset();
+            _socket = nullptr;
         }
         if (_is_camera) {
             _manager->DestroyCameraClientConnection();
