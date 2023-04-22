@@ -48,7 +48,7 @@ namespace infrastructure {
     void TcpClient::startConnection(const bool is_initial_connection) {
         if (!is_initial_connection) {
             if (_is_stopped) return;
-            std::this_thread::sleep_for(1s);
+            std::this_thread::sleep_for(5s);
         }
         if (_is_stopped) return;
         if (_socket == nullptr) {
@@ -144,6 +144,7 @@ namespace infrastructure {
     }
 
     void TcpClient::reconnect(error_code ec) {
+        std::cout << "Socket has error " << ec << "; attempting to reconnect" << std::endl;
         disconnect(ec);
         startConnection(false);
     }

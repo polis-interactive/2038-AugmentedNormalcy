@@ -69,12 +69,15 @@ namespace service {
             if (!_is_started) {
                 return;
             }
+            std::cout << "Do I hang?" << std::endl;
             {
                 std::unique_lock<std::mutex> lock(_camera_mutex);
+                std::cout << "I hung" << std::endl;
                 if (_camera_session) {
                     _camera_session->TryClose();
                     _camera_session.reset();
                 }
+                std::cout << "maybe?" << std::endl;
             }
             {
                 std::unique_lock<std::mutex> lock(_headset_mutex);
@@ -86,6 +89,7 @@ namespace service {
             _tcp_server->Stop();
             _tcp_context->Stop();
             _is_started = false;
+            std::cout << "no hang here" << std::endl;
         }
         void Unset() {
             _tcp_server.reset();
