@@ -174,7 +174,7 @@ namespace infrastructure {
             setWindowHints();
             const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
             _width = mode->width;
-            _heigt = mode->height;
+            _height = mode->height;
             _window = glfwCreateWindow(_width, _height, "Headset", NULL, NULL);
             if (!_window)
             {
