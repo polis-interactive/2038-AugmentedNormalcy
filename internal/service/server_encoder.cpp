@@ -33,7 +33,9 @@ namespace service {
         {
             std::unique_lock<std::mutex> lock(_camera_mutex);
             if (_camera_session) {
+                std::cout << "cpp about to hang" << std::endl;
                 _camera_session->TryClose();
+                std::cout << "cpp not hung" << std::endl;
                 _camera_session.reset();
             }
             _camera_session = camera_session;
