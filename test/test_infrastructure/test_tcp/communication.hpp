@@ -117,5 +117,66 @@ public:
 };
 
 
+class FakeResizableBuffer: public ResizableBuffer {
+public:
+    explicit FakeResizableBuffer(unsigned int max_buffer_size):
+            _max_buffer_size(max_buffer_size),
+            _buffer_size(max_buffer_size)
+    {
+        _buffer = new char[_max_buffer_size];
+    };
+    [[nodiscard]] void *GetMemory() override {
+        return _buffer;
+    };
+    [[nodiscard]] std::size_t GetSize() override {
+        return _buffer_size;
+    };
+    void SetSize(std::size_t used_size) override {
+        _buffer_size = used_size;
+    };
+    [[nodiscard]] bool IsLeakyBuffer() override {
+        return false;
+    };
+    char *_buffer;
+    unsigned int _buffer_size;
+    const unsigned int _max_buffer_size;
+};
+
+class FakeResizableBufferPool: public ResizableBufferPool {
+public:
+    explicit FakeResizableBufferPool(
+        unsigned int max_buffer_size, unsigned int buffer_count, ResizableBufferCallback callback
+    ):
+            _callback(std::move(callback))
+    {
+        for (int i = 0; i < buffer_count; i++) {
+            _buffers.push_back(new FakeResizableBuffer(max_buffer_size));
+        }
+    }
+    [[nodiscard]] std::shared_ptr<ResizableBuffer> GetResizableBuffer() override {
+        std::unique_lock<std::mutex> lock(_buffer_mutex);
+        auto fake_buffer = _buffers.front();
+        _buffers.pop_front();
+        auto buffer = std::shared_ptr<ResizableBuffer>(
+            (ResizableBuffer *) fake_buffer, [this, fake_buffer](ResizableBuffer *) mutable {
+                std::unique_lock<std::mutex> lock(_buffer_mutex);
+                _buffers.push_back(fake_buffer);
+            }
+        );
+        return std::move(buffer);
+    };
+    void PostResizableBuffer(std::shared_ptr<ResizableBuffer> &&buffer) override {
+        _callback(std::move(buffer));
+    };
+    std::size_t AvailableBuffers() {
+        std::unique_lock<std::mutex> lock(_buffer_mutex);
+        return _buffers.size();
+    }
+    std::deque<FakeResizableBuffer *> _buffers;
+    std::mutex _buffer_mutex;
+    ResizableBufferCallback _callback;
+};
+
+
 
 #endif //AUGMENTEDNORMALCY_TEST_TCP_COMMUNICATION_HPP

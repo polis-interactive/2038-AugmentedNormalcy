@@ -34,15 +34,12 @@ project (
 include(cmake/boost.cmake)
 include(cmake/camera.cmake)
 include(cmake/encoder.cmake)
+include(cmake/decoder.cmake)
+include(cmake/display.cmake)
 
 set(root_dir ${CMAKE_CURRENT_LIST_DIR})
 set(internal_dir ${root_dir}/internal)
 set(third_party_dir ${root_dir}/third_party)
-
-if (AN_PLATFORM_TYPE STREQUAL JETSON)
-    add_subdirectory(${third_party_dir}/jetson_multimedia_api)
-    include_directories(${third_party_dir}/jetson_multimedia_api/include)
-endif()
 
 include_directories(${root_dir}/internal)
 
@@ -51,8 +48,20 @@ if (FEATURE_CAMERA)
     add_subdirectory(${internal_dir}/infrastructure/camera)
 endif()
 if (FEATURE_ENCODER)
+    add_subdirectory(${third_party_dir}/jetson_multimedia_api)
+    include_directories(${third_party_dir}/jetson_multimedia_api/include)
     add_subdirectory(${internal_dir}/infrastructure/encoder)
 endif()
+if (FEATURE_DECODER)
+    add_subdirectory(${internal_dir}/infrastructure/decoder)
+endif()
+if (FEATURE_DISPLAY)
+    set(glad_dir ${third_party_dir}/glad)
+    include_directories(${glad_dir}/include)
+    # for some reason, can only get this to build if I directly include glad instead of compiling it as a shared lib
+    add_subdirectory(${internal_dir}/infrastructure/graphics)
+endif()
+
 add_subdirectory(${internal_dir}/service)
 
 add_subdirectory(test)
