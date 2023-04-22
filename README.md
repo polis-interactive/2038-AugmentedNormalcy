@@ -24,7 +24,7 @@ $ make -j4
 $ mkdir build
 $ cd build
 $ cmake -DAN_PLATFORM:STRING=RPI_CAMERA ..
-    (or RPI_HEADSET)
+    (or cmake -DAN_PLATFORM:STRING=RPI_HEADSET ..)
 $ make -j4
 ```
 
@@ -34,4 +34,13 @@ $ make -j4
 $ sudo modprobe -r bcm2835-codec
 $ sudo modprobe bcm2835-codec debug=5
 $ dmesg
-```
+
+
+## Bringing up a pi
+
+- Basic set up pi
+- install vim, git, cmake, build-essential, libcamera-dev
+- install boost (see guide)
+- install glfw (headset only, see guide)
+- 
+

@@ -38,6 +38,7 @@ include(cmake/decoder.cmake)
 include(cmake/display.cmake)
 include(cmake/location.cmake)
 
+
 set(root_dir ${CMAKE_CURRENT_LIST_DIR})
 set(internal_dir ${root_dir}/internal)
 set(third_party_dir ${root_dir}/third_party)
