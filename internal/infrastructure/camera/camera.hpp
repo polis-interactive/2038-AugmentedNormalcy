@@ -27,9 +27,9 @@ namespace infrastructure {
     class Camera {
     public:
         [[nodiscard]] static std::shared_ptr<Camera> Create(
-            const CameraConfig &config, SizedBufferCallback &&send_callback
+            const CameraConfig &config, SizedBufferPoolCallback &&send_callback
         );
-        Camera(const CameraConfig &config, SizedBufferCallback &&send_callback);
+        Camera(const CameraConfig &config, SizedBufferPoolCallback &&send_callback);
         void Start() {
             StartCamera();
         }
@@ -37,7 +37,7 @@ namespace infrastructure {
             StopCamera();
         }
     protected:
-        SizedBufferCallback _send_callback;
+        SizedBufferPoolCallback _send_callback;
     private:
         virtual void CreateCamera(const CameraConfig &config) = 0;
         virtual void StartCamera() = 0;

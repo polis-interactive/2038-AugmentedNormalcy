@@ -10,6 +10,7 @@
 
 #include "tcp_context.hpp"
 #include "utils/buffers.hpp"
+#include "tcp_packet_header.hpp"
 
 using boost::asio::ip::tcp;
 using boost::system::error_code;
@@ -74,17 +75,17 @@ namespace infrastructure {
         TcpCameraSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &_manager);
         void Run();
     private:
-        void readStream();
-        void readStreamPlane(std::shared_ptr<SizedBufferPool> &&pool, std::shared_ptr<SizedBuffer> &&buffer);
-        void continueReadPlane(
-                std::shared_ptr<SizedBufferPool> &&pool, std::shared_ptr<SizedBuffer> &&buffer,
-                std::size_t bytes_written
-        );
+        void readHeader();
+        void readBody();
         tcp::socket _socket;
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
         std::shared_ptr<TcpServerManager> &_manager;
         std::shared_ptr<SizedPlaneBufferPool> _plane_buffer_pool = nullptr;
         unsigned long _session_id= -1;
+
+        PacketHeader _header;
+        std::shared_ptr<SizedBufferPool> _plane_buffer = nullptr;
+        std::shared_ptr<SizedBuffer> _buffer = nullptr;
     };
 
     class TcpHeadsetSession : public std::enable_shared_from_this<TcpHeadsetSession>, public WritableTcpSession {
@@ -113,8 +114,9 @@ namespace infrastructure {
         std::shared_ptr<TcpServerManager> &_manager;
         std::atomic<bool> _is_live;
         unsigned long _session_id = -1;
+        PacketHeader _header;
         std::mutex _message_mutex;
-        std::queue<TcpWriterMessage> _message_queue;
+        std::queue<std::shared_ptr<SizedBuffer>> _message_queue;
     };
 
     struct TcpServerConfig {

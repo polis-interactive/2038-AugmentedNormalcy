@@ -48,7 +48,7 @@ namespace infrastructure {
     void TcpClient::startConnection(const bool is_initial_connection) {
         if (!is_initial_connection) {
             if (_is_stopped) return;
-            std::this_thread::sleep_for(5s);
+            std::this_thread::sleep_for(1s);
         }
         if (_is_stopped) return;
         if (_socket == nullptr) {
@@ -80,25 +80,73 @@ namespace infrastructure {
         _manager->CreateCameraClientConnection();
     }
 
-    void TcpClient::Post(std::shared_ptr<SizedBuffer> &&buffer) {
+    void TcpClient::Post(std::shared_ptr<SizedBufferPool> &&buffer) {
         if (_is_stopped || !_is_connected) return;
-        auto buffer_memory = buffer->GetMemory();
-        auto buffer_size = buffer->GetSize();
-        std::string str((char *)buffer_memory);
+        bool write_in_progress = false;
+        {
+            std::unique_lock<std::mutex> lock(_send_plane_buffer_mutex);
+            write_in_progress = !_send_plane_buffer_queue.empty();
+            _send_plane_buffer_queue.push(buffer);
+        }
+        if (!write_in_progress) {
+            _send_buffer = _send_plane_buffer_queue.front()->GetSizedBuffer();
+            _header.SetupHeader(_send_buffer->GetSize());
+            writeHeader();
+        }
+    }
+
+    void TcpClient::writeHeader() {
+        if (_is_stopped || !_is_connected) return;
         auto self(shared_from_this());
         _socket->async_send(
-            net::buffer(buffer_memory, buffer_size),
-            [this, s = std::move(self), send_buffer = std::move(buffer)](error_code ec, std::size_t bytes_written) {
-                if (ec || bytes_written != send_buffer->GetSize()) {
-                    reconnect(ec);
+                net::buffer(_header.Data(), _header.Size()),
+                [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
+                    if (ec || bytes_written != _header.Size()) {
+                        reconnect(ec);
+                    } else {
+                        writeBody();
+                    }
                 }
+        );
+
+    }
+
+    void TcpClient::writeBody() {
+        if (_is_stopped || !_is_connected) return;
+        auto self(shared_from_this());
+        _socket->async_send(
+            net::buffer((uint8_t *) _send_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
+            [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
+                if (ec || bytes_written != _header.DataLength()) {
+                    reconnect(ec);
+                    return;
+                }
+                if (_header.IsFinished()) {
+                    _send_buffer = _send_plane_buffer_queue.front()->GetSizedBuffer();
+                    if (_send_buffer == nullptr) {
+                        bool messages_remaining = false;
+                        {
+                            std::unique_lock<std::mutex> lock(_send_plane_buffer_mutex);
+                            _send_plane_buffer_queue.pop();
+                            messages_remaining = !_send_plane_buffer_queue.empty();
+                        }
+                        if (!messages_remaining) {
+                            return;
+                        }
+                        _send_buffer = _send_plane_buffer_queue.front()->GetSizedBuffer();
+                    }
+                    _header.SetupHeader(_send_buffer->GetSize());
+                } else {
+                    _header.SetupNextHeader();
+                }
+                writeHeader();
             }
         );
     }
 
     void TcpClient::startRead() {
         std::cout << "TcpClient connected; starting to read" << std::endl;
-        _buffer_pool = _manager->CreateHeadsetClientConnection();
+        _receive_buffer_pool = _manager->CreateHeadsetClientConnection();
         auto self(shared_from_this());
         net::dispatch(
             _socket->get_executor(),
@@ -112,54 +160,68 @@ namespace infrastructure {
         if (_is_stopped || !_is_connected) return;
         auto self(shared_from_this());
         _socket->async_receive(
-            net::buffer(_header.Data(), TcpReaderMessage::header_length),
+            net::buffer(_header.Data(), _header.Size()),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
-                if (!ec && bytes_written == TcpReaderMessage::header_length && _header.DecodeHeader() && !_is_stopped) {
-                    readBody();
-                } else {
+                if (ec || bytes_written != _header.Size() || !_header.Ok() || _is_stopped) {
                     reconnect(ec);
+                    return;
                 }
+                readBody();
             }
         );
     }
 
     void TcpClient::readBody() {
         if (_is_stopped || !_is_connected) return;
-        auto buffer = _buffer_pool->GetResizableBuffer();
-        auto buffer_memory = buffer->GetMemory();
+        if (_receive_buffer == nullptr) {
+            _receive_buffer = _receive_buffer_pool->GetResizableBuffer();
+        }
         auto self(shared_from_this());
         _socket->async_receive(
-            net::buffer(buffer_memory, _header.BodyLength()),
-            [this, s = std::move(self), camera_buffer = std::move(buffer)] (error_code ec, std::size_t bytes_written) mutable {
-                if (!ec && bytes_written == _header.BodyLength() && !_is_stopped) {
-                    camera_buffer->SetSize(bytes_written);
-                    _buffer_pool->PostResizableBuffer(std::move(camera_buffer));
-                    readHeader();
-                } else {
+            net::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
+            [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
+                if (ec || bytes_written != _header.DataLength() || _is_stopped) {
                     reconnect(ec);
+                    return;
                 }
+                if (_header.IsFinished()) {
+                    _receive_buffer->SetSize(_header.BytesWritten());
+                    _receive_buffer_pool->PostResizableBuffer(std::move(_receive_buffer));
+                    _receive_buffer = nullptr;
+                    _header.ResetHeader();
+                }
+                readHeader();
             }
         );
 
     }
 
     void TcpClient::reconnect(error_code ec) {
-        std::cout << "Socket has error " << ec << "; attempting to reconnect" << std::endl;
+        std::cout << "TCP Client: Socket has error " << ec << "; attempting to reconnect" << std::endl;
         disconnect(ec);
         startConnection(false);
     }
 
     void TcpClient::disconnect(error_code ec) {
         _is_connected = false;
-        if (_socket->is_open()) {
+        if (_socket && _socket->is_open()) {
             _socket->shutdown(tcp::socket::shutdown_both, ec);
             _socket->close();
             _socket.reset();
             _socket = nullptr;
         }
         if (_is_camera) {
+            _send_buffer = nullptr;
+            {
+                std::unique_lock<std::mutex> lock(_send_plane_buffer_mutex);
+                while(!_send_plane_buffer_queue.empty()) {
+                    _send_plane_buffer_queue.pop();
+                }
+            }
             _manager->DestroyCameraClientConnection();
         } else {
+            _receive_buffer = nullptr;
+            _receive_buffer_pool = nullptr;
             _manager->DestroyHeadsetClientConnection();
         }
     }

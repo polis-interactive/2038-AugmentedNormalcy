@@ -68,6 +68,9 @@ public:
     explicit FakePlaneBuffer(unsigned int buffer_size) {
         _buffer = std::make_shared<FakeSizedBuffer>(buffer_size);
     }
+    explicit FakePlaneBuffer(std::string &str) {
+        _buffer = std::make_shared<FakeSizedBuffer>(str);
+    }
     [[nodiscard]] std::shared_ptr<SizedBuffer> GetSizedBuffer() override {
         if (_has_sent) {
             _has_sent = !_has_sent;

@@ -12,6 +12,7 @@
 
 #include "utils/buffers.hpp"
 #include "tcp_context.hpp"
+#include "tcp_packet_header.hpp"
 
 using boost::asio::ip::tcp;
 using boost::system::error_code;
@@ -46,16 +47,21 @@ namespace infrastructure {
         TcpClient() = delete;
         TcpClient (const TcpClient&) = delete;
         TcpClient& operator= (const TcpClient&) = delete;
-        ~TcpClient() { Stop(); }
+        ~TcpClient() {
+            boost::system::error_code ec;
+            disconnect(ec);
+        }
         TcpClient (
             const TcpClientConfig &config, net::io_context &context, std::shared_ptr<TcpClientManager> manager
         );
         void Start();
         void Stop();
-        void Post(std::shared_ptr<SizedBuffer> &&buffer);
+        void Post(std::shared_ptr<SizedBufferPool> &&buffer);
     private:
         void startConnection(bool is_initial_connection);
         void startWrite();
+        void writeHeader();
+        void writeBody();
         void startRead();
         void readHeader();
         void readBody();
@@ -68,9 +74,15 @@ namespace infrastructure {
         tcp::endpoint _remote_endpoint;
         std::shared_ptr<tcp::socket> _socket = nullptr;
         std::shared_ptr<TcpClientManager> _manager;
-        std::shared_ptr<ResizableBufferPool> _buffer_pool = nullptr;
 
-        TcpReaderMessage _header;
+        PacketHeader _header;
+
+        std::mutex _send_plane_buffer_mutex;
+        std::queue<std::shared_ptr<SizedBufferPool>> _send_plane_buffer_queue;
+        std::shared_ptr<SizedBuffer> _send_buffer;
+
+        std::shared_ptr<ResizableBufferPool> _receive_buffer_pool = nullptr;
+        std::shared_ptr<ResizableBuffer> _receive_buffer = nullptr;
     };
 
 }

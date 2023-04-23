@@ -11,7 +11,7 @@
 #include "fake_camera.hpp"
 
 namespace infrastructure {
-    std::shared_ptr<Camera> Camera::Create(const CameraConfig &config, SizedBufferCallback &&send_callback) {
+    std::shared_ptr<Camera> Camera::Create(const CameraConfig &config, SizedBufferPoolCallback &&send_callback) {
         switch(config.get_camera_type()) {
 #ifdef _LIBCAMERA_CAMERA_
             case CameraType::LIBCAMERA:
@@ -24,7 +24,7 @@ namespace infrastructure {
         }
     }
 
-    Camera::Camera(const CameraConfig &config, SizedBufferCallback &&send_callback):
+    Camera::Camera(const CameraConfig &config, SizedBufferPoolCallback &&send_callback):
         _send_callback(std::move(send_callback))
     {}
 }

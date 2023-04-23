@@ -6,10 +6,6 @@
 
 namespace infrastructure {
 
-    void fail(error_code ec, char const* what) {
-        std::cerr << what << ": " << ec.message() << "\n";
-    }
-
     void failOut(error_code ec, char const* what) {
         std::cerr << what << ": " << ec.message() << "\n";
         throw std::runtime_error(ec.message());
@@ -118,99 +114,54 @@ namespace infrastructure {
         _session_id = session_id;
         _plane_buffer_pool = plane_buffer_pool;
 
-        std::cout << "TcpCameraSession: running readStream" << std::endl;
+        std::cout << "TcpCameraSession: running read" << std::endl;
         net::dispatch(
             _socket.get_executor(),
             [this, s = std::move(self)]() {
-                readStream();
+                readHeader();
             }
         );
     }
 
-    void TcpCameraSession::readStream() {
-        auto plane_buffer = _plane_buffer_pool->GetSizedBufferPool();
-        auto plane = plane_buffer->GetSizedBuffer();
-        auto memory = plane->GetMemory();
-        auto size = plane->GetSize();
+    void TcpCameraSession::readHeader() {
         auto self(shared_from_this());
         _socket.async_receive(
-            boost::asio::buffer(memory, size),
-            [this, s = std::move(self), camera_pool = std::move(plane_buffer), camera_buffer = std::move(plane)]
-            (error_code ec, std::size_t bytes_written) mutable {
-                if (!ec && bytes_written == camera_buffer->GetSize()) {
-                    auto next_plane = camera_pool->GetSizedBuffer();
-                    if (next_plane) {
-                        readStreamPlane(std::move(camera_pool), std::move(next_plane));
-                    } else {
-                        _plane_buffer_pool->PostSizedBufferPool(std::move(camera_pool));
-                        readStream();
-                    }
-                } else if (!ec) {
-                    continueReadPlane(std::move(camera_pool), std::move(camera_buffer), bytes_written);
-                } else {
-                    TryClose(true);
-                }
-            }
-        );
-    }
-
-    void TcpCameraSession::readStreamPlane(
-        std::shared_ptr<SizedBufferPool> &&pool, std::shared_ptr<SizedBuffer> &&plane
-    ) {
-        auto self(shared_from_this());
-        auto memory = plane->GetMemory();
-        auto size = plane->GetSize();
-        _socket.async_receive(
-            boost::asio::buffer(memory, size),
-            [this, s = std::move(self), camera_pool = std::move(pool), camera_buffer = std::move(plane)]
-            (error_code ec, std::size_t bytes_written) mutable {
-                if (!ec && bytes_written == camera_buffer->GetSize()) {
-                    auto next_plane = camera_pool->GetSizedBuffer();
-                    if (next_plane) {
-                        readStreamPlane(std::move(camera_pool), std::move(next_plane));
-                    } else {
-                        _plane_buffer_pool->PostSizedBufferPool(std::move(camera_pool));
-                        readStream();
-                    }
-                } else if (!ec) {
-                    continueReadPlane(std::move(camera_pool), std::move(camera_buffer), bytes_written);
-                } else {
-                    TryClose(true);
-                }
-            }
-        );
-    }
-
-    void TcpCameraSession::continueReadPlane(
-        std::shared_ptr<SizedBufferPool> &&pool, std::shared_ptr<SizedBuffer> &&plane,
-        std::size_t bytes_written
-    ) {
-        auto buffer_memory = static_cast<uint8_t *>(plane->GetMemory()) + bytes_written;
-        auto buffer_size = plane->GetSize() - bytes_written;
-        auto self(shared_from_this());
-        _socket.async_receive(
-                boost::asio::buffer(buffer_memory, buffer_size),
-                [
-                    this, s = std::move(self), camera_pool = std::move(pool),
-                    camera_buffer = std::move(plane), current_bytes = bytes_written
-                ]
-                (error_code ec, std::size_t bytes_written) mutable {
-                    if (!ec && (bytes_written + current_bytes) == camera_buffer->GetSize()) {
-                        auto next_plane = camera_pool->GetSizedBuffer();
-                        if (next_plane) {
-                            readStreamPlane(std::move(camera_pool), std::move(next_plane));
-                        } else {
-                            _plane_buffer_pool->PostSizedBufferPool(std::move(camera_pool));
-                            readStream();
-                        }
-                    } else if (!ec) {
-                        continueReadPlane(
-                            std::move(camera_pool), std::move(camera_buffer), bytes_written + current_bytes
-                        );
-                    } else {
+                net::buffer(_header.Data(), _header.Size()),
+                [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
+                    if (ec || bytes_written != _header.Size() || !_header.Ok()) {
                         TryClose(true);
+                        return;
                     }
+                    readBody();
                 }
+        );
+    }
+
+    void TcpCameraSession::readBody() {
+        if (_plane_buffer == nullptr) {
+            _plane_buffer = _plane_buffer_pool->GetSizedBufferPool();
+        }
+        if (_buffer == nullptr) {
+            _buffer = _plane_buffer->GetSizedBuffer();
+        }
+        auto self(shared_from_this());
+        _socket.async_receive(
+            boost::asio::buffer((uint8_t *) _buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
+            [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
+                if (ec || bytes_written != _header.DataLength()) {
+                    TryClose(true);
+                    return;
+                }
+                if (_header.IsFinished()) {
+                    _buffer = _plane_buffer->GetSizedBuffer();
+                    if (_buffer == nullptr) {
+                        _plane_buffer_pool->PostSizedBufferPool(std::move(_plane_buffer));
+                        _plane_buffer = nullptr;
+                    }
+                    _header.ResetHeader();
+                }
+                readHeader();
+            }
         );
     }
 
@@ -242,14 +193,14 @@ namespace infrastructure {
         if (!_is_live) {
             return;
         }
-        auto msg = TcpWriterMessage(std::move(buffer));
         bool write_in_progress = false;
         {
             std::unique_lock<std::mutex> lock(_message_mutex);
             write_in_progress = !_message_queue.empty();
-            _message_queue.push(msg);
+            _message_queue.push(std::move(buffer));
         }
         if (!write_in_progress) {
+            _header.SetupHeader(_message_queue.front()->GetSize());
             writeHeader();
         }
     }
@@ -257,9 +208,9 @@ namespace infrastructure {
     void TcpHeadsetSession::writeHeader() {
         auto self(shared_from_this());
         _socket.async_send(
-                net::buffer(_message_queue.front().Data(), _message_queue.front().Length()),
+                net::buffer(_header.Data(), _header.Size()),
                 [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
-                    if (ec || bytes_written != _message_queue.front().Length()) {
+                    if (ec || bytes_written != _header.Size()) {
                         TryClose(true);
                     } else {
                         writeBody();
@@ -267,25 +218,32 @@ namespace infrastructure {
                 }
         );
     }
+
     void TcpHeadsetSession::writeBody() {
-        auto &buffer = _message_queue.front().GetBuffer();
+        auto &buffer = _message_queue.front();
         auto self(shared_from_this());
         _socket.async_send(
-                net::buffer(buffer->GetMemory(), buffer->GetSize()),
+                net::buffer((uint8_t *) buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
                 [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
-                    if (ec || bytes_written != _message_queue.front().GetBuffer()->GetSize()) {
+                    if (ec || bytes_written != _header.DataLength()) {
                         TryClose(true);
                         return;
                     }
-                    bool messages_remaining = false;
-                    {
-                        std::unique_lock<std::mutex> lock(_message_mutex);
-                        _message_queue.pop();
-                        messages_remaining = !_message_queue.empty();
+                    if (_header.IsFinished()) {
+                        bool messages_remaining = false;
+                        {
+                            std::unique_lock<std::mutex> lock(_message_mutex);
+                            _message_queue.pop();
+                            messages_remaining = !_message_queue.empty();
+                        }
+                        if (!messages_remaining) {
+                            return;
+                        }
+                        _header.SetupHeader(_message_queue.front()->GetSize());
+                    } else {
+                        _header.SetupNextHeader();
                     }
-                    if (messages_remaining) {
-                        writeHeader();
-                    }
+                    writeHeader();
                 }
         );
     }

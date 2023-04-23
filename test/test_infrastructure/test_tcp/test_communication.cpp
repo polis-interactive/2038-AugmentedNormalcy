@@ -93,8 +93,8 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
     // start sending the samples
     for (auto &sample : samples) {
         std::cout << "Writing buffer: " << sample << std::endl;
-        auto buffer = std::make_shared<FakeSizedBuffer>(sample);
-        client->Post(buffer);
+        auto buffer = std::make_shared<FakePlaneBuffer>(sample);
+        client->Post(std::move(buffer));
         std::this_thread::sleep_for(1ms);
     }
     std::this_thread::sleep_for(10ms);
@@ -103,8 +103,8 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
     REQUIRE_EQ(samples.size(), output.size());
     // make sure we got them in the same order
     REQUIRE(std::equal(samples.begin(), samples.end(), output.begin()));
-    // make sure we freed them to boot (one should be held by the pool on receive)
-    REQUIRE_EQ(pool->AvailableBuffers(), 5 - 1);
+    // make sure we freed them
+    REQUIRE_EQ(pool->AvailableBuffers(), 5);
 
     client->Stop();
     srv->Stop();
@@ -146,7 +146,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
         if (s.size() < 10) {
             s.insert(s.begin(), 10 - s.size(), '0');
         }
-        auto buffer = std::make_shared<FakeSizedBuffer>(s);
+        auto buffer = std::make_shared<FakePlaneBuffer>(s);
         client->Post(std::move(buffer));
         send_count += 1;
     }
@@ -154,7 +154,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
 
     REQUIRE_EQ(send_count, 10000);
     REQUIRE_EQ(send_count, receive_count);
-    REQUIRE_EQ(pool->AvailableBuffers(), 5 - 1);
+    REQUIRE_EQ(pool->AvailableBuffers(), 5);
 
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
     std::cout << "test_infrastructure/test_tcp/communication/pull_server sends 10000 messages: " <<
