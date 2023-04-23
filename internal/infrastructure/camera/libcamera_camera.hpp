@@ -47,6 +47,7 @@ namespace infrastructure {
         {}
         [[nodiscard]] std::shared_ptr<SizedBuffer> GetSizedBuffer() final {
             switch (++next_plane) {
+#if _AN_PLATFORM_ == PLATFORM_RPI
                 case 0:
                     return std::make_shared<CameraPlaneBuffer>(_buffer, _size * 2 / 3);
                 case 1:
@@ -54,6 +55,10 @@ namespace infrastructure {
                 case 2:
                     return std::make_shared<CameraPlaneBuffer>(
                         (uint8_t *)_buffer + _size * 2 / 3 + _size / 6, _size / 6);
+#else
+                case 0:
+                    return std::make_shared<CameraPlaneBuffer>(_buffer, _size);
+#endif
                 default:
                     return nullptr;
             }

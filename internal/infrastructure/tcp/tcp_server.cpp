@@ -126,7 +126,6 @@ namespace infrastructure {
 
     void TcpCameraSession::readHeader() {
         auto self(shared_from_this());
-        _header.ResetHeader();
         _socket.async_receive(
                 net::buffer(_header.Data(), _header.Size()),
                 [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
@@ -164,9 +163,11 @@ namespace infrastructure {
                 if (ec) {
                     std::cout << "TcpCameraSession: error reading body: " << ec << "; closing" << std::endl;
                     TryClose(true);
+                    return;
                 } else if (bytes_written != _header.DataLength()) {
                     _header.OffsetPacket(bytes_written);
                     readBody();
+                    return;
                 }
                 else if (_header.IsFinished()) {
                     _buffer = _plane_buffer->GetSizedBuffer();
@@ -174,8 +175,9 @@ namespace infrastructure {
                         _plane_buffer_pool->PostSizedBufferPool(std::move(_plane_buffer));
                         _plane_buffer = nullptr;
                     }
-                    readHeader();
+                    _header.ResetHeader();
                 }
+                readHeader();
             }
         );
     }
