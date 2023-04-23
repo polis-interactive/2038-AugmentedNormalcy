@@ -4,6 +4,8 @@
 
 #include "tcp_server.hpp"
 
+#include <utility>
+
 namespace infrastructure {
 
     void failOut(error_code ec, char const* what) {
@@ -15,7 +17,7 @@ namespace infrastructure {
         _context(context),
         _endpoint(tcp::v4(), config.get_tcp_server_port()),
         _acceptor(net::make_strand(context)),
-        _manager(manager)
+        _manager(std::move(manager))
     {
         error_code ec;
 
@@ -76,7 +78,6 @@ namespace infrastructure {
             net::make_strand(_context),
             [this, s = std::move(self)](error_code ec, tcp::socket socket) {
                 std::cout << "TcpServer: attempting connection" << std::endl;
-                std::cout << ec << std::endl;
                 if (_is_stopped) {
                     return;
                 }
@@ -140,6 +141,8 @@ namespace infrastructure {
                         std::cout << bytes_written << " != " << _header.Size();
                     } else if (_header.Ok()) {
                         std::cout << "unable to parse header";
+                    } else {
+                        std::cout << "unknown error";
                     }
                     std::cout << "; closing" << std::endl;
                     TryClose(true);
