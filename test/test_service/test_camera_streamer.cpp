@@ -148,8 +148,6 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
 
 }
 
-#if _AN_PLATFORM_ != PLATFORM_RPI
-
 TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
     service::CameraStreamerConfig streamer_conf(
             "127.0.0.1", 6969,
@@ -227,4 +225,3 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
     REQUIRE_GT(frame_count, 149);
 
 }
-#endif
