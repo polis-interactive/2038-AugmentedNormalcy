@@ -49,12 +49,12 @@ namespace infrastructure {
             switch (++next_plane) {
 #if _AN_PLATFORM_ == PLATFORM_RPI
                 case 0:
-                    return std::make_shared<CameraPlaneBuffer>(_buffer, _size * 2 / 3);
+                    return std::make_shared<CameraPlaneBuffer>(_buffer, 1327104);
                 case 1:
-                    return std::make_shared<CameraPlaneBuffer>((uint8_t *)_buffer + _size * 2 / 3, _size / 6);
+                    return std::make_shared<CameraPlaneBuffer>((uint8_t *)_buffer + 1327104, 331776);
                 case 2:
                     return std::make_shared<CameraPlaneBuffer>(
-                        (uint8_t *)_buffer + _size * 2 / 3 + _size / 6, _size / 6);
+                        (uint8_t *)_buffer + 1658880, 331776);
 #else
                 case 0:
                     return std::make_shared<CameraPlaneBuffer>(_buffer, _size);
