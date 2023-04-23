@@ -24,6 +24,9 @@ using SizedBufferPoolCallback = std::function<void(std::shared_ptr<SizedBufferPo
 
 class SizedPlaneBufferPool {
 public:
+    /* TODO: get rid of super hack */
+    virtual void Start() {};
+    virtual void Stop() {};
     [[nodiscard]] virtual std::shared_ptr<SizedBufferPool> GetSizedBufferPool() = 0;
     virtual void PostSizedBufferPool(std::shared_ptr<SizedBufferPool> &&buffer) = 0;
 };

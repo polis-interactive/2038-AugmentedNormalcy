@@ -114,30 +114,33 @@ namespace infrastructure {
         auto [session_id, plane_buffer_pool] = _manager->CreateCameraServerConnection(self);
         _session_id = session_id;
         _plane_buffer_pool = plane_buffer_pool;
+        _plane_buffer_pool->Start();
 
         std::cout << "TcpCameraSession: running read" << std::endl;
         net::dispatch(
             _socket.get_executor(),
             [this, s = std::move(self)]() {
-                readHeader();
+                readHeader(0);
             }
         );
     }
 
-    void TcpCameraSession::readHeader() {
+    void TcpCameraSession::readHeader(std::size_t last_bytes) {
         auto self(shared_from_this());
         _socket.async_receive(
-                net::buffer(_header.Data(), _header.Size()),
-                [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
-                    if (!ec && bytes_written == _header.Size() && _header.Ok()) {
+                net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
+                [this, s = std::move(self), last_bytes] (error_code ec, std::size_t bytes_written) mutable {
+                    auto total_bytes = last_bytes + bytes_written;
+                    if (!ec && total_bytes == _header.Size() && _header.Ok()) {
                         readBody();
+                        return;
+                    } else if (total_bytes != _header.Size()) {
+                        readHeader(total_bytes);
                         return;
                     }
                     std::cout << "TcpCameraSession: error reading header: ";
                     if (ec) {
                         std::cout << ec;
-                    } else if (bytes_written != _header.Size()) {
-                        std::cout << bytes_written << " != " << _header.Size();
                     } else if (_header.Ok()) {
                         std::cout << "unable to parse header";
                     } else {
@@ -177,7 +180,7 @@ namespace infrastructure {
                     }
                     _header.ResetHeader();
                 }
-                readHeader();
+                readHeader(0);
             }
         );
     }
@@ -186,6 +189,10 @@ namespace infrastructure {
         if (_socket.is_open()) {
             error_code ec;
             _socket.shutdown(tcp::socket::shutdown_send, ec);
+        }
+        if (_plane_buffer_pool) {
+            _plane_buffer_pool->Stop();
+            _plane_buffer_pool.reset();
         }
         if (is_self_close) {
             auto self(shared_from_this());

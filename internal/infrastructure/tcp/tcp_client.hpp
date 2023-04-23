@@ -60,7 +60,7 @@ namespace infrastructure {
         void writeHeader();
         void writeBody();
         void startRead();
-        void readHeader();
+        void readHeader(std::size_t last_bytes);
         void readBody();
         void disconnect(error_code ec);
         void reconnect(error_code ec);

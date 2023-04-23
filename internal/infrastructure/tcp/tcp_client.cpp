@@ -174,20 +174,24 @@ namespace infrastructure {
             _socket->get_executor(),
             [this, s = std::move(self)]() {
                 if (_is_stopped || !_is_connected) return;
-                readHeader();
+                readHeader(0);
             }
         );
     }
 
-    void TcpClient::readHeader() {
+    void TcpClient::readHeader(std::size_t last_bytes) {
         if (_is_stopped || !_is_connected) return;
         auto self(shared_from_this());
         _socket->async_receive(
-            net::buffer(_header.Data(), _header.Size()),
-            [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
+            net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
+            [this, s = std::move(self), last_bytes] (error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
-                if (!ec && bytes_written == _header.Size() && _header.Ok()) {
+                auto total_bytes = last_bytes + bytes_written;
+                if (!ec && total_bytes == _header.Size() && _header.Ok()) {
                     readBody();
+                    return;
+                } else if (total_bytes < _header.Size()) {
+                    readHeader(total_bytes);
                     return;
                 }
                 std::cout << "TcpClient: error reading header: ";
@@ -231,7 +235,7 @@ namespace infrastructure {
                     _receive_buffer = nullptr;
                     _header.ResetHeader();
                 }
-                readHeader();
+                readHeader(0);
             }
         );
 

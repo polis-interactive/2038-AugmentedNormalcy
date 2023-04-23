@@ -46,7 +46,9 @@ namespace infrastructure {
         [[nodiscard]]  virtual CameraConnectionPayload CreateCameraServerConnection(
             std::shared_ptr<TcpSession> session
         ) = 0;
-        virtual void DestroyCameraServerConnection(std::shared_ptr<TcpSession> session) = 0;
+        virtual void DestroyCameraServerConnection(
+                std::shared_ptr<TcpSession> session
+        ) = 0;
 
         // headset session
         [[nodiscard]]  virtual unsigned long CreateHeadsetServerConnection(
@@ -75,7 +77,7 @@ namespace infrastructure {
         TcpCameraSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &_manager);
         void Run();
     private:
-        void readHeader();
+        void readHeader(std::size_t last_bytes);
         void readBody();
         tcp::socket _socket;
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
