@@ -148,9 +148,12 @@ namespace infrastructure {
         _socket.async_receive(
             boost::asio::buffer((uint8_t *) _buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
-                if (ec || bytes_written != _header.DataLength()) {
+                if (ec) {
                     TryClose(true);
                     return;
+                } else if (bytes_written != _header.DataLength()) {
+                    _header.OffsetPacket(bytes_written);
+                    readBody();
                 }
                 if (_header.IsFinished()) {
                     _buffer = _plane_buffer->GetSizedBuffer();

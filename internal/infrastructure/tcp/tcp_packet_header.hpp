@@ -64,6 +64,10 @@ namespace infrastructure {
             }
             return true;
         }
+        void OffsetPacket(std::size_t bytes_written) {
+            _data_length -= bytes_written;
+            _bytes_written += bytes_written;
+        }
         void ResetHeader() {
             _bytes_written = 0;
         }
