@@ -47,13 +47,10 @@ namespace infrastructure {
         TcpClient() = delete;
         TcpClient (const TcpClient&) = delete;
         TcpClient& operator= (const TcpClient&) = delete;
-        ~TcpClient() {
-            boost::system::error_code ec;
-            disconnect(ec);
-        }
         TcpClient (
             const TcpClientConfig &config, net::io_context &context, std::shared_ptr<TcpClientManager> manager
         );
+        ~TcpClient();
         void Start();
         void Stop();
         void Post(std::shared_ptr<SizedBufferPool> &&buffer);
@@ -78,8 +75,8 @@ namespace infrastructure {
         PacketHeader _header;
 
         std::mutex _send_plane_buffer_mutex;
-        std::queue<std::shared_ptr<SizedBufferPool>> _send_plane_buffer_queue;
-        std::shared_ptr<SizedBuffer> _send_buffer;
+        std::queue<std::shared_ptr<SizedBufferPool>> _send_plane_buffer_queue = {};
+        std::shared_ptr<SizedBuffer> _send_buffer = nullptr;
 
         std::shared_ptr<ResizableBufferPool> _receive_buffer_pool = nullptr;
         std::shared_ptr<ResizableBuffer> _receive_buffer = nullptr;

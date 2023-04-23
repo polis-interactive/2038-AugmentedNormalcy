@@ -34,16 +34,23 @@ namespace infrastructure {
     void TcpClient::Stop() {
         if (!_is_stopped) {
             _is_stopped = true;
+            std::mutex done_mux;
+            std::condition_variable done_cv;
             auto self(shared_from_this());
             boost::asio::post(
                 net::make_strand(_context),
-                [this, s = std::move(self)]() {
+                [this, s = std::move(self), &done_mux, &done_cv]() {
                     error_code ec;
                     disconnect(ec);
+                    std::lock_guard lk(done_mux);
+                    done_cv.notify_one();
                 }
             );
+            std::unique_lock lk(done_mux);
+            done_cv.wait(lk);
         }
     }
+    TcpClient::~TcpClient() {}
 
     void TcpClient::startConnection(const bool is_initial_connection) {
         if (!is_initial_connection) {
@@ -86,7 +93,7 @@ namespace infrastructure {
         {
             std::unique_lock<std::mutex> lock(_send_plane_buffer_mutex);
             write_in_progress = !_send_plane_buffer_queue.empty();
-            _send_plane_buffer_queue.push(buffer);
+            _send_plane_buffer_queue.push(std::move(buffer));
         }
         if (!write_in_progress) {
             _send_buffer = _send_plane_buffer_queue.front()->GetSizedBuffer();
@@ -101,6 +108,7 @@ namespace infrastructure {
         _socket->async_send(
                 net::buffer(_header.Data(), _header.Size()),
                 [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
+                    if (_is_stopped || !_is_connected) return;
                     if (ec || bytes_written != _header.Size()) {
                         reconnect(ec);
                     } else {
@@ -117,6 +125,7 @@ namespace infrastructure {
         _socket->async_send(
             net::buffer((uint8_t *) _send_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
+                if (_is_stopped || !_is_connected) return;
                 if (ec || bytes_written != _header.DataLength()) {
                     reconnect(ec);
                     return;
@@ -151,6 +160,7 @@ namespace infrastructure {
         net::dispatch(
             _socket->get_executor(),
             [this, s = std::move(self)]() {
+                if (_is_stopped || !_is_connected) return;
                 readHeader();
             }
         );
@@ -162,7 +172,8 @@ namespace infrastructure {
         _socket->async_receive(
             net::buffer(_header.Data(), _header.Size()),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
-                if (ec || bytes_written != _header.Size() || !_header.Ok() || _is_stopped) {
+                if (_is_stopped || !_is_connected) return;
+                if (ec || bytes_written != _header.Size() || !_header.Ok()) {
                     reconnect(ec);
                     return;
                 }
@@ -180,7 +191,8 @@ namespace infrastructure {
         _socket->async_receive(
             net::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
-                if (ec || bytes_written != _header.DataLength() || _is_stopped) {
+                if (_is_stopped || !_is_connected) return;
+                if (ec || bytes_written != _header.DataLength()) {
                     reconnect(ec);
                     return;
                 }
