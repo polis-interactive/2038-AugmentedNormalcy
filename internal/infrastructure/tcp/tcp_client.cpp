@@ -67,7 +67,6 @@ namespace infrastructure {
             _remote_endpoint,
             [this, s = std::move(self)](error_code ec) {
                 std::cout << "TcpClient attempting connection" << std::endl;
-                std::cout << ec << std::endl;
                 if (!ec && !_is_stopped) {
                     _is_connected = true;
                     if (_is_camera) {
