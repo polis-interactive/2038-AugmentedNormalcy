@@ -118,7 +118,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
     };
 
 #if _AN_PLATFORM_ == PLATFORM_RPI
-    std::vector<unsigned int> frame_sizes = { 1536 * 864, 1536 * 864 / 6, 1536 * 864 / 6 };
+    std::vector<unsigned int> frame_sizes = { 1536 * 864, 1536 * 864 / 4, 1536 * 864 / 4 };
 #else
     std::vector<unsigned int> frame_sizes = { 814669 };
 #endif
@@ -193,7 +193,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
     };
 
 #if _AN_PLATFORM_ == PLATFORM_RPI
-    std::vector<unsigned int> frame_sizes = { 1536 * 864, 1536 * 864 / 6, 1536 * 864 / 6 };
+    std::vector<unsigned int> frame_sizes = { 1536 * 864, 1536 * 864 / 4, 1536 * 864 / 4 };
 #else
     std::vector<unsigned int> frame_sizes = { 814669 };
 #endif
