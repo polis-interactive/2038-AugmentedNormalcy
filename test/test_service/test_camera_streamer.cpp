@@ -108,10 +108,11 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
         std::size_t bytes_written = 0;
         auto buffer = ptr->GetSizedBuffer();
         while (buffer != nullptr) {
-            test_file_out.write((char *)((uint8_t *)buffer->GetMemory() + bytes_written), buffer->GetSize());
+            test_file_out.write((char *)buffer->GetMemory(), buffer->GetSize());
             bytes_written += buffer->GetSize();
             buffer = ptr->GetSizedBuffer();
         }
+        std::cout << "Bytes written: " << bytes_written << std::endl;
         test_file_out.flush();
         test_file_out.close();
     };
@@ -182,10 +183,11 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
         std::size_t bytes_written = 0;
         auto buffer = ptr->GetSizedBuffer();
         while (buffer != nullptr) {
-            test_file_out.write((char *)((uint8_t *)buffer->GetMemory() + bytes_written), buffer->GetSize());
+            test_file_out.write((char *)buffer->GetMemory(), buffer->GetSize());
             bytes_written += buffer->GetSize();
             buffer = ptr->GetSizedBuffer();
         }
+        std::cout << "Bytes written: " << bytes_written << std::endl;
         test_file_out.flush();
         test_file_out.close();
     };
