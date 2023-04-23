@@ -225,14 +225,23 @@ namespace infrastructure {
     void TcpHeadsetSession::writeHeader() {
         auto self(shared_from_this());
         _socket.async_send(
-                net::buffer(_header.Data(), _header.Size()),
-                [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
-                    if (ec || bytes_written != _header.Size()) {
-                        TryClose(true);
-                    } else {
-                        writeBody();
-                    }
+            net::buffer(_header.Data(), _header.Size()),
+            [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
+                if (!ec && bytes_written == _header.Size()) {
+                    writeBody();
+                    return;
                 }
+                std::cout << "TcpHeadsetSession: error writing header: ";
+                if (ec) {
+                    std::cout << ec;
+                } else if (bytes_written != _header.Size()) {
+                    std::cout << bytes_written << " != " << _header.Size();
+                } else {
+                    std::cout << "unknown error";
+                }
+                std::cout << "; closing" << std::endl;
+                TryClose(true);
+            }
         );
     }
 
@@ -242,8 +251,13 @@ namespace infrastructure {
         _socket.async_send(
                 net::buffer((uint8_t *) buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
                 [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
-                    if (ec || bytes_written != _header.DataLength()) {
+                    if (ec) {
+                        std::cout << "TcpHeadsetSession: error writing body: " << ec << "; reconnecting" << std::endl;
                         TryClose(true);
+                        return;
+                    } else if (bytes_written != _header.DataLength()) {
+                        _header.OffsetPacket(bytes_written);
+                        writeBody();
                         return;
                     }
                     if (_header.IsFinished()) {

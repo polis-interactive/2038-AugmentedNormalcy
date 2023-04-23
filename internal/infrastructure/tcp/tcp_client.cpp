@@ -105,24 +105,24 @@ namespace infrastructure {
         if (_is_stopped || !_is_connected) return;
         auto self(shared_from_this());
         _socket->async_send(
-                net::buffer(_header.Data(), _header.Size()),
-                [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
-                    if (_is_stopped || !_is_connected) return;
-                    if (!ec && bytes_written == _header.Size()) {
-                        writeBody();
-                        return;
-                    }
-                    std::cout << "TcpClient: error writing header: ";
-                    if (ec) {
-                        std::cout << ec;
-                    } else if (bytes_written != _header.Size()) {
-                        std::cout << bytes_written << " != " << _header.Size();
-                    } else {
-                        std::cout << "unknown error";
-                    }
-                    std::cout << "; reconnecting" << std::endl;
-                    reconnect(ec);
+            net::buffer(_header.Data(), _header.Size()),
+            [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
+                if (_is_stopped || !_is_connected) return;
+                if (!ec && bytes_written == _header.Size()) {
+                    writeBody();
+                    return;
                 }
+                std::cout << "TcpClient: error writing header: ";
+                if (ec) {
+                    std::cout << ec;
+                } else if (bytes_written != _header.Size()) {
+                    std::cout << bytes_written << " != " << _header.Size();
+                } else {
+                    std::cout << "unknown error";
+                }
+                std::cout << "; reconnecting" << std::endl;
+                reconnect(ec);
+            }
         );
 
     }
@@ -134,8 +134,13 @@ namespace infrastructure {
             net::buffer((uint8_t *) _send_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
-                if (ec || bytes_written != _header.DataLength()) {
+                if (ec) {
+                    std::cout << "TcpClient: error writing body: " << ec << "; reconnecting" << std::endl;
                     reconnect(ec);
+                    return;
+                } else if (bytes_written != _header.DataLength()) {
+                    _header.OffsetPacket(bytes_written);
+                    writeBody();
                     return;
                 }
                 if (_header.IsFinished()) {
@@ -181,11 +186,22 @@ namespace infrastructure {
             net::buffer(_header.Data(), _header.Size()),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
-                if (ec || bytes_written != _header.Size() || !_header.Ok()) {
-                    reconnect(ec);
+                if (!ec && bytes_written == _header.Size() && _header.Ok()) {
+                    readBody();
                     return;
                 }
-                readBody();
+                std::cout << "TcpClient: error reading header: ";
+                if (ec) {
+                    std::cout << ec;
+                } else if (bytes_written != _header.Size()) {
+                    std::cout << bytes_written << " != " << _header.Size();
+                } else if (_header.Ok()) {
+                    std::cout << "unable to parse header";
+                } else {
+                    std::cout << "unknown error";
+                }
+                std::cout << "; reconnecting" << std::endl;
+                reconnect(ec);
             }
         );
     }
@@ -200,11 +216,16 @@ namespace infrastructure {
             net::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
-                if (ec || bytes_written != _header.DataLength()) {
+                if (ec) {
+                    std::cout << "TcpClient: error reading body: " << ec << "; reconnecting" << std::endl;
                     reconnect(ec);
                     return;
+                } else if (ec || bytes_written != _header.DataLength()) {
+                    _header.OffsetPacket(bytes_written);
+                    readBody();
+                    return;
                 }
-                if (_header.IsFinished()) {
+                else if (_header.IsFinished()) {
                     _receive_buffer->SetSize(_header.BytesWritten());
                     _receive_buffer_pool->PostResizableBuffer(std::move(_receive_buffer));
                     _receive_buffer = nullptr;
