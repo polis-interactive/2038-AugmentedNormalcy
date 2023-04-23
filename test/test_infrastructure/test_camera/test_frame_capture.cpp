@@ -72,7 +72,7 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
         std::size_t bytes_written = 0;
         auto buffer = ptr->GetSizedBuffer();
         while (buffer != nullptr) {
-            test_file_out.write((char *)((uint8_t *)buffer->GetMemory() + bytes_written), buffer->GetSize());
+            test_file_out.write((char *)buffer->GetMemory(), buffer->GetSize());
             bytes_written += buffer->GetSize();
             buffer = ptr->GetSizedBuffer();
         }
