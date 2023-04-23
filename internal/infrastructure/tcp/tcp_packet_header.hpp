@@ -40,11 +40,15 @@ namespace infrastructure {
         [[nodiscard]] uint32_t BytesWritten() const {
             return _bytes_written;
         }
-        /* write methods */
+        void OffsetPacket(std::size_t bytes_written) {
+            _data_length -= bytes_written;
+            _bytes_written += bytes_written;
+        }
         [[nodiscard]] bool IsFinished() {
             _bytes_written += _data_length;
             return _bytes_written >= _total_bytes;
         }
+        /* write methods */
         void SetupHeader(uint64_t total_bytes) {
             std::memset(_data, 0, sizeof _data);
             _recall_packet_number += 1;
@@ -63,10 +67,6 @@ namespace infrastructure {
                 return false;
             }
             return true;
-        }
-        void OffsetPacket(std::size_t bytes_written) {
-            _data_length -= bytes_written;
-            _bytes_written += bytes_written;
         }
         void ResetHeader() {
             _bytes_written = 0;

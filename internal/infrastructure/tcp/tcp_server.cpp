@@ -125,14 +125,24 @@ namespace infrastructure {
 
     void TcpCameraSession::readHeader() {
         auto self(shared_from_this());
+        _header.ResetHeader();
         _socket.async_receive(
                 net::buffer(_header.Data(), _header.Size()),
                 [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
-                    if (ec || bytes_written != _header.Size() || !_header.Ok()) {
-                        TryClose(true);
+                    if (!ec && bytes_written == _header.Size() && _header.Ok()) {
+                        readBody();
                         return;
                     }
-                    readBody();
+                    std::cout << "TcpCameraSession: error reading header: ";
+                    if (ec) {
+                        std::cout << ec;
+                    } else if (bytes_written != _header.Size()) {
+                        std::cout << bytes_written << " != " << _header.Size();
+                    } else if (_header.Ok()) {
+                        std::cout << "unable to parse header";
+                    }
+                    std::cout << "; closing" << std::endl;
+                    TryClose(true);
                 }
         );
     }
@@ -149,21 +159,20 @@ namespace infrastructure {
             boost::asio::buffer((uint8_t *) _buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
                 if (ec) {
+                    std::cout << "TcpCameraSession: error reading body: " << ec << "; closing" << std::endl;
                     TryClose(true);
-                    return;
                 } else if (bytes_written != _header.DataLength()) {
                     _header.OffsetPacket(bytes_written);
                     readBody();
                 }
-                if (_header.IsFinished()) {
+                else if (_header.IsFinished()) {
                     _buffer = _plane_buffer->GetSizedBuffer();
                     if (_buffer == nullptr) {
                         _plane_buffer_pool->PostSizedBufferPool(std::move(_plane_buffer));
                         _plane_buffer = nullptr;
                     }
-                    _header.ResetHeader();
+                    readHeader();
                 }
-                readHeader();
             }
         );
     }
