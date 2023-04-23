@@ -6,6 +6,7 @@
 #define AUGMENTEDNORMALCY_TEST_CAMERA_STREAMER_SERVER_HPP
 
 #include <deque>
+#include <iostream>
 
 #include "infrastructure/tcp/tcp_server.hpp"
 #include "utils/buffers.hpp"
@@ -28,14 +29,14 @@ struct TestServerConfig:
     };
 };
 
-class FakeSizedBuffer: public SizedBuffer {
+class CameraBuffer: public SizedBuffer {
 public:
-    explicit FakeSizedBuffer(unsigned int buffer_size):
+    explicit CameraBuffer(unsigned int buffer_size):
             _buffer_size(buffer_size)
     {
         _buffer = new char[buffer_size];
     };
-    explicit FakeSizedBuffer(std::string &str):
+    explicit CameraBuffer(std::string &str):
             _buffer(new char[str.size()]),
             _buffer_size(str.size())
     {
@@ -51,33 +52,36 @@ public:
     const unsigned int _buffer_size;
 };
 
-class FakePlaneBuffer: public SizedBufferPool {
+class CameraStreamerPlaneBuffer: public SizedBufferPool {
 public:
-    explicit FakePlaneBuffer(unsigned int buffer_size) {
-        _buffer = std::make_shared<FakeSizedBuffer>(buffer_size);
-    }
-    [[nodiscard]] std::shared_ptr<SizedBuffer> GetSizedBuffer() override {
-        if (_has_sent) {
-            _has_sent = !_has_sent;
-            return nullptr;
-        } else {
-            _has_sent = !_has_sent;
-            return _buffer;
+    explicit CameraStreamerPlaneBuffer(const std::vector<unsigned int> &buffer_sizes)
+    {
+        for (const auto& value : buffer_sizes) {
+            _buffers.push_back(std::make_shared<CameraBuffer>(value));
         }
     }
-    bool _has_sent = false;
-    std::shared_ptr<FakeSizedBuffer> _buffer;
+    [[nodiscard]] std::shared_ptr<SizedBuffer> GetSizedBuffer() override {
+        if (++_buffer_position < _buffers.size()) {
+            return _buffers.at(_buffer_position);
+        } else {
+            _buffer_position = -1;
+            return nullptr;
+        }
+    }
+    int _buffer_position = -1;
+    std::vector<std::shared_ptr<CameraBuffer>> _buffers;
 };
 
-class FakePlaneBufferPool: public SizedPlaneBufferPool {
+class CameraStreamerBufferPool: public SizedPlaneBufferPool {
 public:
-    explicit FakePlaneBufferPool(
-            unsigned int buffer_size, unsigned int buffer_count, SizedBufferPoolCallback callback
+    explicit CameraStreamerBufferPool(
+        const std::vector<unsigned int> &buffer_sizes, unsigned int buffer_count, SizedBufferPoolCallback callback
     ):
             _callback(std::move(callback))
     {
+        std::cout << "am i constructed?" << std::endl;
         for (int i = 0; i < buffer_count; i++) {
-            _buffers.push_back(new FakePlaneBuffer(buffer_size));
+            _buffers.push_back(new CameraStreamerPlaneBuffer(buffer_sizes));
         }
     }
     std::shared_ptr<SizedBufferPool> GetSizedBufferPool() override {
@@ -99,7 +103,7 @@ public:
         std::unique_lock<std::mutex> lock(_buffer_mutex);
         return _buffers.size();
     }
-    std::deque<FakePlaneBuffer *> _buffers;
+    std::deque<CameraStreamerPlaneBuffer *> _buffers;
     std::mutex _buffer_mutex;
     SizedBufferPoolCallback _callback;
 };
