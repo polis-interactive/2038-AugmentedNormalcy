@@ -109,7 +109,7 @@ namespace infrastructure {
         TcpHeadsetSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager);
         void ConnectAndWait();
     private:
-        void writeHeader();
+        void writeHeader(std::size_t last_bytes);
         void writeBody();
         tcp::socket _socket;
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e

@@ -57,7 +57,7 @@ namespace infrastructure {
     private:
         void startConnection(bool is_initial_connection);
         void startWrite();
-        void writeHeader();
+        void writeHeader(std::size_t last_bytes);
         void writeBody();
         void startRead();
         void readHeader(std::size_t last_bytes);

@@ -225,24 +225,26 @@ namespace infrastructure {
         }
         if (!write_in_progress) {
             _header.SetupHeader(_message_queue.front()->GetSize());
-            writeHeader();
+            writeHeader(0);
         }
     }
 
-    void TcpHeadsetSession::writeHeader() {
+    void TcpHeadsetSession::writeHeader(std::size_t last_bytes) {
         auto self(shared_from_this());
         _socket.async_send(
-            net::buffer(_header.Data(), _header.Size()),
-            [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
-                if (!ec && bytes_written == _header.Size()) {
+            net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
+            [this, s = std::move(self), last_bytes](error_code ec, std::size_t bytes_written) mutable {
+                auto total_bytes = last_bytes + bytes_written;
+                if (!ec && total_bytes == _header.Size()) {
                     writeBody();
+                    return;
+                } else if (total_bytes < _header.Size()) {
+                    writeHeader(total_bytes);
                     return;
                 }
                 std::cout << "TcpHeadsetSession: error writing header: ";
                 if (ec) {
                     std::cout << ec;
-                } else if (bytes_written != _header.Size()) {
-                    std::cout << bytes_written << " != " << _header.Size();
                 } else {
                     std::cout << "unknown error";
                 }
@@ -281,7 +283,7 @@ namespace infrastructure {
                     } else {
                         _header.SetupNextHeader();
                     }
-                    writeHeader();
+                    writeHeader(0);
                 }
         );
     }
