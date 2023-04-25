@@ -62,63 +62,8 @@ namespace service {
     public:
         static std::shared_ptr<ServerEncoder> Create(const ServerEncoderConfig &config);
         explicit ServerEncoder(ServerEncoderConfig config): _is_started(false), _conf(std::move(config)) {}
-        void Start() {
-            if (_is_started) {
-                return;
-            }
-            /* startup worker thread */
-            {
-                std::unique_lock<std::mutex> lock(_work_mutex);
-                _work_queue = {};
-            }
-            _work_stop = false;
-            auto self(shared_from_this());
-            _work_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
-                run();
-            });
-            /* startup server */
-            _tcp_context->Start();
-            _tcp_server->Start();
-            _is_started = true;
-        }
-        void Stop() {
-            if (!_is_started) {
-                return;
-            }
-            /* cleanup sessions */
-            {
-                std::unique_lock<std::mutex> lock(_camera_mutex);
-                for (auto &[endpoint, camera] : _camera_sessions) {
-                    camera->TryClose(false);
-                    camera.reset();
-                }
-                _camera_sessions.clear();
-            }
-            {
-                std::unique_lock<std::mutex> lock(_headset_mutex);
-                for (auto &[endpoint, headset] : _headset_sessions) {
-                    headset->TryClose(false);
-                    headset.reset();
-                }
-                _headset_sessions.clear();
-            }
-            /* teardown thread */
-            if (_work_thread) {
-                if (_work_thread->joinable()) {
-                    {
-                        std::unique_lock<std::mutex> lock(_work_mutex);
-                        _work_stop = true;
-                        _work_cv.notify_one();
-                    }
-                    _work_thread->join();
-                }
-                _work_thread.reset();
-            }
-            /* stop server */
-            _tcp_server->Stop();
-            _tcp_context->Stop();
-            _is_started = false;
-        }
+        void Start();
+        void Stop();
         void Unset() {
             _tcp_server.reset();
             _tcp_context.reset();

@@ -9,6 +9,7 @@ static const tcp_addr ip_bound(const std::string& ip_string) {
 }
 
 namespace service {
+
     std::shared_ptr<ServerEncoder> ServerEncoder::Create(const service::ServerEncoderConfig &config) {
         auto camera_streamer = std::make_shared<ServerEncoder>(config);
         camera_streamer->initialize();
@@ -19,6 +20,26 @@ namespace service {
         _tcp_context = infrastructure::TcpContext::Create(_conf);
         auto self(shared_from_this());
         _tcp_server = infrastructure::TcpServer::Create(_conf, _tcp_context->GetContext(), self);
+    }
+
+    void ServerEncoder::Start() {
+        if (_is_started) {
+            return;
+        }
+        /* startup worker thread */
+        {
+            std::unique_lock<std::mutex> lock(_work_mutex);
+            _work_queue = {};
+        }
+        _work_stop = false;
+        auto self(shared_from_this());
+        _work_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
+            run();
+        });
+        /* startup server */
+        _tcp_context->Start();
+        _tcp_server->Start();
+        _is_started = true;
     }
 
     void ServerEncoder::run() {
@@ -151,5 +172,44 @@ namespace service {
             find_session->second.reset();
             _headset_sessions.erase(find_session);
         }
+    }
+
+    void ServerEncoder::Stop() {
+        if (!_is_started) {
+            return;
+        }
+        /* cleanup sessions */
+        {
+            std::unique_lock<std::mutex> lock(_camera_mutex);
+            for (auto &[endpoint, camera] : _camera_sessions) {
+                camera->TryClose(false);
+                camera.reset();
+            }
+            _camera_sessions.clear();
+        }
+        {
+            std::unique_lock<std::mutex> lock(_headset_mutex);
+            for (auto &[endpoint, headset] : _headset_sessions) {
+                headset->TryClose(false);
+                headset.reset();
+            }
+            _headset_sessions.clear();
+        }
+        /* teardown thread */
+        if (_work_thread) {
+            if (_work_thread->joinable()) {
+                {
+                    std::unique_lock<std::mutex> lock(_work_mutex);
+                    _work_stop = true;
+                    _work_cv.notify_one();
+                }
+                _work_thread->join();
+            }
+            _work_thread.reset();
+        }
+        /* stop server */
+        _tcp_server->Stop();
+        _tcp_context->Stop();
+        _is_started = false;
     }
 }

@@ -22,6 +22,7 @@ TEST_CASE("SERVICE_SERVER-ENCODER_Setup-and-teardown") {
         t3 = Clock::now();
         streamer->Stop();
         t4 = Clock::now();
+        streamer->Unset();
     }
     auto d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
     auto d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2);
