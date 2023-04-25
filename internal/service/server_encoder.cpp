@@ -49,12 +49,12 @@ namespace service {
         }
         if (!_has_processed) {
             _last_endpoint = input.first;
-            _last_camera_swap = Clock::now();
+            _last_camera_swap = SteadyClock::now();
             _has_processed = true;
         } else if (camera_count == 1) {
             // inelegant but miss me with that duration stuff
         } else if (input.first != _last_endpoint) {
-            const auto now = Clock::now();
+            const auto now = SteadyClock::now();
             const auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(now - _last_camera_swap);
             if (elapsed_time.count() < 15) return;
             _last_endpoint = input.first;

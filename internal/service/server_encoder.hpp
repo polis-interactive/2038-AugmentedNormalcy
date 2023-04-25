@@ -15,7 +15,7 @@
 using boost::asio::ip::tcp;
 typedef boost::asio::ip::address_v4 tcp_addr;
 
-typedef std::chrono::steady_clock Clock;
+typedef std::chrono::steady_clock SteadyClock;
 
 namespace service {
     struct ServerEncoderConfig:
@@ -160,7 +160,7 @@ namespace service {
         std::queue<InputBuffer> _work_queue;
         bool _has_processed;
         tcp::endpoint _last_endpoint;
-        std::chrono::time_point<Clock> _last_camera_swap;
+        std::chrono::time_point<SteadyClock> _last_camera_swap;
 
     };
 }
