@@ -13,6 +13,9 @@
 #include "infrastructure/encoder/jetson_encoder.hpp"
 
 using boost::asio::ip::tcp;
+typedef boost::asio::ip::address_v4 tcp_addr;
+
+typedef std::chrono::steady_clock Clock;
 
 namespace service {
     struct ServerEncoderConfig:
@@ -50,6 +53,8 @@ namespace service {
         const int _downstream_buffer_count;
     };
 
+    typedef std::pair<tcp::endpoint , std::shared_ptr<SizedBuffer>> InputBuffer;
+
     class ServerEncoder:
         public std::enable_shared_from_this<ServerEncoder>,
         public infrastructure::TcpServerManager
@@ -61,6 +66,17 @@ namespace service {
             if (_is_started) {
                 return;
             }
+            /* startup worker thread */
+            {
+                std::unique_lock<std::mutex> lock(_work_mutex);
+                _work_queue = {};
+            }
+            _work_stop = false;
+            auto self(shared_from_this());
+            _work_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable {
+                run();
+            });
+            /* startup server */
             _tcp_context->Start();
             _tcp_server->Start();
             _is_started = true;
@@ -69,20 +85,36 @@ namespace service {
             if (!_is_started) {
                 return;
             }
+            /* cleanup sessions */
             {
                 std::unique_lock<std::mutex> lock(_camera_mutex);
-                if (_camera_session) {
-                    _camera_session->TryClose(false);
-                    _camera_session.reset();
+                for (auto &[endpoint, camera] : _camera_sessions) {
+                    camera->TryClose(false);
+                    camera.reset();
                 }
+                _camera_sessions.clear();
             }
             {
                 std::unique_lock<std::mutex> lock(_headset_mutex);
-                if (_headset_session) {
-                    _headset_session->TryClose(false);
-                    _headset_session.reset();
+                for (auto &[endpoint, headset] : _headset_sessions) {
+                    headset->TryClose(false);
+                    headset.reset();
                 }
+                _headset_sessions.clear();
             }
+            /* teardown thread */
+            if (_work_thread) {
+                if (_work_thread->joinable()) {
+                    {
+                        std::unique_lock<std::mutex> lock(_work_mutex);
+                        _work_stop = true;
+                        _work_cv.notify_one();
+                    }
+                    _work_thread->join();
+                }
+                _work_thread.reset();
+            }
+            /* stop server */
             _tcp_server->Stop();
             _tcp_context->Stop();
             _is_started = false;
@@ -112,11 +144,24 @@ namespace service {
         std::atomic_bool _is_started = false;
         std::shared_ptr<infrastructure::TcpContext> _tcp_context = nullptr;
         std::shared_ptr<infrastructure::TcpServer> _tcp_server = nullptr;
-        std::shared_ptr<infrastructure::TcpSession> _camera_session = nullptr;
+
+        std::map<tcp::endpoint, std::shared_ptr<infrastructure::TcpSession>> _camera_sessions;
         std::mutex _camera_mutex;
-        std::shared_ptr<infrastructure::WritableTcpSession> _headset_session = nullptr;
+        std::map<tcp::endpoint, std::shared_ptr<infrastructure::WritableTcpSession>> _headset_sessions;
         std::mutex _headset_mutex;
         std::atomic<unsigned long> _last_session_number = { 0 };
+
+        void run();
+        void shipBuffer(InputBuffer &&buffer);
+        std::unique_ptr<std::thread> _work_thread;
+        std::atomic<bool> _work_stop = { true };
+        std::mutex _work_mutex;
+        std::condition_variable _work_cv;
+        std::queue<InputBuffer> _work_queue;
+        bool _has_processed;
+        tcp::endpoint _last_endpoint;
+        std::chrono::time_point<Clock> _last_camera_swap;
+
     };
 }
 
