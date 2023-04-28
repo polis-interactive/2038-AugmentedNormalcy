@@ -54,7 +54,11 @@ namespace service {
                 int value;
                 std::cin >> value;
 
-                if (value == 200 || value == 201) {
+                if (std::cin.fail()) {
+                    std::cin.clear(); // Clear the error flags
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Ignore the rest of the line
+                    std::cout << "Invalid input. Please enter 200 or 201." << std::endl;
+                } else if (value == 200 || value == 201) {
                     auto &use_addr = value == 200 ? camera_1_addr : camera_2_addr;
                     std::unique_lock<std::mutex> lock(_camera_mutex);
                     const auto &find_session = _camera_sessions.find(use_addr);
