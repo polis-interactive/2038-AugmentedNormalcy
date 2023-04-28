@@ -146,6 +146,27 @@ namespace service {
             old_sessions.erase(session);
             old_binding->second = camera;
         }
+        void ChangeAllMappings(const tcp::endpoint &camera) {
+            std::unique_lock lk(_connection_mutex);
+            auto new_camera_iter = _camera_to_headset.find(camera);
+            if (new_camera_iter == _camera_to_headset.end()) {
+                new_camera_iter = _camera_to_headset.insert({ camera, {} }).first;
+            }
+            for (auto old_camera_iter = _camera_to_headset.begin(); old_camera_iter != _camera_to_headset.end();) {
+                if (old_camera_iter->first == camera) {
+                    ++old_camera_iter;
+                    continue;
+                }
+                auto &old_sessions = old_camera_iter->second;
+                auto &new_sessions = new_camera_iter->second;
+                for (auto session_iter = old_sessions.begin(); session_iter != old_sessions.end();) {
+                    new_sessions.insert(std::move(*session_iter));
+                    _headset_to_camera[session_iter->GetEndpoint()] = camera;
+                    session_iter = old_sessions.erase(session_iter);
+                }
+                old_camera_iter = _camera_to_headset.erase(old_camera_iter);
+            }
+        }
 
         bool TryReplaceSession(
                 const tcp::endpoint &headset, std::shared_ptr<infrastructure::WritableTcpSession> new_session

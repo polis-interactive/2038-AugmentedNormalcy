@@ -37,8 +37,27 @@ namespace service {
     }
 
     void ServerEncoder::run() {
+        const tcp_addr camera_1_addr = ip_bound("192.168.1.200");
+        const tcp_addr camera_2_addr = ip_bound("192.168.1.201");
         while(!_work_stop) {
-            // do some cin here
+            int input;
+            std::cout << "Enter a number: ";
+            std::cin >> input;
+            if (input == 200 || input == 201) {
+                auto &use_addr = input == 200 ? camera_1_addr : camera_2_addr;
+                std::unique_lock<std::mutex> lock(_camera_mutex);
+                const auto &find_session = std::find_if(
+                    _camera_sessions.begin(), _camera_sessions.end(),
+                    [&use_addr](const std::pair<tcp::endpoint, std::shared_ptr<infrastructure::TcpSession>> &camera_pair) ->  bool {
+                        return camera_pair.first.address() == use_addr;
+                    }
+                );
+                if (find_session != _camera_sessions.end()) {
+                    _connection_manager.ChangeAllMappings(find_session->first);
+                }
+            } else {
+                std::cout << "bad input...";
+            }
         }
     }
 
