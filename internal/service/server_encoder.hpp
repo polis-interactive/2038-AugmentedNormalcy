@@ -64,11 +64,11 @@ namespace service {
     class SessionHolder {
     public:
         SessionHolder(
-            const tcp::endpoint &endpoint, std::shared_ptr<infrastructure::WritableTcpSession> &&session
-        ) : _endpoint(endpoint), _session(std::move(session)) {}
+            const tcp_addr &addr, std::shared_ptr<infrastructure::WritableTcpSession> &&session
+        ) : _addr(addr), _session(std::move(session)) {}
 
-        [[nodiscard]] tcp::endpoint GetEndpoint() const {
-            return _endpoint;
+        [[nodiscard]] tcp_addr GetAddr() const {
+            return _addr;
         }
 
         [[nodiscard]] std::shared_ptr<infrastructure::WritableTcpSession> GetTcpSession() const {
@@ -80,14 +80,14 @@ namespace service {
         }
 
         bool operator==(const SessionHolder& other) const {
-            return _endpoint == other._endpoint;
+            return _addr == other._addr;
         }
-        bool operator==(const tcp::endpoint &endpoint) const {
-            return _endpoint == endpoint;
+        bool operator==(const tcp_addr &addr) const {
+            return _addr == addr;
         }
 
     private:
-        const tcp::endpoint _endpoint;
+        const tcp_addr _addr;
         std::shared_ptr<infrastructure::WritableTcpSession> _session;
     };
 
@@ -96,13 +96,13 @@ namespace service {
 template<>
 struct std::hash<service::SessionHolder> {
     std::size_t operator()(const service::SessionHolder& holder) const {
-        return std::hash<tcp::endpoint>{}(holder.GetEndpoint());
+        return std::hash<tcp_addr>{}(holder.GetAddr());
     }
 };
 
 namespace service {
 
-    typedef std::map<tcp::endpoint, std::shared_ptr<infrastructure::WritableTcpSession>> HeadsetSessions;
+    typedef std::map<tcp_addr, std::shared_ptr<infrastructure::WritableTcpSession>> HeadsetSessions;
 
     class ConnectionManager {
         /*
@@ -111,7 +111,7 @@ namespace service {
          */
     public:
         void AddMapping(
-            const tcp::endpoint& camera, const tcp::endpoint& headset,
+            const tcp_addr& camera, const tcp_addr& headset,
             std::shared_ptr<infrastructure::WritableTcpSession> session
         ) {
             std::unique_lock lk(_connection_mutex);
@@ -120,7 +120,7 @@ namespace service {
         }
 
         void AddManyMappings(
-                const tcp::endpoint &camera,
+                const tcp_addr &camera,
                 const HeadsetSessions &headset_sessions
         ) {
             std::unique_lock lk(_connection_mutex);
@@ -132,7 +132,7 @@ namespace service {
             }
         }
 
-        void ChangeMapping(const tcp::endpoint &camera, const tcp::endpoint &headset) {
+        void ChangeMapping(const tcp_addr &camera, const tcp_addr &headset) {
             std::unique_lock lk(_connection_mutex);
             auto old_binding = _headset_to_camera.find(headset);
             if (old_binding == _headset_to_camera.end()) return;
@@ -146,7 +146,7 @@ namespace service {
             old_sessions.erase(session);
             old_binding->second = camera;
         }
-        void ChangeAllMappings(const tcp::endpoint &camera) {
+        void ChangeAllMappings(const tcp_addr &camera) {
             std::unique_lock lk(_connection_mutex);
             auto new_camera_iter = _camera_to_headset.find(camera);
             if (new_camera_iter == _camera_to_headset.end()) {
@@ -161,7 +161,7 @@ namespace service {
                 auto &new_sessions = new_camera_iter->second;
                 for (auto session_iter = old_sessions.begin(); session_iter != old_sessions.end();) {
                     new_sessions.insert(std::move(*session_iter));
-                    _headset_to_camera[session_iter->GetEndpoint()] = camera;
+                    _headset_to_camera[session_iter->GetAddr()] = camera;
                     session_iter = old_sessions.erase(session_iter);
                 }
                 old_camera_iter = _camera_to_headset.erase(old_camera_iter);
@@ -169,7 +169,7 @@ namespace service {
         }
 
         bool TryReplaceSession(
-                const tcp::endpoint &headset, std::shared_ptr<infrastructure::WritableTcpSession> new_session
+                const tcp_addr &headset, std::shared_ptr<infrastructure::WritableTcpSession> new_session
         ) {
             std::unique_lock lk(_connection_mutex);
             auto binding = _headset_to_camera.find(headset);
@@ -184,7 +184,7 @@ namespace service {
             return true;
         }
 
-        void PostMessage(const tcp::endpoint &camera, std::shared_ptr<SizedBuffer> &&buffer) {
+        void PostMessage(const tcp_addr &camera, std::shared_ptr<SizedBuffer> &&buffer) {
             std::shared_lock lk(_connection_mutex);
             auto connection = _camera_to_headset.find(camera);
             if (connection == _camera_to_headset.end()) return;
@@ -198,13 +198,13 @@ namespace service {
             }
         }
 
-        void RemoveCamera(const tcp::endpoint &camera) {
+        void RemoveCamera(const tcp_addr &camera) {
             std::unique_lock lk(_connection_mutex);
             auto session_set = _camera_to_headset.find(camera);
             if (session_set == _camera_to_headset.end()) return;
 
             for (const auto &session : session_set->second) {
-                auto headset_it = _headset_to_camera.find(session.GetEndpoint());
+                auto headset_it = _headset_to_camera.find(session.GetAddr());
                 if (headset_it != _headset_to_camera.end()) {
                     _headset_to_camera.erase(headset_it);
                 }
@@ -212,7 +212,7 @@ namespace service {
             _camera_to_headset.erase(session_set);
         }
 
-        void RemoveHeadset(const tcp::endpoint &headset) {
+        void RemoveHeadset(const tcp_addr &headset) {
             std::unique_lock lk(_connection_mutex);
             auto connection = _headset_to_camera.find(headset);
             if (connection == _headset_to_camera.end()) return;
@@ -236,8 +236,8 @@ namespace service {
 
     private:
         mutable std::shared_mutex _connection_mutex;
-        std::map<tcp::endpoint, std::unordered_set<SessionHolder>> _camera_to_headset;
-        std::map<tcp::endpoint, tcp::endpoint> _headset_to_camera;
+        std::map<tcp_addr, std::unordered_set<SessionHolder>> _camera_to_headset;
+        std::map<tcp_addr, tcp_addr> _headset_to_camera;
     };
 
     class ServerEncoder:
@@ -254,7 +254,7 @@ namespace service {
             _tcp_context.reset();
         }
         // tcp server
-        [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp::endpoint endpoint) override;
+        [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp_addr addr) override;
 
         // camera session
         [[nodiscard]]  infrastructure::CameraConnectionPayload CreateCameraServerConnection(
@@ -277,9 +277,9 @@ namespace service {
         std::shared_ptr<infrastructure::TcpContext> _tcp_context = nullptr;
         std::shared_ptr<infrastructure::TcpServer> _tcp_server = nullptr;
 
-        std::map<tcp::endpoint, std::shared_ptr<infrastructure::TcpSession>> _camera_sessions;
+        std::map<tcp_addr, std::shared_ptr<infrastructure::TcpSession>> _camera_sessions;
         std::mutex _camera_mutex;
-        std::map<tcp::endpoint, std::shared_ptr<infrastructure::WritableTcpSession>> _headset_sessions;
+        std::map<tcp_addr, std::shared_ptr<infrastructure::WritableTcpSession>> _headset_sessions;
         std::mutex _headset_mutex;
         std::atomic<unsigned long> _last_session_number = { 0 };
 
@@ -288,10 +288,6 @@ namespace service {
         void run();
         std::unique_ptr<std::thread> _work_thread;
         std::atomic<bool> _work_stop = { true };
-        bool _has_processed;
-        tcp::endpoint _last_endpoint;
-        std::chrono::time_point<SteadyClock> _last_camera_swap;
-
     };
 }
 

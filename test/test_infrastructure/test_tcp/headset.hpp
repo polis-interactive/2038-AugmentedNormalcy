@@ -35,7 +35,7 @@ public:
     std::shared_ptr<ResizableBufferPool> _buffer_pool;
 
     /* headset server */
-    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp::endpoint endpoint) override {
+    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp_addr addr) override {
         return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
     }
     [[nodiscard]] unsigned long CreateHeadsetServerConnection(

@@ -85,12 +85,15 @@ namespace infrastructure {
                     socket.set_option(tcp::no_delay(true));
                     net::socket_base::keep_alive option(true);
                     socket.set_option(option);
-                    auto connection_type = _manager->GetConnectionType(socket.remote_endpoint());
+                    const auto addr = socket.remote_endpoint().address().to_v4();
+                    auto connection_type = _manager->GetConnectionType(addr);
                     if (connection_type == TcpConnectionType::CAMERA_CONNECTION) {
-                        std::shared_ptr<TcpCameraSession>(new TcpCameraSession(std::move(socket), _manager))->Run();
+                        std::shared_ptr<TcpCameraSession>(
+                            new TcpCameraSession(std::move(socket), addr, _manager)
+                        )->Run();
                     } else if (connection_type == TcpConnectionType::HEADSET_CONNECTION) {
                         std::shared_ptr<TcpHeadsetSession>(
-                                new TcpHeadsetSession(std::move(socket), _manager)
+                                new TcpHeadsetSession(std::move(socket), addr, _manager)
                         )->ConnectAndWait();
                     } else {
                         std::cout << "TcpServer: Unknown connection, abort" << std::endl;
@@ -104,8 +107,8 @@ namespace infrastructure {
         );
     }
 
-    TcpCameraSession::TcpCameraSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager):
-        _socket(std::move(socket)), _manager(manager)
+    TcpCameraSession::TcpCameraSession(tcp::socket &&socket, tcp_addr addr, std::shared_ptr<TcpServerManager> &manager):
+        _socket(std::move(socket)), _manager(manager), _addr(std::move(addr))
     {}
 
     void TcpCameraSession::Run() {
@@ -200,10 +203,11 @@ namespace infrastructure {
         }
     }
 
-    TcpHeadsetSession::TcpHeadsetSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager):
+    TcpHeadsetSession::TcpHeadsetSession(tcp::socket &&socket, tcp_addr addr, std::shared_ptr<TcpServerManager> &manager):
         _socket(std::move(socket)),
         _is_live(true),
-        _manager(manager)
+        _manager(manager),
+        _addr(std::move(addr))
     {
         std::cout << "TcpHeadsetSession: creating connection" << std::endl;
     }

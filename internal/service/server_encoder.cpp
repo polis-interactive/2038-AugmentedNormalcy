@@ -40,34 +40,49 @@ namespace service {
         const tcp_addr camera_1_addr = ip_bound("192.168.1.200");
         const tcp_addr camera_2_addr = ip_bound("192.168.1.201");
         while(!_work_stop) {
-            int input;
-            std::cout << "Enter a number: ";
-            std::cin >> input;
-            if (input == 200 || input == 201) {
-                auto &use_addr = input == 200 ? camera_1_addr : camera_2_addr;
-                std::unique_lock<std::mutex> lock(_camera_mutex);
-                const auto &find_session = std::find_if(
-                    _camera_sessions.begin(), _camera_sessions.end(),
-                    [&use_addr](const std::pair<tcp::endpoint, std::shared_ptr<infrastructure::TcpSession>> &camera_pair) ->  bool {
-                        return camera_pair.first.address() == use_addr;
+            fd_set readfds;
+            FD_ZERO(&readfds);
+            FD_SET(STDIN_FILENO, &readfds);
+
+            struct timeval timeout;
+            timeout.tv_sec = 1;  // Wait up to 1 second
+            timeout.tv_usec = 0;
+
+            int ret = select(STDIN_FILENO + 1, &readfds, NULL, NULL, &timeout);
+
+            if (ret > 0 && FD_ISSET(STDIN_FILENO, &readfds)) {
+                int value;
+                std::cin >> value;
+
+                if (value == 200 || value == 201) {
+                    auto &use_addr = value == 200 ? camera_1_addr : camera_2_addr;
+                    std::unique_lock<std::mutex> lock(_camera_mutex);
+                    const auto &find_session = _camera_sessions.find(use_addr);
+                    if (find_session != _camera_sessions.end()) {
+                        std::cout << "Switching to camera: " <<  value << std::endl;
+                        _connection_manager.ChangeAllMappings(find_session->first);
+                    } else {
+                        std::cout << "Camera " << value << " is unavailable" << std::endl;
                     }
-                );
-                if (find_session != _camera_sessions.end()) {
-                    _connection_manager.ChangeAllMappings(find_session->first);
+                } else {
+                    std::cout << "Invalid input. Please enter 200 or 201." << std::endl;
                 }
+            } else if (ret == 0) {
+                // Timeout, no input available
+                continue;
             } else {
-                std::cout << "bad input...";
+                // Error occurred
+                break;
             }
         }
     }
 
-    infrastructure::TcpConnectionType ServerEncoder::GetConnectionType(tcp::endpoint endpoint) {
+    infrastructure::TcpConnectionType ServerEncoder::GetConnectionType(tcp_addr addr) {
         static const tcp_addr min_headset_address = ip_bound("192.168.1.100");
         static const tcp_addr min_camera_address = ip_bound("192.168.1.200");
-        const tcp_addr addr_endpoint = endpoint.address().to_v4();
-        if (addr_endpoint >= min_camera_address) {
+        if (addr >= min_camera_address) {
             return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
-        } else if (addr_endpoint >= min_headset_address) {
+        } else if (addr >= min_headset_address) {
             return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
         }
         return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
@@ -77,28 +92,28 @@ namespace service {
             std::shared_ptr<infrastructure::TcpSession> camera_session
     ) {
         bool is_only_camera = false;
-        const auto endpoint = camera_session->GetEndpoint();
+        const auto addr = camera_session->GetAddr();
         {
             std::unique_lock<std::mutex> lock(_camera_mutex);
             is_only_camera = _camera_sessions.empty();
-            auto find_session = _camera_sessions.find(camera_session->GetEndpoint());
+            auto find_session = _camera_sessions.find(camera_session->GetAddr());
             if (find_session != _camera_sessions.end()) {
                 find_session->second->TryClose(true);
                 find_session->second.reset();
             }
-            _camera_sessions[endpoint] = camera_session;
+            _camera_sessions[addr] = camera_session;
         }
 
         if (is_only_camera) {
             std::unique_lock<std::mutex> lock(_headset_mutex);
-            _connection_manager.AddManyMappings(endpoint, _headset_sessions);
+            _connection_manager.AddManyMappings(addr, _headset_sessions);
         }
 
         auto self(shared_from_this());
         auto enc = infrastructure::Encoder::Create(
             _conf,
-            [this, s = std::move(self), endpoint] (std::shared_ptr<SizedBuffer> &&buffer) {
-                _connection_manager.PostMessage(endpoint, std::move(buffer));
+            [this, s = std::move(self), addr] (std::shared_ptr<SizedBuffer> &&buffer) {
+                _connection_manager.PostMessage(addr, std::move(buffer));
             }
         );
         return { ++_last_session_number, enc };
@@ -106,20 +121,20 @@ namespace service {
 
     void ServerEncoder::DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> camera_session) {
 
-        const auto endpoint = camera_session->GetEndpoint();
+        const auto addr = camera_session->GetAddr();
 
         std::unique_lock<std::mutex> lock(_camera_mutex);
-        auto find_session = _camera_sessions.find(endpoint);
+        auto find_session = _camera_sessions.find(addr);
         if (
                 find_session != _camera_sessions.end() &&
                 find_session->second->GetSessionId() == camera_session->GetSessionId()
         ) {
-            _connection_manager.RemoveCamera(endpoint);
+            _connection_manager.RemoveCamera(addr);
             find_session->second->TryClose(false);
             find_session->second.reset();
             _camera_sessions.erase(find_session);
         } else if (find_session == _camera_sessions.end()) {
-            _connection_manager.RemoveCamera(endpoint);
+            _connection_manager.RemoveCamera(addr);
         }
 
     }
@@ -128,26 +143,26 @@ namespace service {
         std::shared_ptr<infrastructure::WritableTcpSession> headset_session
     ) {
 
-        const auto endpoint = headset_session->GetEndpoint();
+        const auto addr = headset_session->GetAddr();
 
         {
             std::unique_lock<std::mutex> lock(_headset_mutex);
-            auto find_session = _headset_sessions.find(headset_session->GetEndpoint());
+            auto find_session = _headset_sessions.find(headset_session->GetAddr());
             if (find_session != _headset_sessions.end()) {
                 find_session->second->TryClose(true);
                 find_session->second.reset();
             }
-            _headset_sessions[endpoint] = headset_session;
+            _headset_sessions[addr] = headset_session;
         }
 
         bool did_change_mapping = _connection_manager.TryReplaceSession(
-                headset_session->GetEndpoint(), headset_session
+                headset_session->GetAddr(), headset_session
         );
 
         if (!did_change_mapping) {
             std::unique_lock<std::mutex> lock(_camera_mutex);
             if (_camera_sessions.begin() != _camera_sessions.end()) {
-                _connection_manager.AddMapping(_camera_sessions.begin()->first, endpoint, headset_session);
+                _connection_manager.AddMapping(_camera_sessions.begin()->first, addr, headset_session);
             }
         }
 
@@ -158,20 +173,20 @@ namespace service {
         std::shared_ptr<infrastructure::WritableTcpSession> headset_session
     ) {
 
-        const auto endpoint = headset_session->GetEndpoint();
+        const auto addr = headset_session->GetAddr();
 
         std::unique_lock<std::mutex> lock(_headset_mutex);
-        auto find_session = _headset_sessions.find(endpoint);
+        auto find_session = _headset_sessions.find(addr);
         if (
                 find_session != _headset_sessions.end() &&
                 find_session->second->GetSessionId() == headset_session->GetSessionId()
         ) {
-            _connection_manager.RemoveHeadset(headset_session->GetEndpoint());
+            _connection_manager.RemoveHeadset(headset_session->GetAddr());
             find_session->second->TryClose(false);
             find_session->second.reset();
             _headset_sessions.erase(find_session);
         } else if (find_session == _headset_sessions.end()) {
-            _connection_manager.RemoveHeadset(endpoint);
+            _connection_manager.RemoveHeadset(addr);
         }
 
     }
@@ -186,7 +201,7 @@ namespace service {
         /* cleanup sessions */
         {
             std::unique_lock<std::mutex> lock(_camera_mutex);
-            for (auto &[endpoint, camera] : _camera_sessions) {
+            for (auto &[_, camera] : _camera_sessions) {
                 camera->TryClose(false);
                 camera.reset();
             }
@@ -194,7 +209,7 @@ namespace service {
         }
         {
             std::unique_lock<std::mutex> lock(_headset_mutex);
-            for (auto &[endpoint, headset] : _headset_sessions) {
+            for (auto &[_, headset] : _headset_sessions) {
                 headset->TryClose(false);
                 headset.reset();
             }

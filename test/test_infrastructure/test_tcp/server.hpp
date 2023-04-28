@@ -29,7 +29,7 @@ struct TestServerConfig:
 
 class NoSessionManager: public infrastructure::TcpServerManager {
 public:
-    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp::endpoint endpoint) override {
+    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp_addr addr) override {
         return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
     }
     /* dummy's for the rest */
