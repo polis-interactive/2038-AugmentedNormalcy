@@ -178,6 +178,16 @@ namespace infrastructure {
             // request failed, probably closing
             return;
         }
+        static long ctr = 0;
+
+        if (++ctr % 150 == 0) {
+            const auto fcs = request->metadata().get(controls::FocusFoM);
+            if (fcs.has_value()) {
+                std::cout << "focus: " << fcs.value() << std::endl;
+            } else {
+                std::cout << "no focus reported..." << std::endl;
+            }
+        }
 
         // I can't believe I need all this to get the memory location
         const Stream *stream = _configuration->at(0).stream();
