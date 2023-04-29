@@ -163,6 +163,8 @@ namespace infrastructure {
         _controls.set(controls::AeMeteringMode, 0);
         _controls.set(controls::AwbMode, 0);
         _controls.set(controls::draft::NoiseReductionMode, 3);
+        _controls.set(controls::AfMode, controls::AfModeEnum::AfModeManual);
+        _controls.set(controls::LensPosition, 0.5);
 
         if (_camera->start(&_controls))
             throw std::runtime_error("failed to start camera");
