@@ -52,6 +52,9 @@ namespace service {
         [[nodiscard]] std::pair<int, int> get_encoder_width_height() const override {
             return {1536, 864};
         }
+        [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
+            return 1;
+        }
 
     private:
         const int _tcp_pool_size;
