@@ -181,11 +181,11 @@ namespace infrastructure {
         static long ctr = 0;
 
         if (++ctr % 150 == 0) {
-            const auto fcs = request->metadata().get(controls::FocusFoM);
+            const auto fcs = request->metadata().get(controls::LensPosition);
             if (fcs.has_value()) {
-                std::cout << "focus: " << fcs.value() << std::endl;
+                std::cout << "lens position: " << fcs.value() << std::endl;
             } else {
-                std::cout << "no focus reported..." << std::endl;
+                std::cout << "no lens position reported..." << std::endl;
             }
         }
 
