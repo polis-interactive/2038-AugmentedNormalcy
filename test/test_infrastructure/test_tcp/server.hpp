@@ -23,6 +23,9 @@ struct TestServerConfig:
     [[nodiscard]] int get_tcp_server_port() const override {
         return _tcp_server_port;
     };
+    [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
+        return 1;
+    }
 };
 
 /* Used to test bringing up and tearing down the server */

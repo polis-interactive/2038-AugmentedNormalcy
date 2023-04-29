@@ -75,9 +75,13 @@ namespace infrastructure {
         }
     protected:
         friend class TcpServer;
-        TcpCameraSession(tcp::socket &&socket, tcp_addr addr, std::shared_ptr<TcpServerManager> &_manager);
+        TcpCameraSession(
+                tcp::socket &&socket, std::shared_ptr<TcpServerManager> &_manager,
+                const tcp_addr addr, const int read_timeout
+        );
         void Run();
     private:
+        void startTimer();
         void readHeader(std::size_t last_bytes);
         void readBody();
         tcp::socket _socket;
@@ -86,6 +90,8 @@ namespace infrastructure {
         std::shared_ptr<TcpServerManager> &_manager;
         std::shared_ptr<SizedPlaneBufferPool> _plane_buffer_pool = nullptr;
         unsigned long _session_id= -1;
+        boost::asio::deadline_timer _read_timer;
+        const int _read_timeout;
 
         PacketHeader _header;
         std::shared_ptr<SizedBufferPool> _plane_buffer = nullptr;
@@ -126,6 +132,7 @@ namespace infrastructure {
 
     struct TcpServerConfig {
         [[nodiscard]] virtual int get_tcp_server_port() const = 0;
+        [[nodiscard]] virtual int get_tcp_server_timeout_on_read() const = 0;
     };
 
     class TcpServer: public std::enable_shared_from_this<TcpServer>{
@@ -150,6 +157,7 @@ namespace infrastructure {
         tcp::acceptor _acceptor;
         tcp::endpoint _endpoint;
         std::shared_ptr<TcpServerManager> _manager;
+        const int _read_timeout;
     };
 }
 
