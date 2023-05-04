@@ -182,15 +182,6 @@ namespace infrastructure {
         }
         static long ctr = 0;
 
-        if (++ctr % 150 == 0) {
-            const auto fcs = request->metadata().get(controls::LensPosition);
-            if (fcs.has_value()) {
-                std::cout << "lens position: " << fcs.value() << std::endl;
-            } else {
-                std::cout << "no lens position reported..." << std::endl;
-            }
-        }
-
         // I can't believe I need all this to get the memory location
         const Stream *stream = _configuration->at(0).stream();
         auto &buffers = request->buffers();
