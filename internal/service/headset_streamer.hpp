@@ -53,6 +53,9 @@ namespace service {
         [[nodiscard]] std::pair<int, int> get_decoder_width_height() const override {
             return _image_width_height;
         };
+        [[nodiscard]] int get_tcp_client_timeout_on_read() const override {
+            return 1;
+        };
     private:
         const std::string _tcp_server_host;
         const int _tcp_server_port;

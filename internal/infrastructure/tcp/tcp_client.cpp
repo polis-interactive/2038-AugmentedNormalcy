@@ -19,7 +19,9 @@ namespace infrastructure {
             config.get_tcp_server_port()
         ),
         _manager(std::move(manager)),
-        _is_camera(config.get_tcp_client_is_camera())
+        _is_camera(config.get_tcp_client_is_camera()),
+        _read_timer(context.get_executor()),
+        _read_timeout(config.get_tcp_client_timeout_on_read())
     {
 
     }
@@ -181,13 +183,28 @@ namespace infrastructure {
         );
     }
 
+    void TcpClient::startTimer() {
+        _read_timer.expires_from_now(boost::posix_time::seconds(_read_timeout));
+        auto self(shared_from_this());
+        _read_timer.async_wait([this, s = std::move(self)](error_code ec) {
+            if (!ec) {
+                reconnect(ec);
+            }
+        });
+    }
+
     void TcpClient::readHeader(std::size_t last_bytes) {
         if (_is_stopped || !_is_connected) return;
+        startTimer();
         auto self(shared_from_this());
         _socket->async_receive(
             net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
             [this, s = std::move(self), last_bytes] (error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
+                if (ec ==  boost::asio::error::operation_aborted) {
+                    return;
+                }
+                _read_timer.cancel();
                 auto total_bytes = last_bytes + bytes_written;
                 if (!ec && total_bytes == _header.Size() && _header.Ok()) {
                     readBody();
@@ -215,16 +232,21 @@ namespace infrastructure {
         if (_receive_buffer == nullptr) {
             _receive_buffer = _receive_buffer_pool->GetResizableBuffer();
         }
+        startTimer();
         auto self(shared_from_this());
         _socket->async_receive(
             net::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
+                if (ec ==  boost::asio::error::operation_aborted) {
+                    return;
+                }
+                _read_timer.cancel();
                 if (ec) {
                     std::cout << "TcpClient: error reading body: " << ec << "; reconnecting" << std::endl;
                     reconnect(ec);
                     return;
-                } else if (ec || bytes_written != _header.DataLength()) {
+                } else if (bytes_written != _header.DataLength()) {
                     _header.OffsetPacket(bytes_written);
                     readBody();
                     return;

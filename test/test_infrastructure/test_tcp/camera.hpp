@@ -32,7 +32,7 @@ public:
 
 
     /* camera server */
-    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp::endpoint endpoint) override {
+    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp_addr addr) override {
         return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
     }
     [[nodiscard]]  infrastructure::CameraConnectionPayload CreateCameraServerConnection(

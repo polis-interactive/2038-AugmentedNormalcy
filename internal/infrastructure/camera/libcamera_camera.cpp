@@ -163,6 +163,8 @@ namespace infrastructure {
         _controls.set(controls::AeMeteringMode, 0);
         _controls.set(controls::AwbMode, 0);
         _controls.set(controls::draft::NoiseReductionMode, 3);
+        _controls.set(controls::AfMode, controls::AfModeEnum::AfModeManual);
+        _controls.set(controls::LensPosition, 0.5);
 
         if (_camera->start(&_controls))
             throw std::runtime_error("failed to start camera");
@@ -178,6 +180,7 @@ namespace infrastructure {
             // request failed, probably closing
             return;
         }
+        static long ctr = 0;
 
         // I can't believe I need all this to get the memory location
         const Stream *stream = _configuration->at(0).stream();

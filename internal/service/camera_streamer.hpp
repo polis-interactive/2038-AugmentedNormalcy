@@ -50,6 +50,9 @@ namespace service {
         [[nodiscard]] int get_camera_buffer_count() const override {
             return 5;
         };
+        [[nodiscard]] int get_tcp_client_timeout_on_read() const override {
+            return 5;
+        };
     private:
         const std::string _tcp_server_host;
         const int _tcp_server_port;
