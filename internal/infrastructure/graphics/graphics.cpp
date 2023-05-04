@@ -87,7 +87,7 @@ static void displaySetup(int width, int height, int window_width, int window_hei
              "\n"
              "void main() {\n"
              "  gl_Position = vec4(v_pos, 1.0);\n"
-             "  texcoord.x = 1.0 - v_tex.x;\n"
+             "  texcoord.x = v_tex.x;\n"
              "  texcoord.y = 1.0 - v_tex.y;\n"
              "  c_pos = v_color.x;\n"
              "}\n"
