@@ -23,6 +23,7 @@ namespace infrastructure {
         [[nodiscard]] virtual std::string get_tcp_server_host() const = 0;
         [[nodiscard]] virtual int get_tcp_server_port() const = 0;
         [[nodiscard]] virtual bool get_tcp_client_is_camera() const = 0;
+        [[nodiscard]] virtual int get_tcp_client_timeout_on_read() const = 0;
     };
 
 
@@ -60,6 +61,7 @@ namespace infrastructure {
         void writeHeader(std::size_t last_bytes);
         void writeBody();
         void startRead();
+        void startTimer();
         void readHeader(std::size_t last_bytes);
         void readBody();
         void disconnect(error_code ec);
@@ -71,6 +73,9 @@ namespace infrastructure {
         tcp::endpoint _remote_endpoint;
         std::shared_ptr<tcp::socket> _socket = nullptr;
         std::shared_ptr<TcpClientManager> _manager;
+
+        boost::asio::deadline_timer _read_timer;
+        const int _read_timeout;
 
         PacketHeader _header;
 

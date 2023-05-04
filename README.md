@@ -34,28 +34,31 @@ $ make -j4
 $ sudo modprobe -r bcm2835-codec
 $ sudo modprobe bcm2835-codec debug=5
 $ dmesg
-```
+
 
 ## Bringing up a pi
 
+- install vim, git, cmake, build-essential
 - Basic set up pi
-- install vim, git, cmake, build-essential, libcamera-dev
 - install boost (see guide)
+- install libcamera-dev (camera only)
 - install glfw (headset only, see guide), weston
-- 
-
-## Static IP on the pi
-
-Add these lines to /etc/dhcpcd.conf
-
-above 200 for camera, 100-200 for headset
+- Set static ip (100's for headset, 200's for camera)
 
 ```
+$ sudo vim /etc/dhcpcd.conf
+
 interface wlan0
-static ip_address=192.168.1.200/24
+static ip_address=192.168.1.XXX/24
 static routers=192.168.1.1
 
 interface eth0
-static ip_address=192.168.1.200/24
+static ip_address=192.168.1.XXX/24
 static routers=192.168.1.1
+```
+
+- Set WLANS for easy change over (headset only)
+
+```
+$ sudo vim /etc/wpa_supplicant/wpa_supplicant.conf
 ```

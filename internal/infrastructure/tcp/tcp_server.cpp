@@ -17,7 +17,8 @@ namespace infrastructure {
         _context(context),
         _endpoint(tcp::v4(), config.get_tcp_server_port()),
         _acceptor(net::make_strand(context)),
-        _manager(std::move(manager))
+        _manager(std::move(manager)),
+        _read_timeout(config.get_tcp_server_timeout_on_read())
     {
         error_code ec;
 
@@ -85,12 +86,15 @@ namespace infrastructure {
                     socket.set_option(tcp::no_delay(true));
                     net::socket_base::keep_alive option(true);
                     socket.set_option(option);
-                    auto connection_type = _manager->GetConnectionType(socket.remote_endpoint());
+                    const auto addr = socket.remote_endpoint().address().to_v4();
+                    auto connection_type = _manager->GetConnectionType(addr);
                     if (connection_type == TcpConnectionType::CAMERA_CONNECTION) {
-                        std::shared_ptr<TcpCameraSession>(new TcpCameraSession(std::move(socket), _manager))->Run();
+                        std::shared_ptr<TcpCameraSession>(
+                            new TcpCameraSession(std::move(socket), _manager, addr, _read_timeout)
+                        )->Run();
                     } else if (connection_type == TcpConnectionType::HEADSET_CONNECTION) {
                         std::shared_ptr<TcpHeadsetSession>(
-                                new TcpHeadsetSession(std::move(socket), _manager)
+                                new TcpHeadsetSession(std::move(socket), addr, _manager)
                         )->ConnectAndWait();
                     } else {
                         std::cout << "TcpServer: Unknown connection, abort" << std::endl;
@@ -104,8 +108,12 @@ namespace infrastructure {
         );
     }
 
-    TcpCameraSession::TcpCameraSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager):
-        _socket(std::move(socket)), _manager(manager)
+    TcpCameraSession::TcpCameraSession(
+            tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager,
+            const tcp_addr addr, const int read_timeout
+    ):
+        _socket(std::move(socket)), _manager(manager), _addr(std::move(addr)), _read_timer(socket.get_executor()),
+        _read_timeout(read_timeout)
     {}
 
     void TcpCameraSession::Run() {
@@ -125,16 +133,31 @@ namespace infrastructure {
         );
     }
 
+    void TcpCameraSession::startTimer() {
+        _read_timer.expires_from_now(boost::posix_time::seconds(_read_timeout));
+        auto self(shared_from_this());
+        _read_timer.async_wait([this, s = std::move(self)](error_code ec) {
+            if (!ec) {
+                TryClose(true);
+            }
+        });
+    }
+
     void TcpCameraSession::readHeader(std::size_t last_bytes) {
+        startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
                 net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
                 [this, s = std::move(self), last_bytes] (error_code ec, std::size_t bytes_written) mutable {
+                    if (ec ==  boost::asio::error::operation_aborted) {
+                        return;
+                    }
+                    _read_timer.cancel();
                     auto total_bytes = last_bytes + bytes_written;
                     if (!ec && total_bytes == _header.Size() && _header.Ok()) {
                         readBody();
                         return;
-                    } else if (total_bytes != _header.Size()) {
+                    } else if (!ec && total_bytes != _header.Size()) {
                         readHeader(total_bytes);
                         return;
                     }
@@ -159,10 +182,15 @@ namespace infrastructure {
         if (_buffer == nullptr) {
             _buffer = _plane_buffer->GetSizedBuffer();
         }
+        startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
             boost::asio::buffer((uint8_t *) _buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
+                if (ec ==  boost::asio::error::operation_aborted) {
+                    return;
+                }
+                _read_timer.cancel();
                 if (ec) {
                     std::cout << "TcpCameraSession: error reading body: " << ec << "; closing" << std::endl;
                     TryClose(true);
@@ -200,10 +228,11 @@ namespace infrastructure {
         }
     }
 
-    TcpHeadsetSession::TcpHeadsetSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager):
+    TcpHeadsetSession::TcpHeadsetSession(tcp::socket &&socket, tcp_addr addr, std::shared_ptr<TcpServerManager> &manager):
         _socket(std::move(socket)),
         _is_live(true),
-        _manager(manager)
+        _manager(manager),
+        _addr(std::move(addr))
     {
         std::cout << "TcpHeadsetSession: creating connection" << std::endl;
     }
