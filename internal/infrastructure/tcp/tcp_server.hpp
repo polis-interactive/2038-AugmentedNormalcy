@@ -45,7 +45,7 @@ namespace infrastructure {
         [[nodiscard]]  virtual unsigned long CreateCameraServerConnection(
             std::shared_ptr<TcpSession> session
         ) = 0;
-        virtual void PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer);
+        virtual void PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer) = 0;
         virtual void DestroyCameraServerConnection(
                 std::shared_ptr<TcpSession> session
         ) = 0;
@@ -55,6 +55,83 @@ namespace infrastructure {
             std::shared_ptr<WritableTcpSession> session
         ) = 0;
         virtual void DestroyHeadsetServerConnection(std::shared_ptr<WritableTcpSession> session) = 0;
+    };
+
+    class TcpCameraBuffer: public ResizableBuffer {
+    public:
+        TcpCameraBuffer(std::size_t size, const bool is_leaky):
+            _max_size(size), _is_leaky(is_leaky)
+        {
+            _buffer = new unsigned char[_max_size];
+        }
+        [[nodiscard]] void * GetMemory() final {
+            return _buffer;
+        }
+        [[nodiscard]] std::size_t GetSize() final {
+            return _size;
+        }
+        virtual void SetSize(std::size_t used_size) {
+            _size = used_size;
+        };
+        [[nodiscard]] bool IsLeakyBuffer() final {
+            return _is_leaky;
+        };
+        ~TcpCameraBuffer() {
+            delete[] _buffer;
+        }
+    private:
+        const std::size_t _max_size;
+        const bool _is_leaky;
+        unsigned char *_buffer;
+        std::size_t _size;
+    };
+
+    class TcpCameraBufferPool: public std::enable_shared_from_this<TcpCameraBufferPool> {
+    public:
+        static std::shared_ptr<TcpCameraBufferPool> Create(const int buffer_count, const int buffer_size) {
+            auto buffer_pool = std::make_shared<TcpCameraBufferPool>(buffer_count, buffer_size);
+            return buffer_pool;
+        }
+        TcpCameraBufferPool(const int buffer_count, const int buffer_size) {
+            for (int i = 0; i < buffer_count; i++) {
+                _buffers.push_back(new TcpCameraBuffer(buffer_size, false));
+            }
+            _leaky_buffer = std::make_shared<TcpCameraBuffer>(buffer_size, true);
+        }
+        [[nodiscard]] std::shared_ptr<TcpCameraBuffer> GetCameraBuffer() {
+            TcpCameraBuffer *buffer = nullptr;
+            {
+                std::unique_lock<std::mutex> lock(_buffer_mutex);
+                if (!_buffers.empty()) {
+                    buffer = _buffers.front();
+                    _buffers.pop_front();
+                }
+            }
+            if (buffer == nullptr) {
+                return _leaky_buffer;
+            }
+            auto self(shared_from_this());
+            auto wrapped_buffer = std::shared_ptr<TcpCameraBuffer>(
+                buffer, [this, s = std::move(self)](TcpCameraBuffer * b) mutable {
+                    std::unique_lock<std::mutex> lock(_buffer_mutex);
+                    _buffers.push_back(b);
+                }
+            );
+            return wrapped_buffer;
+        };
+        ~TcpCameraBufferPool() {
+            TcpCameraBuffer *buffer;
+            std::unique_lock<std::mutex> lock(_buffer_mutex);
+            while (!_buffers.empty()) {
+                buffer = _buffers.front();
+                _buffers.pop_front();
+                delete buffer;
+            }
+        }
+    private:
+        std::shared_ptr<TcpCameraBuffer> _leaky_buffer;
+        std::deque<TcpCameraBuffer *> _buffers;
+        std::mutex _buffer_mutex;
     };
 
 
@@ -76,7 +153,7 @@ namespace infrastructure {
         friend class TcpServer;
         TcpCameraSession(
             tcp::socket &&socket, std::shared_ptr<TcpServerManager> &_manager,
-            const tcp_addr addr, const int read_timeout, const int buffer_count
+            const tcp_addr addr, const int read_timeout, const int buffer_count, const int buffer_size
         );
         void Run();
     private:
@@ -92,8 +169,8 @@ namespace infrastructure {
         const int _read_timeout;
 
         PacketHeader _header;
-        std::shared_ptr<ResizableBufferPool> _receive_buffer_pool = nullptr;
-        std::shared_ptr<ResizableBuffer> _receive_buffer = nullptr;
+        std::shared_ptr<TcpCameraBufferPool> _receive_buffer_pool = nullptr;
+        std::shared_ptr<TcpCameraBuffer> _receive_buffer = nullptr;
     };
 
     class TcpHeadsetSession : public std::enable_shared_from_this<TcpHeadsetSession>, public WritableTcpSession {
@@ -131,7 +208,8 @@ namespace infrastructure {
     struct TcpServerConfig {
         [[nodiscard]] virtual int get_tcp_server_port() const = 0;
         [[nodiscard]] virtual int get_tcp_server_timeout_on_read() const = 0;
-        [[nodiscard]] virtual unsigned int get_tcp_camera_session_buffer_count() const = 0;
+        [[nodiscard]] virtual int get_tcp_camera_session_buffer_count() const = 0;
+        [[nodiscard]] virtual int get_tcp_camera_session_buffer_size() const = 0;
     };
 
     class TcpServer: public std::enable_shared_from_this<TcpServer>{
@@ -158,6 +236,7 @@ namespace infrastructure {
         std::shared_ptr<TcpServerManager> _manager;
         const int _read_timeout;
         const int _tcp_camera_session_buffer_count;
+        const int _tcp_camera_session_buffer_size;
     };
 }
 

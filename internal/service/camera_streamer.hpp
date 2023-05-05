@@ -60,6 +60,9 @@ namespace service {
         [[nodiscard]] unsigned int get_encoder_downstream_buffer_count() const override {
             return _encoder_buffers_downstream;
         };
+        [[nodiscard]] std::pair<int, int> get_encoder_width_height() const override {
+            return _camera_width_height;
+        };
     private:
         const std::string _tcp_server_host;
         const int _tcp_server_port;

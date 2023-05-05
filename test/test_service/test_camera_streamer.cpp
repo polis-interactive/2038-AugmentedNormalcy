@@ -23,10 +23,11 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Setup-and-teardown") {
     service::CameraStreamerConfig conf(
         "127.0.0.1", 6969,
 #if _AN_PLATFORM_ == PLATFORM_RPI
-        infrastructure::CameraType::LIBCAMERA, { 1536, 864 }
+        { 1536, 864 },
 #elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
-        infrastructure::CameraType::LIBCAMERA, {848, 480}
+        {848, 480},
 #endif
+        6, 6
     );
 
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4;
@@ -52,10 +53,11 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Holding-pattern") {
     service::CameraStreamerConfig conf(
             "127.0.0.1", 6969,
 #if _AN_PLATFORM_ == PLATFORM_RPI
-            infrastructure::CameraType::LIBCAMERA, { 1536, 864 }
+            { 1536, 864 },
 #elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
-            infrastructure::CameraType::LIBCAMERA, {848, 480}
+            {848, 480},
 #endif
+            6, 6
     );
 
 
@@ -72,10 +74,11 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
     service::CameraStreamerConfig streamer_conf(
             "127.0.0.1", 6969,
 #if _AN_PLATFORM_ == PLATFORM_RPI
-            infrastructure::CameraType::LIBCAMERA, { 1536, 864 }
+            { 1536, 864 },
 #elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
-            infrastructure::CameraType::LIBCAMERA, {848, 480}
+            {848, 480},
 #endif
+            6, 6
     );
 
     std::filesystem::path test_dir = TEST_DIR;
@@ -97,7 +100,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
     std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
     bool is_done = false;
 
-    auto callback = [&out_frame, &out_time, &is_done](std::shared_ptr<SizedBufferPool> &&ptr){
+    auto callback = [&out_frame, &out_time, &is_done](std::shared_ptr<ResizableBuffer> &&ptr){
         if (is_done) {
             return;
         }
@@ -105,14 +108,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
         is_done = true;
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-        std::size_t bytes_written = 0;
-        auto buffer = ptr->GetSizedBuffer();
-        while (buffer != nullptr) {
-            test_file_out.write((char *)buffer->GetMemory(), buffer->GetSize());
-            bytes_written += buffer->GetSize();
-            buffer = ptr->GetSizedBuffer();
-        }
-        std::cout << "Bytes written: " << bytes_written << std::endl;
+        test_file_out.write((char *)ptr->GetMemory(), ptr->GetSize());
         test_file_out.flush();
         test_file_out.close();
     };
@@ -125,8 +121,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
     TestServerConfig srv_conf(3, 6969);
     auto ctx = infrastructure::TcpContext::Create(srv_conf);
     ctx->Start();
-    auto pool = std::make_shared<CameraStreamerBufferPool>(frame_sizes, 5, callback);
-    auto manager = std::make_shared<TcpCameraServerManager>(pool);
+    auto manager = std::make_shared<TcpCameraServerManager>(callback);
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
     auto srv = infrastructure::TcpServer::Create(srv_conf, ctx->GetContext(), srv_manager);
     srv->Start();
@@ -148,12 +143,9 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
 
 }
 
-#if _AN_PLATFORM_ == PLATFORM_RPI
-
 TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
     service::CameraStreamerConfig streamer_conf(
-            "127.0.0.1", 6969,
-            infrastructure::CameraType::LIBCAMERA, { 1536, 864 }
+        "127.0.0.1", 6969, { 1536, 864 }, 6, 6
     );
 
     std::filesystem::path test_dir = TEST_DIR;
@@ -172,7 +164,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
     std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
     int frame_count = 0;
 
-    auto callback = [&out_frame, &out_time, &frame_count](std::shared_ptr<SizedBufferPool> &&ptr){
+    auto callback = [&out_frame, &out_time, &frame_count](std::shared_ptr<ResizableBuffer> &&ptr){
         frame_count++;
         if (frame_count != 150) {
             return;
@@ -180,14 +172,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
         std::cout << "Writing to file" << std::endl;
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-        std::size_t bytes_written = 0;
-        auto buffer = ptr->GetSizedBuffer();
-        while (buffer != nullptr) {
-            test_file_out.write((char *)buffer->GetMemory(), buffer->GetSize());
-            bytes_written += buffer->GetSize();
-            buffer = ptr->GetSizedBuffer();
-        }
-        std::cout << "Bytes written: " << bytes_written << std::endl;
+        test_file_out.write((char *)ptr->GetMemory(), ptr->GetSize());
         test_file_out.flush();
         test_file_out.close();
     };
@@ -201,8 +186,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
     TestServerConfig srv_conf(3, 6969);
     auto ctx = infrastructure::TcpContext::Create(srv_conf);
     ctx->Start();
-    auto pool = std::make_shared<CameraStreamerBufferPool>(frame_sizes, 5, callback);
-    auto manager = std::make_shared<TcpCameraServerManager>(pool);
+    auto manager = std::make_shared<TcpCameraServerManager>(callback);
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
     auto srv = infrastructure::TcpServer::Create(srv_conf, ctx->GetContext(), srv_manager);
     srv->Start();
@@ -227,4 +211,3 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
     REQUIRE_GT(frame_count, 149);
 
 }
-#endif

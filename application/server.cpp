@@ -12,8 +12,8 @@ std::function<void(int)> shutdown_handler;
 void signal_handler(int signal) { shutdown_handler(signal); }
 
 int main() {
-    const service::ServerEncoderConfig conf(3, 6969, 4, 6);
-    auto service = service::ServerEncoder::Create(conf);
+    const service::ServerStreamerConfig conf(3, 6969, 5, 1990656);
+    auto service = service::ServerStreamer::Create(conf);
     service->Start();
 
     bool exit = false;

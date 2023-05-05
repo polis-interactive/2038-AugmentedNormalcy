@@ -24,6 +24,12 @@ using StreamRole = libcamera::StreamRole;
 using StreamRoles = libcamera::StreamRoles;
 
 namespace infrastructure {
+
+    LibcameraCamera::LibcameraCamera(const LibcameraConfig &config, CameraBufferCallback &&send_callback):
+            _send_callback(std::move(send_callback))
+    {
+        createCamera(config);
+    }
     void LibcameraCamera::createCamera(const LibcameraConfig &config) {
         openCamera();
         configureViewFinder(config);

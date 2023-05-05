@@ -70,7 +70,6 @@ struct CameraBuffer: public SizedBuffer {
 private:
     void *_request;
     void * _buffer;
-    int next_plane = -1;
     int _fd;
     std::size_t _size;
     int64_t _timestamp_us;

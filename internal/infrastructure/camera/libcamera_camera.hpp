@@ -28,16 +28,12 @@ namespace infrastructure {
     class LibcameraCamera : public std::enable_shared_from_this<LibcameraCamera> {
     public:
         static std::shared_ptr<LibcameraCamera>Create(
-            const LibcameraConfig &config, CameraBufferCallback output_callback
+            const LibcameraConfig &config, CameraBufferCallback &&output_callback
         ) {
             auto camera = std::make_shared<LibcameraCamera>(config, std::move(output_callback));
             return std::move(camera);
         }
-        LibcameraCamera(const LibcameraConfig &config, CameraBufferCallback &&send_callback):
-            _send_callback(std::move(send_callback))
-        {
-            createCamera(config);
-        };
+        LibcameraCamera(const LibcameraConfig &config, CameraBufferCallback &&send_callback);
         void Start();
         void Stop();
         ~LibcameraCamera() {

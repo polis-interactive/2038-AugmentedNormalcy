@@ -19,7 +19,8 @@ namespace infrastructure {
         _acceptor(net::make_strand(context)),
         _manager(std::move(manager)),
         _read_timeout(config.get_tcp_server_timeout_on_read()),
-        _tcp_camera_session_buffer_count(config.get_tcp_camera_session_buffer_count())
+        _tcp_camera_session_buffer_count(config.get_tcp_camera_session_buffer_count()),
+        _tcp_camera_session_buffer_size(config.get_tcp_camera_session_buffer_size())
     {
         error_code ec;
 
@@ -92,7 +93,8 @@ namespace infrastructure {
                     if (connection_type == TcpConnectionType::CAMERA_CONNECTION) {
                         std::shared_ptr<TcpCameraSession>(
                             new TcpCameraSession(
-                                std::move(socket), _manager, addr, _read_timeout, _tcp_camera_session_buffer_count
+                                std::move(socket), _manager, addr, _read_timeout, _tcp_camera_session_buffer_count,
+                                _tcp_camera_session_buffer_size
                             )
                         )->Run();
                     } else if (connection_type == TcpConnectionType::HEADSET_CONNECTION) {
@@ -113,10 +115,12 @@ namespace infrastructure {
 
     TcpCameraSession::TcpCameraSession(
             tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager,
-            const tcp_addr addr, const int read_timeout, const int buffer_count
+            const tcp_addr addr, const int read_timeout, const int buffer_count,
+            const int buffer_size
     ):
         _socket(std::move(socket)), _manager(manager), _addr(std::move(addr)),
-        _read_timer(socket.get_executor()), _read_timeout(read_timeout)
+        _read_timer(socket.get_executor()), _read_timeout(read_timeout),
+        _receive_buffer_pool(TcpCameraBufferPool::Create(buffer_count, buffer_size))
     {}
 
     void TcpCameraSession::Run() {
@@ -177,7 +181,7 @@ namespace infrastructure {
 
     void TcpCameraSession::readBody() {
         if (_receive_buffer == nullptr) {
-            _receive_buffer = _receive_buffer_pool->GetResizableBuffer();
+            _receive_buffer = _receive_buffer_pool->GetCameraBuffer();
         }
         startTimer();
         auto self(shared_from_this());
@@ -198,9 +202,10 @@ namespace infrastructure {
                     return;
                 }
                 else if (_header.IsFinished()) {
-                    // check for leaky here
-                    _receive_buffer->SetSize(_header.BytesWritten());
-                    _manager->PostCameraServerBuffer(_addr, std::move(_receive_buffer));
+                    if (!_receive_buffer->IsLeakyBuffer()) {
+                        _receive_buffer->SetSize(_header.BytesWritten());
+                        _manager->PostCameraServerBuffer(_addr, std::move(_receive_buffer));
+                    }
                     _receive_buffer = nullptr;
                     _header.ResetHeader();
                 }

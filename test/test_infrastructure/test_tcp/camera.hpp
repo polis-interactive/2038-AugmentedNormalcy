@@ -14,9 +14,9 @@ class TcpCameraClientServerManager:
 {
 public:
     explicit TcpCameraClientServerManager(
-        std::shared_ptr<SizedPlaneBufferPool> buffer_pool
+        ResizableBufferCallback &&on_receive
     ):
-        _buffer_pool(std::move(buffer_pool))
+        _on_receive(std::move(on_receive))
     {}
     /* camera client */
     void CreateCameraClientConnection() override {
@@ -35,13 +35,16 @@ public:
     [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp_addr addr) override {
         return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
     }
-    [[nodiscard]]  infrastructure::CameraConnectionPayload CreateCameraServerConnection(
+    [[nodiscard]] unsigned long CreateCameraServerConnection(
         std::shared_ptr<infrastructure::TcpSession> session
     ) override {
-        return { 0, _buffer_pool };
+        return 0;
     };
+    void PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer) override {
+        _on_receive(std::move(buffer));
+    }
     void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> session) override {}
-    std::shared_ptr<SizedPlaneBufferPool> _buffer_pool;
+    ResizableBufferCallback _on_receive;
 
     /* dummy for headset server */
     [[nodiscard]] unsigned long CreateHeadsetServerConnection(

@@ -26,6 +26,12 @@ struct TestServerConfig:
     [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
         return 1;
     }
+    [[nodiscard]] int get_tcp_camera_session_buffer_count() const override {
+        return 1;
+    };
+    [[nodiscard]] int get_tcp_camera_session_buffer_size() const override {
+        return 5;
+    };
 };
 
 /* Used to test bringing up and tearing down the server */
@@ -36,11 +42,12 @@ public:
         return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
     }
     /* dummy's for the rest */
-    [[nodiscard]] infrastructure::CameraConnectionPayload CreateCameraServerConnection(
+    [[nodiscard]] unsigned long CreateCameraServerConnection(
         std::shared_ptr<infrastructure::TcpSession> session
     ) override {
-        return {};
+        return 1;
     }
+    void PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer) override {};
     void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> session) override {}
     [[nodiscard]] unsigned long CreateHeadsetServerConnection(
         std::shared_ptr<infrastructure::WritableTcpSession> session

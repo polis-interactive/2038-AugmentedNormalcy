@@ -55,11 +55,12 @@ public:
     void DestroyCameraClientConnection() override {};
 
     /* dummy for camera server */
-    [[nodiscard]]  infrastructure::CameraConnectionPayload CreateCameraServerConnection(
+    [[nodiscard]]  unsigned long CreateCameraServerConnection(
         std::shared_ptr<infrastructure::TcpSession> session
     ) override {
-        return { 0, nullptr };
+        return 0;
     };
+    void PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer) override {}
     void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> session) override {}
 };
 

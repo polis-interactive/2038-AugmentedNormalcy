@@ -40,11 +40,17 @@ struct TestClientServerConfig:
         return _tcp_client_is_camera;
     };
     [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
-        return 5;
+        return 10;
     }
     [[nodiscard]] int get_tcp_client_timeout_on_read() const override {
-        return 5;
+        return 10;
     };
+    [[nodiscard]] int get_tcp_camera_session_buffer_count() const override {
+        return 6;
+    }
+    [[nodiscard]] int get_tcp_camera_session_buffer_size() const override {
+        return 5;
+    }
 };
 
 class TcpClientManager: public infrastructure::TcpClientManager {
