@@ -48,7 +48,7 @@ FakeCamera::FakeCamera(const int buffer_count) {
     }
 
     v4l2_fmtdesc fmtdesc{0};
-    fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     for (int i = 0;; ++i) {
         fmtdesc.index = i;
         if (fxioctl(_camera_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
