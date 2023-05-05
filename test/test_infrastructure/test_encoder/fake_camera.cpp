@@ -24,7 +24,7 @@ int fxioctl(int fd, unsigned long ctl, void *arg) {
 }
 
 FakeCamera::FakeCamera(const int buffer_count) {
-    _camera_fd = open("/dev/video0", O_RDWR, 0);
+    _camera_fd = open("/dev/video10", O_RDWR, 0);
 
     if (_camera_fd < 0) {
         throw std::runtime_error("failed to open /dev/video0");
@@ -48,7 +48,7 @@ FakeCamera::FakeCamera(const int buffer_count) {
     }
 
     v4l2_fmtdesc fmtdesc{0};
-    fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+    fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     for (int i = 0;; ++i) {
         fmtdesc.index = i;
         if (fxioctl(_camera_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
@@ -67,14 +67,15 @@ FakeCamera::FakeCamera(const int buffer_count) {
     std::pair<unsigned int, unsigned int> _width_height = { 1536, 864 };
 
     v4l2_format fmt = {0};
-    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     fmt.fmt.pix_mp.width = _width_height.first;
     fmt.fmt.pix_mp.height = _width_height.second;
     fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_YUV420;
     fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
     fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
-    fmt.fmt.pix.bytesperline = _width_height.first;
-    fmt.fmt.pix.sizeimage = _width_height.first * _width_height.second * 3 / 2;
+    fmt.fmt.pix_mp.num_planes = 1;
+    fmt.fmt.pix_mp.plane_fmt[0].bytesperline = _width_height.first;
+    fmt.fmt.pix_mp.plane_fmt[0].sizeimage = _width_height.first * _width_height.second * 3 / 2;
 
     if (ioctl(_camera_fd, VIDIOC_S_FMT, &fmt) == -1) {
         perror("ioctl VIDIOC_S_FMT failed");
@@ -83,7 +84,7 @@ FakeCamera::FakeCamera(const int buffer_count) {
 
     v4l2_requestbuffers reqbufs = {};
     reqbufs.count = buffer_count;
-    reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     reqbufs.memory = V4L2_MEMORY_MMAP;
     if (fxioctl(_camera_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
         throw std::runtime_error("request for output buffers failed");
@@ -101,9 +102,11 @@ FakeCamera::FakeCamera(const int buffer_count) {
 
         buffer = {};
         memset(planes, 0, sizeof(planes));
-        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
         buffer.memory = V4L2_MEMORY_MMAP;
         buffer.index = i;
+        buffer.length = 1;
+        buffer.m.planes = planes;
 
         if (fxioctl(_camera_fd, VIDIOC_QUERYBUF, &buffer) < 0)
             throw std::runtime_error("failed to query output buffer");
@@ -112,8 +115,8 @@ FakeCamera::FakeCamera(const int buffer_count) {
          * mmap
          */
 
-        auto capture_size = buffer.length;
-        auto capture_offset = buffer.m.offset;
+        auto capture_size = buffer.m.planes[0].length;
+        auto capture_offset = buffer.m.planes[0].m.mem_offset;
         auto capture_mem = mmap(
                 nullptr, capture_size, PROT_READ | PROT_WRITE, MAP_SHARED, _camera_fd, capture_offset
         );
