@@ -26,6 +26,28 @@ int fxioctl(int fd, unsigned long ctl, void *arg) {
 FakeCamera::FakeCamera(const int buffer_count) {
     _camera_fd = open("/dev/video0", O_RDWR, 0);
 
+    if (_camera_fd < 0) {
+        throw std::runtime_error("failed to open /dev/video0");
+    }
+
+    // Query camera capabilities
+    v4l2_capability cap{};
+    if (fxioctl(_camera_fd, VIDIOC_QUERYCAP, &cap) == -1) {
+        perror("Querying capabilities");
+        throw std::runtime_error("Querying capabilities");
+    }
+
+    // Check if the device supports video capture
+    if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
+        throw std::runtime_error("Device does not support video capture");
+    }
+
+    // Check if the device supports streaming
+    if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
+        throw std::runtime_error("Device does not support streaming");
+    }
+
+
     std::pair<unsigned int, unsigned int> _width_height = { 1536, 864 };
 
     v4l2_format fmt = {0};
@@ -39,8 +61,10 @@ FakeCamera::FakeCamera(const int buffer_count) {
     fmt.fmt.pix_mp.plane_fmt[0].bytesperline = _width_height.first;
     fmt.fmt.pix_mp.plane_fmt[0].sizeimage = _width_height.first * _width_height.second * 3 / 2;
 
-    if (fxioctl(_camera_fd, VIDIOC_S_FMT, &fmt))
+    if (ioctl(_camera_fd, VIDIOC_S_FMT, &fmt) == -1) {
+        perror("ioctl VIDIOC_S_FMT failed");
         throw std::runtime_error("failed to set capture caps");
+    }
 
     v4l2_requestbuffers reqbufs = {};
     reqbufs.count = buffer_count;
