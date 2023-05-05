@@ -81,7 +81,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-Encode_a_frame") {
     std::ifstream test_file_in(in_frame, std::ios::out | std::ios::binary);
     std::array<char, 1990656> in_buf = {};
     test_file_in.read(in_buf.data(), 1990656);
-    FakeCamera camera(1);
+    FakeCamera camera(5);
 
     {
         auto encoder = infrastructure::V4l2Encoder::Create(conf, std::move(callback));
@@ -131,7 +131,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-StressTest") {
     std::array<char, 1990656> in_buf = {};
     test_file_in.read(in_buf.data(), 1990656);
 
-    FakeCamera camera(6);
+    FakeCamera camera(5);
 
     {
         auto encoder = infrastructure::V4l2Encoder::Create(conf, std::move(callback));
