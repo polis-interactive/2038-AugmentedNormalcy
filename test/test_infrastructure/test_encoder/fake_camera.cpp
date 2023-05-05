@@ -30,23 +30,6 @@ FakeCamera::FakeCamera(const int buffer_count) {
         throw std::runtime_error("failed to open /dev/video0");
     }
 
-    // Query camera capabilities
-    v4l2_capability cap{};
-    if (fxioctl(_camera_fd, VIDIOC_QUERYCAP, &cap) == -1) {
-        perror("Querying capabilities");
-        throw std::runtime_error("Querying capabilities");
-    }
-
-    // Check if the device supports video capture
-    if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-        throw std::runtime_error("Device does not support video capture");
-    }
-
-    // Check if the device supports streaming
-    if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-        throw std::runtime_error("Device does not support streaming");
-    }
-
     v4l2_fmtdesc fmtdesc{0};
     fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
     for (int i = 0;; ++i) {
