@@ -47,6 +47,21 @@ FakeCamera::FakeCamera(const int buffer_count) {
         throw std::runtime_error("Device does not support streaming");
     }
 
+    v4l2_fmtdesc fmtdesc{0};
+    fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+    for (int i = 0;; ++i) {
+        fmtdesc.index = i;
+        if (fxioctl(_camera_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
+            break;
+        }
+        std::cout << "CAPTURE Format " << i << ": " << fmtdesc.description
+                  << ", FourCC: " << static_cast<char>((fmtdesc.pixelformat >> 0) & 0xFF)
+                  << static_cast<char>((fmtdesc.pixelformat >> 8) & 0xFF)
+                  << static_cast<char>((fmtdesc.pixelformat >> 16) & 0xFF)
+                  << static_cast<char>((fmtdesc.pixelformat >> 24) & 0xFF)
+                  << std::endl;
+    }
+
 
     std::pair<unsigned int, unsigned int> _width_height = { 1536, 864 };
 
