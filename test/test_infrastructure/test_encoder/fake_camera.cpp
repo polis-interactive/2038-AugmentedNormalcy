@@ -53,6 +53,7 @@ FakeCamera::FakeCamera(const int buffer_count) {
         fmtdesc.index = i;
         if (fxioctl(_camera_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
             std::cout << "WHAT" << std::endl;
+            break;
         }
         std::cout << "CAPTURE Format " << i << ": " << fmtdesc.description
                   << ", FourCC: " << static_cast<char>((fmtdesc.pixelformat >> 0) & 0xFF)
