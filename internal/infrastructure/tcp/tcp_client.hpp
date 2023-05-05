@@ -54,7 +54,7 @@ namespace infrastructure {
         ~TcpClient();
         void Start();
         void Stop();
-        void Post(std::shared_ptr<SizedBufferPool> &&buffer);
+        void Post(std::shared_ptr<SizedBuffer> &&buffer);
     private:
         void startConnection(bool is_initial_connection);
         void startWrite();
@@ -79,9 +79,8 @@ namespace infrastructure {
 
         PacketHeader _header;
 
-        std::mutex _send_plane_buffer_mutex;
-        std::queue<std::shared_ptr<SizedBufferPool>> _send_plane_buffer_queue = {};
-        std::shared_ptr<SizedBuffer> _send_buffer = nullptr;
+        std::mutex _send_buffer_mutex;
+        std::queue<std::shared_ptr<SizedBuffer>> _send_buffer_queue = {};
 
         std::shared_ptr<ResizableBufferPool> _receive_buffer_pool = nullptr;
         std::shared_ptr<ResizableBuffer> _receive_buffer = nullptr;

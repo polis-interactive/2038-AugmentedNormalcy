@@ -2,7 +2,7 @@
 // Created by brucegoose on 4/8/23.
 //
 
-#include "server_encoder.hpp"
+#include "server_streamer.hpp"
 
 static tcp_addr ip_bound(const std::string& ip_string) {
     return tcp_addr::from_string(ip_string);
@@ -92,7 +92,7 @@ namespace service {
         return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
     }
 
-    infrastructure::CameraConnectionPayload ServerEncoder::CreateCameraServerConnection(
+    unsigned long ServerEncoder::CreateCameraServerConnection(
             std::shared_ptr<infrastructure::TcpSession> camera_session
     ) {
         bool is_only_camera = false;
@@ -112,15 +112,11 @@ namespace service {
             std::unique_lock<std::mutex> lock(_headset_mutex);
             _connection_manager.AddManyMappings(addr, _headset_sessions);
         }
+        return ++_last_session_number;
+    }
 
-        auto self(shared_from_this());
-        auto enc = infrastructure::Encoder::Create(
-            _conf,
-            [this, s = std::move(self), addr] (std::shared_ptr<SizedBuffer> &&buffer) {
-                _connection_manager.PostMessage(addr, std::move(buffer));
-            }
-        );
-        return { ++_last_session_number, enc };
+    void ServerEncoder::PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer) {
+        _connection_manager.PostMessage(addr, std::move(buffer));
     }
 
     void ServerEncoder::DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> camera_session) {

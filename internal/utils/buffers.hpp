@@ -31,9 +31,7 @@ public:
     virtual void PostSizedBufferPool(std::shared_ptr<SizedBufferPool> &&buffer) = 0;
 };
 
-struct ResizableBuffer {
-    [[nodiscard]] virtual void *GetMemory() = 0;
-    [[nodiscard]] virtual std::size_t GetSize() = 0;
+struct ResizableBuffer: public SizedBuffer {
     virtual void SetSize(std::size_t used_size) = 0;
     [[nodiscard]] virtual bool IsLeakyBuffer() = 0;
 };
@@ -47,6 +45,38 @@ public:
 };
 
 // nowhere better to put this at the moment
+
+/* TODO: i think camera / decoder buffer can be combined */
+
+struct CameraBuffer: public SizedBuffer {
+    CameraBuffer(
+            void *request, void *buffer, int fd, std::size_t size, int64_t timestamp_us
+    ):
+            _request(request), _buffer(buffer), _fd(fd), _size(size), _timestamp_us(timestamp_us)
+    {}
+    [[nodiscard]] void *GetRequest() const {
+        return _request;
+    }
+    [[nodiscard]] int GetFd() const {
+        return _fd;
+    }
+    [[nodiscard]] std::size_t GetSize() override {
+        return _size;
+    };
+    [[nodiscard]] void *GetMemory() override {
+        return _buffer;
+    };
+
+private:
+    void *_request;
+    void * _buffer;
+    int next_plane = -1;
+    int _fd;
+    std::size_t _size;
+    int64_t _timestamp_us;
+};
+
+using CameraBufferCallback = std::function<void(std::shared_ptr<CameraBuffer>&&)>;
 
 struct DecoderBuffer: public SizedBuffer {
     DecoderBuffer(unsigned int buffer_index, int fd, void *memory, std::size_t size):

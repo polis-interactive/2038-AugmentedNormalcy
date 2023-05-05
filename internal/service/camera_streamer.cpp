@@ -16,8 +16,17 @@ namespace service {
         _tcp_context = infrastructure::TcpContext::Create(config);
         auto self(shared_from_this());
         _tcp_client = infrastructure::TcpClient::Create(config, _tcp_context->GetContext(), self);
-        _camera = infrastructure::Camera::Create(config, [this, self](std::shared_ptr<SizedBufferPool> &&post_buffer) {
-            _tcp_client->Post(std::move(post_buffer));
-        });
+        _encoder = infrastructure::V4l2Encoder::Create(
+            config,
+            [this, self](std::shared_ptr<SizedBuffer> &&buffer) {
+                _tcp_client->Post(std::move(buffer));
+            }
+        );
+        _camera = infrastructure::LibcameraCamera::Create(
+            config,
+            [this, self](std::shared_ptr<CameraBuffer> &&camera_buffer) {
+                _encoder->PostCameraBuffer(std::move(camera_buffer));
+            }
+        );
     }
 }

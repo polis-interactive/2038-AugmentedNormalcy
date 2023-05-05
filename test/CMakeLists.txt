@@ -26,11 +26,14 @@ if (FEATURE_CAMERA)
 endif()
 
 if (FEATURE_ENCODER)
-    set(tests ${tests}
-            test_infrastructure/test_encoder/test_jetson_encoder.cpp
-            test_service/test_server_encoder.cpp
-    )
-    set(tests_link_libraries ${tests_link_libraries} encoder service)
+# if (FEATURE_ENCODER AND AN_PLATFORM_TYPE STREQUAL RPI)
+    set(tests ${tests} test_infrastructure/test_encoder/test_v4l2_encoder.cpp)
+    set(tests_link_libraries ${tests_link_libraries} encoder)
+endif()
+
+if (NOT AN_PLATFORM_TYPE STREQUAL RPI)
+    set(tests ${tests} test_service/test_server_streamer.cpp)
+    set(tests_link_libraries ${tests_link_libraries} encoder)
 endif()
 
 if (FEATURE_DECODER AND AN_PLATFORM_TYPE STREQUAL RPI)

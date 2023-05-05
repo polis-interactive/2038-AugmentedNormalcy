@@ -25,8 +25,6 @@ namespace infrastructure {
         UNKNOWN_CONNECTION
     };
 
-    typedef std::pair<unsigned long, std::shared_ptr<SizedPlaneBufferPool>> CameraConnectionPayload;
-
     class TcpSession {
     public:
         virtual void TryClose(bool is_self_close) = 0;
@@ -44,9 +42,10 @@ namespace infrastructure {
         // tcp server
         [[nodiscard]] virtual TcpConnectionType GetConnectionType(tcp_addr endpoint) = 0;
         // camera session
-        [[nodiscard]]  virtual CameraConnectionPayload CreateCameraServerConnection(
+        [[nodiscard]]  virtual unsigned long CreateCameraServerConnection(
             std::shared_ptr<TcpSession> session
         ) = 0;
+        virtual void PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer);
         virtual void DestroyCameraServerConnection(
                 std::shared_ptr<TcpSession> session
         ) = 0;
@@ -76,8 +75,8 @@ namespace infrastructure {
     protected:
         friend class TcpServer;
         TcpCameraSession(
-                tcp::socket &&socket, std::shared_ptr<TcpServerManager> &_manager,
-                const tcp_addr addr, const int read_timeout
+            tcp::socket &&socket, std::shared_ptr<TcpServerManager> &_manager,
+            const tcp_addr addr, const int read_timeout, const int buffer_count
         );
         void Run();
     private:
@@ -88,14 +87,13 @@ namespace infrastructure {
         const tcp_addr _addr;
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
         std::shared_ptr<TcpServerManager> &_manager;
-        std::shared_ptr<SizedPlaneBufferPool> _plane_buffer_pool = nullptr;
-        unsigned long _session_id= -1;
+        unsigned long _session_id= 0;
         boost::asio::deadline_timer _read_timer;
         const int _read_timeout;
 
         PacketHeader _header;
-        std::shared_ptr<SizedBufferPool> _plane_buffer = nullptr;
-        std::shared_ptr<SizedBuffer> _buffer = nullptr;
+        std::shared_ptr<ResizableBufferPool> _receive_buffer_pool = nullptr;
+        std::shared_ptr<ResizableBuffer> _receive_buffer = nullptr;
     };
 
     class TcpHeadsetSession : public std::enable_shared_from_this<TcpHeadsetSession>, public WritableTcpSession {
@@ -114,7 +112,7 @@ namespace infrastructure {
         void Write(std::shared_ptr<SizedBuffer> &&send_buffer) override;
     protected:
         friend class TcpServer;
-        TcpHeadsetSession(tcp::socket &&socket, tcp_addr addr, std::shared_ptr<TcpServerManager> &manager);
+        TcpHeadsetSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager, tcp_addr addr);
         void ConnectAndWait();
     private:
         void writeHeader(std::size_t last_bytes);
@@ -124,7 +122,7 @@ namespace infrastructure {
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
         std::shared_ptr<TcpServerManager> &_manager;
         std::atomic<bool> _is_live;
-        unsigned long _session_id = -1;
+        unsigned long _session_id = 0;
         PacketHeader _header;
         std::mutex _message_mutex;
         std::queue<std::shared_ptr<SizedBuffer>> _message_queue;
@@ -133,6 +131,7 @@ namespace infrastructure {
     struct TcpServerConfig {
         [[nodiscard]] virtual int get_tcp_server_port() const = 0;
         [[nodiscard]] virtual int get_tcp_server_timeout_on_read() const = 0;
+        [[nodiscard]] virtual unsigned int get_tcp_camera_session_buffer_count() const = 0;
     };
 
     class TcpServer: public std::enable_shared_from_this<TcpServer>{
@@ -158,6 +157,7 @@ namespace infrastructure {
         tcp::endpoint _endpoint;
         std::shared_ptr<TcpServerManager> _manager;
         const int _read_timeout;
+        const int _tcp_camera_session_buffer_count;
     };
 }
 

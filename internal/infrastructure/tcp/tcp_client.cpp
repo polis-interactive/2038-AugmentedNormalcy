@@ -88,17 +88,16 @@ namespace infrastructure {
         _manager->CreateCameraClientConnection();
     }
 
-    void TcpClient::Post(std::shared_ptr<SizedBufferPool> &&buffer) {
+    void TcpClient::Post(std::shared_ptr<SizedBuffer> &&buffer) {
         if (_is_stopped || !_is_connected) return;
         bool write_in_progress = false;
         {
-            std::unique_lock<std::mutex> lock(_send_plane_buffer_mutex);
-            write_in_progress = !_send_plane_buffer_queue.empty();
-            _send_plane_buffer_queue.push(std::move(buffer));
+            std::unique_lock<std::mutex> lock(_send_buffer_mutex);
+            write_in_progress = !_send_buffer_queue.empty();
+            _send_buffer_queue.push(std::move(buffer));
         }
         if (!write_in_progress) {
-            _send_buffer = _send_plane_buffer_queue.front()->GetSizedBuffer();
-            _header.SetupHeader(_send_buffer->GetSize());
+            _header.SetupHeader(_send_buffer_queue.front()->GetSize());
             writeHeader(0);
         }
     }
@@ -133,9 +132,10 @@ namespace infrastructure {
 
     void TcpClient::writeBody() {
         if (_is_stopped || !_is_connected) return;
+        auto &buffer = _send_buffer_queue.front();
         auto self(shared_from_this());
         _socket->async_send(
-            net::buffer((uint8_t *) _send_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
+            net::buffer((uint8_t *) buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
                 if (ec) {
@@ -148,20 +148,16 @@ namespace infrastructure {
                     return;
                 }
                 if (_header.IsFinished()) {
-                    _send_buffer = _send_plane_buffer_queue.front()->GetSizedBuffer();
-                    if (_send_buffer == nullptr) {
-                        bool messages_remaining = false;
-                        {
-                            std::unique_lock<std::mutex> lock(_send_plane_buffer_mutex);
-                            _send_plane_buffer_queue.pop();
-                            messages_remaining = !_send_plane_buffer_queue.empty();
-                        }
-                        if (!messages_remaining) {
-                            return;
-                        }
-                        _send_buffer = _send_plane_buffer_queue.front()->GetSizedBuffer();
+                    bool messages_remaining = false;
+                    {
+                        std::unique_lock<std::mutex> lock(_send_buffer_mutex);
+                        _send_buffer_queue.pop();
+                        messages_remaining = !_send_buffer_queue.empty();
                     }
-                    _header.SetupHeader(_send_buffer->GetSize());
+                    if (!messages_remaining) {
+                        return;
+                    }
+                    _header.SetupHeader(_send_buffer_queue.front()->GetSize());
                 } else {
                     _header.SetupNextHeader();
                 }
@@ -278,11 +274,10 @@ namespace infrastructure {
             _socket = nullptr;
         }
         if (_is_camera) {
-            _send_buffer = nullptr;
             {
-                std::unique_lock<std::mutex> lock(_send_plane_buffer_mutex);
-                while(!_send_plane_buffer_queue.empty()) {
-                    _send_plane_buffer_queue.pop();
+                std::unique_lock<std::mutex> lock(_send_buffer_mutex);
+                while(!_send_buffer_queue.empty()) {
+                    _send_buffer_queue.pop();
                 }
             }
             _manager->DestroyCameraClientConnection();
