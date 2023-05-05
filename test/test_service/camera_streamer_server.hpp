@@ -30,8 +30,11 @@ struct TestServerConfig:
     [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
         return 5;
     }
-    [[nodiscard]] unsigned int get_tcp_camera_session_buffer_count() const override {
+    [[nodiscard]] int get_tcp_camera_session_buffer_count() const override {
         return 4;
+    };
+    [[nodiscard]] int get_tcp_camera_session_buffer_size() const override {
+        return 1990656;
     };
 };
 
