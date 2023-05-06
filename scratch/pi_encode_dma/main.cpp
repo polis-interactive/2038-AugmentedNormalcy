@@ -339,7 +339,6 @@ int main(int argc, char *argv[]) {
         buffer.length = 1;
         buffer.timestamp.tv_sec = i * 33000 / 1000000;
         buffer.timestamp.tv_usec = i * 33000 % 1000000;
-        buffer.flags = V4L2_BUF_FLAG_PREPARED;
         buffer.m.planes = planes;
         buffer.m.planes[0].length = max_size;
         buffer.m.planes[0].bytesused = max_size;
