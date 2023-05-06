@@ -46,6 +46,14 @@ namespace infrastructure {
         if (xioctl(_encoder_fd, VIDIOC_STREAMON, &type) < 0)
             throw std::runtime_error("failed to start capture");
 
+    }
+
+    void V4l2Encoder::Start() {
+
+        if (!_work_stop) {
+            return;
+        }
+
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
         memset(planes, 0, sizeof(planes));
@@ -69,14 +77,6 @@ namespace infrastructure {
 
         if (xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer) < 0)
             throw std::runtime_error("failed to dequeue output buffer early");
-    }
-
-    void V4l2Encoder::Start() {
-
-        if (!_work_stop) {
-            return;
-        }
-        return;
 
         _is_primed = false;
         _work_stop = false;
