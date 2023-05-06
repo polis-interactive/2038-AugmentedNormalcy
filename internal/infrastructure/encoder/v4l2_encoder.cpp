@@ -141,6 +141,7 @@ namespace infrastructure {
         /*
          * dequeue output buffer, wait for it to finish
          */
+        std::cout << "Maybe its not the first one?" << std::endl;
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
@@ -148,10 +149,10 @@ namespace infrastructure {
         buffer.memory = V4L2_MEMORY_DMABUF;
         buffer.length = 1;
         buffer.m.planes = planes;
-        buffer.index = 0;
-        buffer.m.planes[0].m.fd = 5;
-        buffer.m.planes[0].length = 1990656;
-        buffer.m.planes[0].bytesused = 1990656;
+        buffer.index = index;
+        buffer.m.planes[0].m.fd = cam_buffer->GetFd();
+        buffer.m.planes[0].length = cam_buffer->GetSize();
+        buffer.m.planes[0].bytesused = cam_buffer->GetSize();
         if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
             perror("ioctl VIDIOC_QBUF failed");
             throw std::runtime_error("failed to queue output buffer");
