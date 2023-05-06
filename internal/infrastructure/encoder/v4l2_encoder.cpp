@@ -141,17 +141,18 @@ namespace infrastructure {
         /*
          * dequeue output buffer, wait for it to finish
          */
-        std::cout << "Maybe its not the first one?" << std::endl;
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
         buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buffer.memory = V4L2_MEMORY_DMABUF;
         buffer.index = index;
+        buffer.field = V4L2_FIELD_NONE;
+        buffer.memory = V4L2_MEMORY_DMABUF;
         buffer.length = 1;
+        buffer.m.planes = planes;
         buffer.m.planes[0].m.fd = cam_buffer->GetFd();
-        buffer.m.planes[0].length = cam_buffer->GetSize();
         buffer.m.planes[0].bytesused = cam_buffer->GetSize();
+        buffer.m.planes[0].length = cam_buffer->GetSize();
         if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
             perror("ioctl VIDIOC_QBUF failed");
             throw std::runtime_error("failed to queue output buffer");
@@ -242,27 +243,6 @@ namespace infrastructure {
 
         _encoder_fd = open(_device_name, O_RDWR, 0);
 
-        v4l2_fmtdesc fmtdesc{0};
-        fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        std::cout << "Wants caps: "
-                  << "FourCC: " << static_cast<char>((V4L2_PIX_FMT_YUV420 >> 0) & 0xFF)
-                  << static_cast<char>((V4L2_PIX_FMT_YUV420 >> 8) & 0xFF)
-                  << static_cast<char>((V4L2_PIX_FMT_YUV420 >> 16) & 0xFF)
-                  << static_cast<char>((V4L2_PIX_FMT_YUV420 >> 24) & 0xFF)
-                  << std::endl;
-        for (int i = 0;; ++i) {
-            fmtdesc.index = i;
-            if (xioctl(_encoder_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
-                break;
-            }
-            std::cout << "OUTPUT Format " << i << ": " << fmtdesc.description
-                      << ", FourCC: " << static_cast<char>((fmtdesc.pixelformat >> 0) & 0xFF)
-                      << static_cast<char>((fmtdesc.pixelformat >> 8) & 0xFF)
-                      << static_cast<char>((fmtdesc.pixelformat >> 16) & 0xFF)
-                      << static_cast<char>((fmtdesc.pixelformat >> 24) & 0xFF)
-                      << std::endl;
-        }
-
         v4l2_format fmt = {0};
         fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         fmt.fmt.pix_mp.width = _width_height.first;
@@ -272,30 +252,10 @@ namespace infrastructure {
         fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
         fmt.fmt.pix_mp.num_planes = 1;
         fmt.fmt.pix_mp.plane_fmt[0].bytesperline = _width_height.first;
+        fmt.fmt.pix_mp.plane_fmt[0].sizeimage = _width_height.first * _width_height.second * 3 / 2;
 
         if (xioctl(_encoder_fd, VIDIOC_S_FMT, &fmt))
             throw std::runtime_error("failed to set output caps");
-
-        fmtdesc = {};
-        fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        std::cout << "Wants caps: "
-                << "FourCC: " << static_cast<char>((V4L2_PIX_FMT_MJPEG >> 0) & 0xFF)
-                << static_cast<char>((V4L2_PIX_FMT_MJPEG >> 8) & 0xFF)
-                << static_cast<char>((V4L2_PIX_FMT_MJPEG >> 16) & 0xFF)
-                << static_cast<char>((V4L2_PIX_FMT_MJPEG >> 24) & 0xFF)
-                << std::endl;
-        for (int i = 0;; ++i) {
-            fmtdesc.index = i;
-            if (xioctl(_encoder_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
-                break;
-            }
-            std::cout << "OUTPUT Format " << i << ": " << fmtdesc.description
-                      << ", FourCC: " << static_cast<char>((fmtdesc.pixelformat >> 0) & 0xFF)
-                      << static_cast<char>((fmtdesc.pixelformat >> 8) & 0xFF)
-                      << static_cast<char>((fmtdesc.pixelformat >> 16) & 0xFF)
-                      << static_cast<char>((fmtdesc.pixelformat >> 24) & 0xFF)
-                      << std::endl;
-        }
 
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
