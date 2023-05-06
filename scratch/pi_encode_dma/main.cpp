@@ -344,6 +344,7 @@ int main(int argc, char *argv[]) {
     buffer.length = 1;
     buffer.timestamp.tv_sec = 0;
     buffer.timestamp.tv_usec = 0;
+    buffer.flags = V4L2_BUF_FLAG_PREPARED;
     buffer.m.planes = planes;
     buffer.m.planes[0].length = 1990656;
     buffer.m.planes[0].m.fd = dma_fd;
