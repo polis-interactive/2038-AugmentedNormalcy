@@ -348,8 +348,6 @@ int main(int argc, char *argv[]) {
             throw std::runtime_error("failed to queue output buffer");
 
 
-        std::cout << "v4l2 decoder queued output buffer" << std::endl;
-
         /*
          * Dequeue the capture buffer
          */
@@ -366,6 +364,9 @@ int main(int argc, char *argv[]) {
 
         if (xioctl(encoder_fd, VIDIOC_DQBUF, &buffer) < 0)
             throw std::runtime_error("failed to dequeue capture buffer");
+
+
+        std::cout << buffer.m.planes[0].bytesused << std::endl;
 
         out_time = Clock::now();
         if (i == 350) {
