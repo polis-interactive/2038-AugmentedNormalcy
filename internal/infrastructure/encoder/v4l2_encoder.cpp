@@ -127,18 +127,11 @@ namespace infrastructure {
     void V4l2Encoder::encodeBuffer(std::shared_ptr<CameraBuffer> &&cam_buffer) {
 
         // in the future, we may need this; but as is, we run synchronously so meh
-        EncoderBuffer *output_buffer = nullptr;
-        {
-            std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
-            if (!_available_upstream_buffers.empty()) {
-                output_buffer = _available_upstream_buffers.front();
-                _available_upstream_buffers.pop();
-            }
-        }
+        EncoderBuffer *output_buffer = _available_upstream_buffers.front();
         if (output_buffer == nullptr) {
-            return;
+            throw std::runtime_error("failed to get output buffer");
         }
-        // memcpy(output_buffer->GetMemory(), cam_buffer->GetMemory(), cam_buffer->GetSize());
+        memcpy(output_buffer->GetMemory(), cam_buffer->GetMemory(), cam_buffer->GetSize());
 
 
         /*
@@ -207,10 +200,6 @@ namespace infrastructure {
         buffer.length = 1;
         buffer.m.planes = planes;
         ret = xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer);
-        if (ret == 0) {
-            std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
-            _available_upstream_buffers.push(output_buffer);
-        }
 
     }
 
