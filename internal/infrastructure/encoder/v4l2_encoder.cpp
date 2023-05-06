@@ -45,14 +45,6 @@ namespace infrastructure {
             return;
         }
 
-        int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        if (xioctl(_encoder_fd, VIDIOC_STREAMON, &type) < 0)
-            throw std::runtime_error("failed to start output");
-
-        type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        if (xioctl(_encoder_fd, VIDIOC_STREAMON, &type) < 0)
-            throw std::runtime_error("failed to start capture");
-
         _is_primed = false;
         _work_stop = false;
 
@@ -104,6 +96,15 @@ namespace infrastructure {
     }
 
     void V4l2Encoder::run() {
+
+        int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        if (xioctl(_encoder_fd, VIDIOC_STREAMON, &type) < 0)
+            throw std::runtime_error("failed to start output");
+
+        type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        if (xioctl(_encoder_fd, VIDIOC_STREAMON, &type) < 0)
+            throw std::runtime_error("failed to start capture");
+
         while(!_work_stop) {
             std::shared_ptr<CameraBuffer> buffer;
             {
