@@ -91,6 +91,9 @@ namespace infrastructure {
             return;
         }
 
+
+        std::cout << "I get called early" << std::endl;
+
         if (_work_thread) {
             if (_work_thread->joinable()) {
                 {
@@ -406,7 +409,6 @@ namespace infrastructure {
     }
 
     V4l2Encoder::~V4l2Encoder() {
-        std::cout << "I get called early" << std::endl;
         Stop();
         teardownUpstreamBuffers();
         teardownDownstreamBuffers();
