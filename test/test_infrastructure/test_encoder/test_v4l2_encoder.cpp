@@ -131,7 +131,10 @@ buffer.index = 0;
 buffer.length = 1;
 buffer.m.planes = planes;
 if (xioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
-throw std::runtime_error("failed to query capture buffer");
+throw std::runtime_error("failed to query output buffer");
+
+auto output_size = buffer.m.planes[0].length;
+auto output_offset = buffer.m.planes[0].m.mem_offset;
 
 buffer = {};
 memset(planes, 0, sizeof(planes));
@@ -143,8 +146,10 @@ buffer.m.planes = planes;
 buffer.m.planes[0].length = capture_size;
 buffer.m.planes[0].m.mem_offset = capture_offset;
 if (jioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
-throw std::runtime_error("failed to dequeue capture buffer");
+throw std::runtime_error("failed to query capture buffer");
 
+auto capture_size = buffer.m.planes[0].length;
+auto capture_offset = buffer.m.planes[0].m.mem_offset;
 
 int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 if (jioctl(encoder_fd, VIDIOC_STREAMON, &type) < 0)
