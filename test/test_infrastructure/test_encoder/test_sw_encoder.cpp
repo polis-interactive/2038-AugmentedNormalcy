@@ -24,7 +24,7 @@ class TestEncoderConfig : public infrastructure::EncoderConfig {
     };
 };
 
-TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-Start_and_Stop") {
+TEST_CASE("INFRASTRUCTURE_ENCODER_SW_ENCODER-Start_and_Stop") {
     TestEncoderConfig conf;
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4, t5;
     {
@@ -46,7 +46,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-Start_and_Stop") {
               d4.count() << ", " << std::endl;
 }
 
-TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-Encode_a_frame") {
+TEST_CASE("INFRASTRUCTURE_ENCODER_SW_ENCODER-Encode_a_frame") {
     TestEncoderConfig conf;
 
     std::filesystem::path this_dir = TEST_DIR;
@@ -98,7 +98,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-Encode_a_frame") {
 }
 
 
-TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-StressTest") {
+TEST_CASE("INFRASTRUCTURE_ENCODER_SW_ENCODER-StressTest") {
 
     TestEncoderConfig conf;
 

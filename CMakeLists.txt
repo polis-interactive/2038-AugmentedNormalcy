@@ -12,6 +12,8 @@ endif()
 if (CMAKE_BUILD_TYPE STREQUAL Debug)
     message("Setting debug flags")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
