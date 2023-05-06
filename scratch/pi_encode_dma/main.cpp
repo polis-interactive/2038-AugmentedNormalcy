@@ -326,6 +326,8 @@ int main(int argc, char *argv[]) {
 
     auto _work_thread = std::make_unique<std::thread>([&]() mutable {
 
+        std::cout << "why" << std::endl;
+
         in_time = Clock::now();
         memcpy((void *)output_mem, (void *) dma_mem, max_size);
 
