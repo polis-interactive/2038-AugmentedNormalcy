@@ -337,8 +337,8 @@ int main(int argc, char *argv[]) {
         buffer.field = V4L2_FIELD_NONE;
         buffer.memory = V4L2_MEMORY_MMAP;
         buffer.length = 1;
-        buffer.timestamp.tv_sec = 0;
-        buffer.timestamp.tv_usec = 0;
+        buffer.timestamp.tv_sec = i * 33000 / 1000000;
+        buffer.timestamp.tv_usec = i * 33000 % 1000000;
         buffer.flags = V4L2_BUF_FLAG_PREPARED;
         buffer.m.planes = planes;
         buffer.m.planes[0].length = max_size;
