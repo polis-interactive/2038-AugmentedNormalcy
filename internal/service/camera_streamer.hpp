@@ -74,20 +74,13 @@ namespace service {
         static std::shared_ptr<CameraStreamer> Create(const CameraStreamerConfig &config);
         CameraStreamer(): _is_started(false) {}
         void Start() {
-            std::cout << "Do I" << std::endl;
             if (_is_started) {
-                std::cout << "even" << std::endl;
                 return;
             }
-            std::cout << "someone" << std::endl;
             _camera->Start();
-            std::cout << "is" << std::endl;
             _encoder->Start();
-            std::cout << "blocking" << std::endl;
             _tcp_context->Start();
-            std::cout << "de" << std::endl;
             _tcp_client->Start();
-            std::cout << "su" << std::endl;
             _is_started = true;
         }
         void Stop() {
