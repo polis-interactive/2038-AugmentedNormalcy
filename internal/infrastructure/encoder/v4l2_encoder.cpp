@@ -310,6 +310,8 @@ namespace infrastructure {
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
 
+        std::cout << "Encoder fd: " << _encoder_fd << std::endl;
+
         for (int i = 0; i < request_downstream_buffers; i++) {
 
             /*
