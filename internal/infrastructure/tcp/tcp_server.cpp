@@ -119,9 +119,10 @@ namespace infrastructure {
             const int buffer_size
     ):
         _socket(std::move(socket)), _manager(manager), _addr(std::move(addr)),
-        _read_timer(socket.get_executor()), _read_timeout(read_timeout),
-        _receive_buffer_pool(TcpCameraBufferPool::Create(buffer_count, buffer_size))
-    {}
+        _read_timer(socket.get_executor()), _read_timeout(read_timeout)
+    {
+        _receive_buffer_pool = TcpCameraBufferPool::Create(buffer_count, buffer_size);
+    }
 
     void TcpCameraSession::Run() {
         std::cout << "TcpCameraSession: creating connection" << std::endl;
@@ -187,6 +188,8 @@ namespace infrastructure {
         std::cout << "maybe?" << std::endl;
         if (_receive_buffer == nullptr) {
             std::cout << "SOMEHOW ENDED UP WITH NULLPTR?" << std::endl;
+        } else {
+            std::cout << "hello?" << std::endl;
         }
         startTimer();
         auto self(shared_from_this());
