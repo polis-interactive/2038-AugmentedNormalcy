@@ -214,8 +214,8 @@ int main(int argc, char *argv[]) {
     v4l2_requestbuffers reqbufs = {};
     reqbufs.count = 1;
     reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    // reqbufs.memory = V4L2_MEMORY_MMAP;
-    reqbufs.memory = V4L2_MEMORY_DMABUF;
+    reqbufs.memory = V4L2_MEMORY_MMAP;
+    // reqbufs.memory = V4L2_MEMORY_DMABUF;
     if (xioctl(encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
         std::cout << errno << std::endl;
         throw std::runtime_error("request for output buffers failed");
@@ -242,20 +242,12 @@ int main(int argc, char *argv[]) {
 
 
     buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.memory = V4L2_MEMORY_DMABUF;
+    buffer.memory = V4L2_MEMORY_MMAP;
+    buffer.index = 0;
     buffer.length = 1;
     buffer.m.planes = planes;
-
     if (xioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
-        throw std::runtime_error("failed to query output buffer");
-
-    print_buffer_info(buffer, planes);
-
-    /*
-
-
-
-
+        throw std::runtime_error("failed to query capture buffer");
 
     auto output_size = buffer.m.planes[0].length;
     auto output_offset = buffer.m.planes[0].m.mem_offset;
@@ -268,10 +260,6 @@ int main(int argc, char *argv[]) {
 
     std::cout << "V4l2 Encoder MMAPed output buffer with size like so: " <<
         output_size << ", " << output_offset << std::endl;
-
-    memcpy((void *)output_mem, (void *) in_buf.data(), max_size);
-
-     */
 
     /*
      * SETUP CAPTURE BUFFERS
@@ -340,14 +328,15 @@ int main(int argc, char *argv[]) {
     buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     buffer.index = 0;
     buffer.field = V4L2_FIELD_NONE;
-    buffer.memory = V4L2_MEMORY_DMABUF;
+    buffer.memory = V4L2_MEMORY_MMAP;
     buffer.length = 1;
     buffer.timestamp.tv_sec = 0;
     buffer.timestamp.tv_usec = 0;
     buffer.flags = V4L2_BUF_FLAG_PREPARED;
     buffer.m.planes = planes;
-    buffer.m.planes[0].length = 1990656;
-    buffer.m.planes[0].m.fd = dma_fd;
+    buffer.m.planes[0].length = max_size;
+    buffer.m.planes[0].bytesused = max_size;
+    buffer.m.planes[0].m.mem_offset = output_offset;
     if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
 
@@ -360,11 +349,14 @@ int main(int argc, char *argv[]) {
     buffer.timestamp.tv_sec = 0;
     buffer.timestamp.tv_usec = 33000;
 
+    in_time = Clock::now();
+    memcpy((void *)output_mem, (void *) dma_mem, max_size);
+
 
     if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
 
-    in_time = Clock::now();
+
     std::cout << "did multiple cycles" << std::endl;
 
     /*
