@@ -53,45 +53,6 @@ namespace infrastructure {
         if (xioctl(_encoder_fd, VIDIOC_STREAMON, &type) < 0)
             throw std::runtime_error("failed to start capture");
 
-
-        v4l2_plane planes[VIDEO_MAX_PLANES];
-        v4l2_buffer buffer = {};
-        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buffer.index = 0;
-        buffer.field = V4L2_FIELD_NONE;
-        buffer.memory = V4L2_MEMORY_MMAP;
-        buffer.length = 1;
-        buffer.timestamp.tv_sec = 0;
-        buffer.timestamp.tv_usec = 0;
-        buffer.flags = V4L2_BUF_FLAG_PREPARED;
-        buffer.m.planes = planes;
-        buffer.m.planes[0].length = 1990656;
-        buffer.m.planes[0].bytesused = 1990656;
-        buffer.m.planes[0].m.mem_offset = 0;
-        if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
-            perror("ioctl VIDIOC_QBUF failed");
-            throw std::runtime_error("failed to queue output buffer early");
-        }
-
-        if (!waitForEncoder()) {
-            std::cout << "I think this should be an error..." << std::endl;
-            return;
-        }
-
-        buffer = {};
-        memset(planes, 0, sizeof(planes));
-        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buffer.memory = V4L2_MEMORY_MMAP;
-        buffer.length = 1;
-        buffer.m.planes = planes;
-        if (xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer) < 0) {
-            perror("ioctl VIDIOC_DQBUF failed");
-            throw std::runtime_error("failed to dequee output buffer early");
-        }
-
-
-
-
         _is_primed = false;
         _work_stop = false;
 
@@ -357,6 +318,12 @@ namespace infrastructure {
                       ", " << (void *) output_mem << std::endl;
 
 
+            if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+                throw std::runtime_error("failed to dequeue capture buffer early");
+
+            if (xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+                throw std::runtime_error("failed to dequeue capture buffer early");
+
             /*
              * Create proxy
              */
@@ -411,6 +378,13 @@ namespace infrastructure {
             );
             if (capture_mem == MAP_FAILED)
                 throw std::runtime_error("failed to mmap output buffer");
+
+            /*
+             * queue buffer
+             */
+
+            if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+                throw std::runtime_error("failed to dequeue capture buffer");
 
             auto downstream_buffer = new EncoderBuffer(buffer.index, capture_mem, capture_size, capture_offset);
             _downstream_buffers.insert({ buffer.index, downstream_buffer });
