@@ -139,7 +139,7 @@ namespace infrastructure {
         }
 
         /*
-         * dequeue output buffer, wait for it to finish
+         * queue output buffer, wait for it to finish
          */
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
@@ -149,6 +149,8 @@ namespace infrastructure {
         buffer.field = V4L2_FIELD_NONE;
         buffer.memory = V4L2_MEMORY_DMABUF;
         buffer.length = 1;
+        buffer.timestamp.tv_sec = 156 / 1000000;
+        buffer.timestamp.tv_usec = 156 % 1000000;
         buffer.m.planes = planes;
         buffer.m.planes[0].m.fd = cam_buffer->GetFd();
         buffer.m.planes[0].bytesused = cam_buffer->GetSize();
@@ -250,9 +252,8 @@ namespace infrastructure {
         fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_YUV420;
         fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
         fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
-        fmt.fmt.pix_mp.num_planes = 1;
         fmt.fmt.pix_mp.plane_fmt[0].bytesperline = _width_height.first;
-        fmt.fmt.pix_mp.plane_fmt[0].sizeimage = _width_height.first * _width_height.second * 3 / 2;
+        fmt.fmt.pix_mp.num_planes = 1;
 
         if (xioctl(_encoder_fd, VIDIOC_S_FMT, &fmt))
             throw std::runtime_error("failed to set output caps");
