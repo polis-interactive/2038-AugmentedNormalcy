@@ -267,7 +267,6 @@ namespace infrastructure {
         fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
         fmt.fmt.pix_mp.num_planes = 1;
         fmt.fmt.pix_mp.plane_fmt[0].bytesperline = _width_height.first;
-        fmt.fmt.pix_mp.plane_fmt[0].sizeimage = _width_height.first * _width_height.second * 3 / 2;
 
         if (xioctl(_encoder_fd, VIDIOC_S_FMT, &fmt))
             throw std::runtime_error("failed to set output caps");
