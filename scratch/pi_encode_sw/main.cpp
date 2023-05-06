@@ -124,7 +124,8 @@ int main(int argc, char *argv[]) {
     std::chrono::duration<double> encode_time(0);
     uint32_t frames = 0;
 
-    uint8_t *encoded_buffer = nullptr;
+    auto enc_buffer = new uint8_t[1990656];
+    std::cout << (void *) enc_buffer << std::endl;
     size_t buffer_len = 0;
 
     for (int inc = 0; inc < 500; inc++) {
@@ -141,8 +142,8 @@ int main(int argc, char *argv[]) {
         cinfo.raw_data_in = TRUE;
         jpeg_set_quality(&cinfo, 192, TRUE);
 
-        jpeg_mem_len_t jpeg_mem_len;
-        jpeg_mem_dest(&cinfo, &encoded_buffer, &jpeg_mem_len);
+        jpeg_mem_len_t jpeg_mem_len = 1990656;
+        jpeg_mem_dest(&cinfo, &enc_buffer, &jpeg_mem_len);
         jpeg_start_compress(&cinfo, TRUE);
 
         int stride2 = stride / 2;
@@ -172,17 +173,22 @@ int main(int argc, char *argv[]) {
         buffer_len = jpeg_mem_len;
 
         encode_time += (std::chrono::high_resolution_clock::now() - start_time);
+
     }
+
+
+    std::cout << (void *) enc_buffer << std::endl;
 
 
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(encode_time);
     std::cout << "Time to encode: " << d1.count() / 500 << std::endl;
 
     std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-    test_file_out.write((char *) encoded_buffer, buffer_len);
+    test_file_out.write((char *) enc_buffer, buffer_len);
     test_file_out.flush();
     test_file_out.close();
 
+    delete []enc_buffer;
 
     /*
      * CLEANUP
