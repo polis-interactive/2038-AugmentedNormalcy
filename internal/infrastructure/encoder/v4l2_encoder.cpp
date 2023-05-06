@@ -35,8 +35,8 @@ namespace infrastructure {
         auto upstream_count = config.get_encoder_upstream_buffer_count();
         auto downstream_count = config.get_encoder_downstream_buffer_count();
         setupEncoder();
-        setupDownstreamBuffers(downstream_count);
         setupUpstreamBuffers(upstream_count);
+        setupDownstreamBuffers(downstream_count);
     }
 
     void V4l2Encoder::Start() {
@@ -411,13 +411,6 @@ namespace infrastructure {
             );
             if (capture_mem == MAP_FAILED)
                 throw std::runtime_error("failed to mmap output buffer");
-
-            /*
-             * queue buffer
-             */
-
-            if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
-                throw std::runtime_error("failed to dequeue capture buffer");
 
             auto downstream_buffer = new EncoderBuffer(buffer.index, capture_mem, capture_size, capture_offset);
             _downstream_buffers.insert({ buffer.index, downstream_buffer });
