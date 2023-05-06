@@ -324,7 +324,7 @@ int main(int argc, char *argv[]) {
      */
 
     in_time = Clock::now();
-    memcpy((void *)output_mem, (void *) dma_mem, max_size);
+    // memcpy((void *)output_mem, (void *) dma_mem, max_size);
 
     buffer = {};
     memset(planes, 0, sizeof(planes));
