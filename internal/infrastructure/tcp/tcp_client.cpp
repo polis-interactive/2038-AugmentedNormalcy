@@ -111,12 +111,14 @@ namespace infrastructure {
             [this, s = std::move(self), last_bytes](error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
                 auto total_bytes = last_bytes + bytes_written;
-                if (!ec && total_bytes == _header.Size()) {
-                    writeBody();
-                    return;
-                } else if (total_bytes < _header.Size()) {
-                    writeHeader(total_bytes);
-                    return;
+                if (!ec) {
+                    if (total_bytes == _header.Size()) {
+                        writeBody();
+                        return;
+                    } else if (total_bytes < _header.Size()) {
+                        writeHeader(total_bytes);
+                        return;
+                    }
                 }
                 std::cout << "TcpClient: error writing header: ";
                 if (ec) {
