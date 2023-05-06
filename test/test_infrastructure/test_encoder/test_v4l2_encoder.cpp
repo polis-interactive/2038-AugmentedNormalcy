@@ -17,10 +17,10 @@ typedef std::chrono::high_resolution_clock Clock;
 
 class TestEncoderConfig : public infrastructure::EncoderConfig {
     [[nodiscard]] unsigned int get_encoder_upstream_buffer_count() const override {
-        return 3;
+        return 1;
     };
     [[nodiscard]] unsigned int get_encoder_downstream_buffer_count() const override {
-        return 3;
+        return 5;
     };
     [[nodiscard]] std::pair<int, int> get_encoder_width_height() const override {
         return { 1536, 864 };
