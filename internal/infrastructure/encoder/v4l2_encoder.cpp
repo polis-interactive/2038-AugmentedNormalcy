@@ -137,13 +137,7 @@ namespace infrastructure {
         if (output_buffer == nullptr) {
             return;
         }
-        std::cout << output_buffer->GetMemory() << ", "
-            << output_buffer->GetSize() << ", "
-            << output_buffer->GetIndex() << ", "
-            << output_buffer->GetOffset() << ", "
-            << cam_buffer->GetMemory() << ", "
-            << cam_buffer->GetSize() << std::endl;
-        memcpy(output_buffer->GetMemory(), cam_buffer->GetMemory(), cam_buffer->GetSize());
+        // memcpy(output_buffer->GetMemory(), cam_buffer->GetMemory(), cam_buffer->GetSize());
 
 
         /*
@@ -153,7 +147,7 @@ namespace infrastructure {
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
         buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buffer.index = output_buffer->GetIndex();
+        buffer.index = 0;
         buffer.field = V4L2_FIELD_NONE;
         buffer.memory = V4L2_MEMORY_MMAP;
         buffer.length = 1;
@@ -161,9 +155,9 @@ namespace infrastructure {
         buffer.timestamp.tv_usec = 0;
         buffer.flags = V4L2_BUF_FLAG_PREPARED;
         buffer.m.planes = planes;
-        buffer.m.planes[0].length = output_buffer->GetSize();
-        buffer.m.planes[0].bytesused = output_buffer->GetSize();
-        buffer.m.planes[0].m.mem_offset = output_buffer->GetOffset();
+        buffer.m.planes[0].length = 1990656;
+        buffer.m.planes[0].bytesused = 1990656;
+        buffer.m.planes[0].m.mem_offset = 0;
         if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
             perror("ioctl VIDIOC_QBUF failed");
             throw std::runtime_error("failed to queue output buffer");
@@ -339,43 +333,6 @@ namespace infrastructure {
              */
 
             auto upstream_buffer = new EncoderBuffer(buffer.index, output_mem, output_size, output_offset);
-
-            if (i == 0) {
-
-                int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-                if (xioctl(_encoder_fd, VIDIOC_STREAMON, &type) < 0)
-                    throw std::runtime_error("failed to start output");
-
-                type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-                if (xioctl(_encoder_fd, VIDIOC_STREAMON, &type) < 0)
-                    throw std::runtime_error("failed to start capture");
-
-
-                buffer = {};
-                memset(planes, 0, sizeof(planes));
-                buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-                buffer.index = 0;
-                buffer.field = V4L2_FIELD_NONE;
-                buffer.memory = V4L2_MEMORY_MMAP;
-                buffer.length = 1;
-                buffer.timestamp.tv_sec = 0;
-                buffer.timestamp.tv_usec = 0;
-                buffer.flags = V4L2_BUF_FLAG_PREPARED;
-                buffer.m.planes = planes;
-                buffer.m.planes[0].length = output_size;
-                buffer.m.planes[0].bytesused = output_size;
-                buffer.m.planes[0].m.mem_offset = output_offset;
-                if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
-                    perror("ioctl VIDIOC_QBUF failed");
-                    throw std::runtime_error("failed to queue output buffer early");
-                }
-                if (xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer) < 0) {
-                    perror("ioctl VIDIOC_DQBUF failed");
-                    throw std::runtime_error("failed to dequeue output buffer early");
-                }
-                std::cout << "got through!" << std::endl;
-            }
-
             _available_upstream_buffers.push(upstream_buffer);
         }
     }
