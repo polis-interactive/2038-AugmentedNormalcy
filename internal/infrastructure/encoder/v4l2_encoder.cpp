@@ -148,12 +148,12 @@ namespace infrastructure {
         buffer.memory = V4L2_MEMORY_DMABUF;
         buffer.length = 1;
         buffer.m.planes = planes;
-        buffer.index = index;
-        buffer.m.planes[0].m.fd = cam_buffer->GetFd();
-        buffer.m.planes[0].length = cam_buffer->GetSize();
-        buffer.m.planes[0].bytesused = cam_buffer->GetSize();
+        buffer.index = 0;
+        buffer.m.planes[0].m.fd = 5;
+        buffer.m.planes[0].length = 1990656;
+        buffer.m.planes[0].bytesused = 1990656;
         if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
-            perror("ioctl VIDIOC_S_FMT failed");
+            perror("ioctl VIDIOC_QBUF failed");
             throw std::runtime_error("failed to queue output buffer");
         }
 
@@ -243,7 +243,7 @@ namespace infrastructure {
         _encoder_fd = open(_device_name, O_RDWR, 0);
 
         v4l2_fmtdesc fmtdesc{0};
-        fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
+        fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         std::cout << "Wants caps: "
                   << "FourCC: " << static_cast<char>((V4L2_PIX_FMT_YUV420 >> 0) & 0xFF)
                   << static_cast<char>((V4L2_PIX_FMT_YUV420 >> 8) & 0xFF)
