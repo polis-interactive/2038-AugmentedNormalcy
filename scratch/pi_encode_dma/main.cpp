@@ -241,7 +241,6 @@ int main(int argc, char *argv[]) {
 
     buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
     buffer.memory = V4L2_MEMORY_DMABUF;
-    buffer.index = 0;
     buffer.length = 1;
     buffer.m.planes = planes;
 
