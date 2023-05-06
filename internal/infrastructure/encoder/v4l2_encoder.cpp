@@ -333,11 +333,38 @@ namespace infrastructure {
                       output_size << ", " << output_offset << ", " << buffer.index <<
                       ", " << (void *) output_mem << std::endl;
 
+
             /*
              * Create proxy
              */
 
             auto upstream_buffer = new EncoderBuffer(buffer.index, output_mem, output_size, output_offset);
+
+            if (i == 0) {
+                buffer = {};
+                memset(planes, 0, sizeof(planes));
+                buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+                buffer.index = upstream_buffer->GetIndex();
+                buffer.field = V4L2_FIELD_NONE;
+                buffer.memory = V4L2_MEMORY_MMAP;
+                buffer.length = 1;
+                buffer.timestamp.tv_sec = 0;
+                buffer.timestamp.tv_usec = 0;
+                buffer.flags = V4L2_BUF_FLAG_PREPARED;
+                buffer.m.planes = planes;
+                buffer.m.planes[0].length = upstream_buffer->GetSize();
+                buffer.m.planes[0].bytesused = upstream_buffer->GetSize();
+                buffer.m.planes[0].m.mem_offset = upstream_buffer->GetOffset();
+                if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
+                    perror("ioctl VIDIOC_QBUF failed");
+                    throw std::runtime_error("failed to queue output buffer early");
+                }
+                if (xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer) < 0) {
+                    perror("ioctl VIDIOC_DQBUF failed");
+                    throw std::runtime_error("failed to dequeue output buffer early");
+                }
+            }
+
             _available_upstream_buffers.push(upstream_buffer);
         }
     }
