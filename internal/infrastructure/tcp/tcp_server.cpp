@@ -186,11 +186,13 @@ namespace infrastructure {
         }
 
         std::cout << "maybe?" << std::endl;
-        if (_receive_buffer == nullptr) {
-            std::cout << "SOMEHOW ENDED UP WITH NULLPTR?" << std::endl;
-        } else {
-            std::cout << "hello?" << std::endl;
-        }
+        std::cout << (void *) _receive_buffer.get() << std::endl;
+        std::cout << _receive_buffer->GetMemory() << std::endl;
+        std::cout << _header.DataLength() << std::endl;
+        std::cout << _header.BytesWritten() << std::endl;
+
+        std::cout << "Passed" << std::endl;
+
         startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
