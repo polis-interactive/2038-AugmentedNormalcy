@@ -137,7 +137,7 @@ namespace infrastructure {
         buffer.length = 1;
         buffer.m.planes = planes;
 
-        if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+        if (xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer) < 0)
             throw std::runtime_error("failed to deque capture buffer early");
 
         if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
