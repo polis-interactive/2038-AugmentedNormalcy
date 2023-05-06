@@ -101,8 +101,6 @@ int main(int argc, char *argv[]) {
     std::array<char, 1990656> in_buf = {};
     test_in_file.read(in_buf.data(), max_size);
 
-    std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
-
     /*
      * CREATE DMA BUFFER
      */
@@ -128,53 +126,57 @@ int main(int argc, char *argv[]) {
 
     uint8_t *encoded_buffer = nullptr;
     size_t buffer_len = 0;
-    in_time = std::chrono::high_resolution_clock::now();
 
+    for (int inc = 0; inc < 500; inc++) {
 
-    cinfo.image_width = width;
-    cinfo.image_height = height;
-    cinfo.input_components = 3;
-    cinfo.in_color_space = JCS_YCbCr;
-    cinfo.restart_interval = 0;
+        auto start_time = std::chrono::high_resolution_clock::now();
 
-    jpeg_set_defaults(&cinfo);
-    cinfo.raw_data_in = TRUE;
-    jpeg_set_quality(&cinfo, 192, TRUE);
+        cinfo.image_width = width;
+        cinfo.image_height = height;
+        cinfo.input_components = 3;
+        cinfo.in_color_space = JCS_YCbCr;
+        cinfo.restart_interval = 0;
 
-    jpeg_mem_len_t jpeg_mem_len;
-    jpeg_mem_dest(&cinfo, &encoded_buffer, &jpeg_mem_len);
-    jpeg_start_compress(&cinfo, TRUE);
+        jpeg_set_defaults(&cinfo);
+        cinfo.raw_data_in = TRUE;
+        jpeg_set_quality(&cinfo, 192, TRUE);
 
-    int stride2 = stride / 2;
-    uint8_t *Y = (uint8_t *) dma_mem;
-    uint8_t *U = (uint8_t *)Y + stride * height;
-    uint8_t *V = (uint8_t *)U + stride2 * (height / 2);
-    uint8_t *Y_max = U - stride;
-    uint8_t *U_max = V - stride2;
-    uint8_t *V_max = U_max + stride2 * (height / 2);
+        jpeg_mem_len_t jpeg_mem_len;
+        jpeg_mem_dest(&cinfo, &encoded_buffer, &jpeg_mem_len);
+        jpeg_start_compress(&cinfo, TRUE);
 
-    JSAMPROW y_rows[16];
-    JSAMPROW u_rows[8];
-    JSAMPROW v_rows[8];
+        int stride2 = stride / 2;
+        uint8_t *Y = (uint8_t *) dma_mem;
+        uint8_t *U = (uint8_t *)Y + stride * height;
+        uint8_t *V = (uint8_t *)U + stride2 * (height / 2);
+        uint8_t *Y_max = U - stride;
+        uint8_t *U_max = V - stride2;
+        uint8_t *V_max = U_max + stride2 * (height / 2);
 
-    for (uint8_t *Y_row = Y, *U_row = U, *V_row = V; cinfo.next_scanline < height;)
-    {
-        for (int i = 0; i < 16; i++, Y_row += stride)
-            y_rows[i] = std::min(Y_row, Y_max);
-        for (int i = 0; i < 8; i++, U_row += stride2, V_row += stride2)
-            u_rows[i] = std::min(U_row, U_max), v_rows[i] = std::min(V_row, V_max);
+        JSAMPROW y_rows[16];
+        JSAMPROW u_rows[8];
+        JSAMPROW v_rows[8];
 
-        JSAMPARRAY rows[] = { y_rows, u_rows, v_rows };
-        jpeg_write_raw_data(&cinfo, rows, 16);
+        for (uint8_t *Y_row = Y, *U_row = U, *V_row = V; cinfo.next_scanline < height;)
+        {
+            for (int i = 0; i < 16; i++, Y_row += stride)
+                y_rows[i] = std::min(Y_row, Y_max);
+            for (int i = 0; i < 8; i++, U_row += stride2, V_row += stride2)
+                u_rows[i] = std::min(U_row, U_max), v_rows[i] = std::min(V_row, V_max);
+
+            JSAMPARRAY rows[] = { y_rows, u_rows, v_rows };
+            jpeg_write_raw_data(&cinfo, rows, 16);
+        }
+
+        jpeg_finish_compress(&cinfo);
+        buffer_len = jpeg_mem_len;
+
+        encode_time += (std::chrono::high_resolution_clock::now() - start_time);
     }
 
-    jpeg_finish_compress(&cinfo);
-    buffer_len = jpeg_mem_len;
 
-    out_time = std::chrono::high_resolution_clock::now();
-
-    auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
-    std::cout << "Time to encode: " << d1.count() << std::endl;
+    auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(encode_time);
+    std::cout << "Time to encode: " << d1.count() / 500 << std::endl;
 
     std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
     test_file_out.write((char *) encoded_buffer, buffer_len);
