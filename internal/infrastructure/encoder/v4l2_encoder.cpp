@@ -137,7 +137,12 @@ namespace infrastructure {
         if (output_buffer == nullptr) {
             return;
         }
-
+        std::cout << output_buffer->GetMemory() << ", "
+            << output_buffer->GetSize() << ", "
+            << output_buffer->GetIndex() << ", "
+            << output_buffer->GetOffset() << ", "
+            << cam_buffer->GetMemory() << ", "
+            << cam_buffer->GetSize() << std::endl;
         memcpy(output_buffer->GetMemory(), cam_buffer->GetMemory(), cam_buffer->GetSize());
 
 
