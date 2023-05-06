@@ -91,6 +91,8 @@ namespace infrastructure {
         std::mutex _available_upstream_buffers_mutex;
         std::queue<EncoderBuffer*> _available_upstream_buffers;
 
+        void *_output_mem = nullptr;
+
         std::mutex _work_mutex;
         std::condition_variable _work_cv;
         std::queue<std::shared_ptr<CameraBuffer>> _work_queue;
