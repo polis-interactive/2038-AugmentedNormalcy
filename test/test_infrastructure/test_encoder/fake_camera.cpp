@@ -43,6 +43,14 @@ int alloc_dma_buf(size_t size, int* fd, void** addr) {
         return -1;
     }
 
+    const char *name = "brrose";
+    if (fxioctl(alloc_data.fd, DMA_BUF_SET_NAME, &name) < 0) {
+        close(heap_fd);
+        perror("ioctl DMA_HEAP_IOCTL_ALLOC failed");
+        return -1;
+    }
+    std::cout << name << std::endl;
+
     *addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, alloc_data.fd, 0);
     if (*addr == MAP_FAILED) {
         perror("mmap failed");
