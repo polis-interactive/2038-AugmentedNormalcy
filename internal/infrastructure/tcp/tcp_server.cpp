@@ -142,9 +142,12 @@ namespace infrastructure {
         _read_timer.expires_from_now(boost::posix_time::seconds(_read_timeout));
         auto self(shared_from_this());
         _read_timer.async_wait([this, s = std::move(self)](error_code ec) {
+            std::cout << "AM" << std::endl;
             if (!ec) {
+                std::cout << "i" << std::endl;
                 TryClose(true);
             }
+            std::cout << "called" << std::endl;
         });
     }
 
