@@ -244,7 +244,12 @@ namespace infrastructure {
 
         v4l2_fmtdesc fmtdesc{0};
         fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        std::cout << "Wants caps: " << V4L2_PIX_FMT_YUV420 << std::endl;
+        std::cout << "Wants caps: "
+                  << "FourCC: " << static_cast<char>((V4L2_PIX_FMT_YUV420 >> 0) & 0xFF)
+                  << static_cast<char>((V4L2_PIX_FMT_YUV420 >> 8) & 0xFF)
+                  << static_cast<char>((V4L2_PIX_FMT_YUV420 >> 16) & 0xFF)
+                  << static_cast<char>((V4L2_PIX_FMT_YUV420 >> 24) & 0xFF)
+                  << std::endl;
         for (int i = 0;; ++i) {
             fmtdesc.index = i;
             if (xioctl(_encoder_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
@@ -273,7 +278,12 @@ namespace infrastructure {
 
         fmtdesc = {};
         fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        std::cout << "Wants caps: " << V4L2_PIX_FMT_MJPEG << std::endl;
+        std::cout << "Wants caps: "
+                << "FourCC: " << static_cast<char>((V4L2_PIX_FMT_MJPEG >> 0) & 0xFF)
+                << static_cast<char>((V4L2_PIX_FMT_MJPEG >> 8) & 0xFF)
+                << static_cast<char>((V4L2_PIX_FMT_MJPEG >> 16) & 0xFF)
+                << static_cast<char>((V4L2_PIX_FMT_MJPEG >> 24) & 0xFF)
+                << std::endl;
         for (int i = 0;; ++i) {
             fmtdesc.index = i;
             if (xioctl(_encoder_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
