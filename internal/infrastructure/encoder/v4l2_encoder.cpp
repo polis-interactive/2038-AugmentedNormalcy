@@ -170,6 +170,8 @@ namespace infrastructure {
             memcpy(_output_mem, cam_buffer->GetMemory(), cam_buffer->GetSize());
         }
 
+        std::cout << "got here" << std::endl;
+
 
         /*
          * queue output buffer, wait for it to finish
