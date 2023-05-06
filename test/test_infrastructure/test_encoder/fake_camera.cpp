@@ -29,9 +29,9 @@ int alloc_dma_buf(size_t size, int* fd, void** addr) {
     int ret;
     struct dma_heap_allocation_data alloc_data = {0};
     alloc_data.len = size;
-    alloc_data.fd = -1;
+    alloc_data.fd_flags = O_CLOEXEC | O_RDWR;
 
-    int heap_fd = open("/dev/dma_heap/system", O_RDWR);
+    int heap_fd = open("/dev/dma_heap/system", O_RDWR | O_CLOEXEC, 0);
     if (heap_fd < 0) {
         perror("Error opening file");
         return -1;
