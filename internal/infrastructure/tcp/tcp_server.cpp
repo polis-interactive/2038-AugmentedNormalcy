@@ -183,7 +183,11 @@ namespace infrastructure {
         if (_receive_buffer == nullptr) {
             _receive_buffer = _receive_buffer_pool->GetCameraBuffer();
         }
+
         std::cout << "maybe?" << std::endl;
+        if (_receive_buffer == nullptr) {
+            std::cout << "SOMEHOW ENDED UP WITH NULLPTR?" << std::endl;
+        }
         startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
