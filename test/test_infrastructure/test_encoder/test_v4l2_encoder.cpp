@@ -20,7 +20,7 @@ class TestEncoderConfig : public infrastructure::EncoderConfig {
         return 1;
     };
     [[nodiscard]] unsigned int get_encoder_downstream_buffer_count() const override {
-        return 5;
+        return 1;
     };
     [[nodiscard]] std::pair<int, int> get_encoder_width_height() const override {
         return { 1536, 864 };
