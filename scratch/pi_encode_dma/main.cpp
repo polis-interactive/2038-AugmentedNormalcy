@@ -326,6 +326,8 @@ int main(int argc, char *argv[]) {
 
     auto _work_thread = std::make_unique<std::thread>([&]() mutable {
 
+        for (int i = 0; i < 500; i++) {
+
         std::cout << "why" << std::endl;
 
         in_time = Clock::now();
@@ -368,7 +370,7 @@ int main(int argc, char *argv[]) {
             throw std::runtime_error("failed to dequeue capture buffer");
 
         out_time = Clock::now();
-
+        if (i == 350) {
         auto out_size = buffer.m.planes[0].bytesused;
         std::cout << "v4l2 decoder dequeued capture buffer with size: " << out_size << std::endl;
 
@@ -376,6 +378,12 @@ int main(int argc, char *argv[]) {
         test_file_out.write((char *) capture_mem, out_size);
         test_file_out.flush();
         test_file_out.close();
+        }
+
+            if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+                throw std::runtime_error("failed to queue capture buffer");
+
+        }
 
     });
 
