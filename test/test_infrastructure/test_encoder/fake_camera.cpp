@@ -81,6 +81,8 @@ FakeCamera::FakeCamera(const int buffer_count) {
     v4l2_buffer buffer = {};
     v4l2_exportbuffer expbuf = {};
 
+    std::cout << "Decoder fd: " << _camera_fd << std::endl;
+
     for (int i = 0; i < buffer_count; i++) {
 
         buffer = {};
@@ -118,7 +120,7 @@ FakeCamera::FakeCamera(const int buffer_count) {
         if (fxioctl(_camera_fd, VIDIOC_EXPBUF, &expbuf) < 0)
             throw std::runtime_error("failed to export the capture buffer");
 
-        std::cout << expbuf.fd << std::endl;
+        std::cout << "exp buffer params: " << expbuf.fd << ", " << capture_size << std::endl;
 
         auto camera_buffer = new CameraBuffer(&buffer.index, capture_mem, expbuf.fd, capture_size, 0);
         _camera_buffers.push_back(camera_buffer);
