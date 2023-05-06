@@ -88,7 +88,6 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-Encode_a_frame") {
         encoder->Start();
         auto buffer = camera.GetBuffer();
         memcpy((char *)buffer->GetMemory(), in_buf.data(), 1990656);
-        std::this_thread::sleep_for(20s);
         encoder->PostCameraBuffer(std::move(buffer));
         in_time = Clock::now();
         std::this_thread::sleep_for(100ms);
