@@ -406,6 +406,7 @@ namespace infrastructure {
     }
 
     V4l2Encoder::~V4l2Encoder() {
+        std::cout << "I get called early" << std::endl;
         Stop();
         teardownUpstreamBuffers();
         teardownDownstreamBuffers();
