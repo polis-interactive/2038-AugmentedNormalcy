@@ -126,33 +126,34 @@ namespace infrastructure {
     void V4l2Encoder::encodeBuffer(std::shared_ptr<CameraBuffer> &&cam_buffer) {
 
         // in the future, we may need this; but as is, we run synchronously so meh
-        int index = -1;
+        EncoderBuffer *output_buffer = nullptr;
         {
             std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
             if (!_available_upstream_buffers.empty()) {
-                index = _available_upstream_buffers.front();
+                output_buffer = _available_upstream_buffers.front();
                 _available_upstream_buffers.pop();
             }
         }
-        if (index == -1) {
+        if (output_buffer == nullptr) {
             return;
         }
 
+        memcpy(output_buffer->GetMemory(), cam_buffer->GetMemory(), cam_buffer->GetSize());
+
+
         /*
-         * dequeue output buffer, wait for it to finish
+         * queue output buffer, wait for it to finish
          */
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
         buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buffer.index = index;
+        buffer.index = output_buffer->GetIndex();
         buffer.field = V4L2_FIELD_NONE;
-        buffer.memory = V4L2_MEMORY_DMABUF;
+        buffer.memory = V4L2_MEMORY_MMAP;
         buffer.length = 1;
         buffer.m.planes = planes;
-        buffer.m.planes[0].m.fd = cam_buffer->GetFd();
-        buffer.m.planes[0].bytesused = 0;
-        buffer.m.planes[0].length = cam_buffer->GetSize();
+        buffer.m.planes[0].bytesused = output_buffer->GetSize();
         if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
             perror("ioctl VIDIOC_QBUF failed");
             throw std::runtime_error("failed to queue output buffer");
@@ -278,7 +279,7 @@ namespace infrastructure {
         v4l2_requestbuffers reqbufs = {};
         reqbufs.count = request_upstream_buffers;
         reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        reqbufs.memory = V4L2_MEMORY_DMABUF;
+        reqbufs.memory = V4L2_MEMORY_MMAP;
         if (xioctl(_encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
             throw std::runtime_error("request for output buffers failed");
         } else if (reqbufs.count != request_upstream_buffers) {
@@ -287,9 +288,49 @@ namespace infrastructure {
             throw std::runtime_error(out_str.str());
         }
 
-        for (unsigned int i = 0; i < reqbufs.count; i++)
-            _available_upstream_buffers.push(i);
+        v4l2_plane planes[VIDEO_MAX_PLANES];
+        v4l2_buffer buffer = {};
 
+        for (int i = 0; i < request_upstream_buffers; i++) {
+
+            /*
+             * Get buffer
+             */
+
+            buffer = {};
+            memset(planes, 0, sizeof(planes));
+            buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+            buffer.memory = V4L2_MEMORY_MMAP;
+            buffer.index = i;
+            buffer.length = 1;
+            buffer.m.planes = planes;
+
+            if (xioctl(_encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+                throw std::runtime_error("failed to query output buffer");
+
+            /*
+             * mmap buffer
+             */
+
+            auto output_size = buffer.m.planes[0].length;
+            auto output_offset = buffer.m.planes[0].m.mem_offset;
+            auto output_mem = mmap(
+                    nullptr, output_size, PROT_READ | PROT_WRITE, MAP_SHARED, _encoder_fd, output_offset
+            );
+            if (output_mem == MAP_FAILED)
+                throw std::runtime_error("failed to mmap output buffer");
+
+            std::cout << "V4l2 Decoder MMAPed output buffer with size like so: " <<
+                      output_size << ", " << output_offset << ", " << buffer.index <<
+                      ", " << (void *) output_mem << std::endl;
+
+            /*
+             * Create proxy
+             */
+
+            auto upstream_buffer = new EncoderBuffer(buffer.index, output_mem, output_size);
+            _available_upstream_buffers.push(upstream_buffer);
+        }
     }
 
     void V4l2Encoder::setupDownstreamBuffers(unsigned int request_downstream_buffers) {

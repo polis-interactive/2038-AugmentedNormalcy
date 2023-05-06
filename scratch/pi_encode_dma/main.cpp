@@ -345,6 +345,7 @@ int main(int argc, char *argv[]) {
 
     std::cout << "v4l2 decoder queued output buffer" << std::endl;
 
+    /*
 
     if (xioctl(encoder_fd, VIDIOC_DQBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
@@ -357,6 +358,8 @@ int main(int argc, char *argv[]) {
 
     if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
+
+    */
 
 
     std::cout << "did multiple cycles" << std::endl;

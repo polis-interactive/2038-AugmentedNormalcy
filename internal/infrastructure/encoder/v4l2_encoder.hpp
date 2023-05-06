@@ -22,7 +22,8 @@ namespace infrastructure {
         EncoderBuffer(unsigned int buffer_index, void *memory, std::size_t size):
                 _buffer_index(buffer_index),
                 _memory(memory),
-                _max_size(size)
+                _max_size(size),
+                _size(size)
         {}
 
         [[nodiscard]] void *GetMemory() override {
@@ -83,7 +84,7 @@ namespace infrastructure {
         std::atomic<bool> _is_primed = false;
 
         std::mutex _available_upstream_buffers_mutex;
-        std::queue<unsigned int> _available_upstream_buffers;
+        std::queue<EncoderBuffer*> _available_upstream_buffers;
 
         std::mutex _work_mutex;
         std::condition_variable _work_cv;
