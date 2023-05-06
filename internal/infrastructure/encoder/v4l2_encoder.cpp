@@ -151,6 +151,7 @@ namespace infrastructure {
         buffer.length = 1;
         buffer.m.planes = planes;
         buffer.m.planes[0].m.fd = cam_buffer->GetFd();
+        std::cout << "queueing buffer: " << cam_buffer->GetFd() << std::endl;
         if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
             perror("xioctl VIDIOC_QBUF failed");
             throw std::runtime_error("failed to queue output buffer");
