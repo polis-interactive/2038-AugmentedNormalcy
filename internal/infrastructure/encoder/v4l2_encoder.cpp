@@ -204,7 +204,7 @@ namespace infrastructure {
         ret = xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer);
         if (ret == 0) {
             std::lock_guard<std::mutex> lock(_available_upstream_buffers_mutex);
-            _available_upstream_buffers.push(buffer.index);
+            _available_upstream_buffers.push(output_buffer);
         }
 
     }
@@ -400,6 +400,12 @@ namespace infrastructure {
     }
 
     void V4l2Encoder::teardownUpstreamBuffers() {
+        while(!_available_upstream_buffers.empty()) {
+            auto buffer = _available_upstream_buffers.front();
+            _available_upstream_buffers.pop();
+            munmap(buffer->GetMemory(), buffer->GetSize());
+            delete buffer;
+        }
         v4l2_requestbuffers reqbufs = {};
         reqbufs.count = 0;
         reqbufs.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -412,6 +418,7 @@ namespace infrastructure {
     void V4l2Encoder::teardownDownstreamBuffers() {
         for (auto [index, buffer] : _downstream_buffers) {
             munmap(buffer->GetMemory(), buffer->GetSize());
+            delete buffer;
         }
         v4l2_requestbuffers reqbufs = {};
         reqbufs.count = 0;
