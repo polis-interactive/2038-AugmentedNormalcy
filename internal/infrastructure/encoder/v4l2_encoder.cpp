@@ -151,7 +151,7 @@ namespace infrastructure {
         buffer.length = 1;
         buffer.m.planes = planes;
         buffer.m.planes[0].m.fd = cam_buffer->GetFd();
-        buffer.m.planes[0].bytesused = cam_buffer->GetSize();
+        buffer.m.planes[0].bytesused = 0;
         buffer.m.planes[0].length = cam_buffer->GetSize();
         if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
             perror("ioctl VIDIOC_QBUF failed");
