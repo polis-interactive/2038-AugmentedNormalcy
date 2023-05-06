@@ -69,7 +69,7 @@ FakeCamera::FakeCamera(const int buffer_count) {
         if (alloc_dma_buf(buffer_size, &fd, &capture_mem) < 0) {
             throw std::runtime_error("unable to allocate dma buffer");
         }
-        std::cout << "buffer: " << fd << ", " << buffer_size;
+        std::cout << "buffer: " << fd << ", " << buffer_size << std::endl;
         auto camera_buffer = new CameraBuffer(nullptr, capture_mem, fd, buffer_size, 0);
         _camera_buffers.push_back(camera_buffer);
     }

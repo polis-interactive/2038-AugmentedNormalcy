@@ -242,6 +242,22 @@ namespace infrastructure {
 
         _encoder_fd = open(_device_name, O_RDWR, 0);
 
+        v4l2_fmtdesc fmtdesc{0};
+        fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        std::cout << "Wants caps: " << V4L2_PIX_FMT_YUV420 << std::endl;
+        for (int i = 0;; ++i) {
+            fmtdesc.index = i;
+            if (xioctl(_encoder_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
+                break;
+            }
+            std::cout << "OUTPUT Format " << i << ": " << fmtdesc.description
+                      << ", FourCC: " << static_cast<char>((fmtdesc.pixelformat >> 0) & 0xFF)
+                      << static_cast<char>((fmtdesc.pixelformat >> 8) & 0xFF)
+                      << static_cast<char>((fmtdesc.pixelformat >> 16) & 0xFF)
+                      << static_cast<char>((fmtdesc.pixelformat >> 24) & 0xFF)
+                      << std::endl;
+        }
+
         v4l2_format fmt = {0};
         fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         fmt.fmt.pix_mp.width = _width_height.first;
@@ -255,6 +271,22 @@ namespace infrastructure {
 
         if (xioctl(_encoder_fd, VIDIOC_S_FMT, &fmt))
             throw std::runtime_error("failed to set output caps");
+
+        fmtdesc = {};
+        fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        std::cout << "Wants caps: " << V4L2_PIX_FMT_MJPEG << std::endl;
+        for (int i = 0;; ++i) {
+            fmtdesc.index = i;
+            if (xioctl(_encoder_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
+                break;
+            }
+            std::cout << "OUTPUT Format " << i << ": " << fmtdesc.description
+                      << ", FourCC: " << static_cast<char>((fmtdesc.pixelformat >> 0) & 0xFF)
+                      << static_cast<char>((fmtdesc.pixelformat >> 8) & 0xFF)
+                      << static_cast<char>((fmtdesc.pixelformat >> 16) & 0xFF)
+                      << static_cast<char>((fmtdesc.pixelformat >> 24) & 0xFF)
+                      << std::endl;
+        }
 
 
         fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
