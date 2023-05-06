@@ -140,8 +140,10 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-StressTest") {
 
         for (int i = 0; i < 500; i++) {
             auto buffer = camera.GetBuffer();
-            memcpy((char *)buffer->GetMemory(), in_buf.data(), 1990656);
-            encoder->PostCameraBuffer(std::move(buffer));
+            if (buffer != nullptr) {
+                memcpy((char *)buffer->GetMemory(), in_buf.data(), 1990656);
+                encoder->PostCameraBuffer(std::move(buffer));
+            }
             std::this_thread::sleep_for(30ms);
         }
         std::this_thread::sleep_for(100ms);

@@ -13,6 +13,8 @@
 #include <linux/videodev2.h>
 #include <filesystem>
 #include <cstring>
+#include <linux/dma-buf.h>
+#include <linux/dma-heap.h>
 
 int fxioctl(int fd, unsigned long ctl, void *arg) {
     int ret, num_tries = 10;
@@ -23,110 +25,51 @@ int fxioctl(int fd, unsigned long ctl, void *arg) {
     return ret;
 }
 
+int alloc_dma_buf(size_t size, int* fd, void** addr) {
+    int ret;
+    struct dma_heap_allocation_data alloc_data = {0};
+    alloc_data.len = size;
+    alloc_data.fd = -1;
+
+    int heap_fd = open("/dev/dma_heap/system", O_RDWR);
+    if (heap_fd < 0) {
+        return -1;
+    }
+
+    ret = ioctl(heap_fd, DMA_HEAP_IOCTL_ALLOC, &alloc_data);
+    if (ret < 0) {
+        close(heap_fd);
+        return ret;
+    }
+
+    *addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, alloc_data.fd, 0);
+    if (*addr == MAP_FAILED) {
+        close(alloc_data.fd);
+        close(heap_fd);
+        return -1;
+    }
+
+    *fd = alloc_data.fd;
+    close(heap_fd);
+    return 0;
+}
+
+void free_dma_buf(int fd, void* addr, size_t size) {
+    munmap(addr, size);
+    close(fd);
+}
+
 FakeCamera::FakeCamera(const int buffer_count) {
-    _camera_fd = open("/dev/video10", O_RDWR, 0);
-
-    if (_camera_fd < 0) {
-        throw std::runtime_error("failed to open /dev/video0");
-    }
-
-    v4l2_fmtdesc fmtdesc{0};
-    fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    for (int i = 0;; ++i) {
-        fmtdesc.index = i;
-        if (fxioctl(_camera_fd, VIDIOC_ENUM_FMT, &fmtdesc) == -1) {
-            std::cout << "WHAT" << std::endl;
-            break;
+    const int buffer_size = 1536 * 864 * 3 / 2;
+    for (size_t i = 0; i < buffer_count; ++i) {
+        void *capture_mem = nullptr;
+        int fd = -1;
+        if (alloc_dma_buf(buffer_size, &fd, &capture_mem) < 0) {
+            throw std::runtime_error("unable to allocate dma buffer");
         }
-        std::cout << "CAPTURE Format " << i << ": " << fmtdesc.description
-                  << ", FourCC: " << static_cast<char>((fmtdesc.pixelformat >> 0) & 0xFF)
-                  << static_cast<char>((fmtdesc.pixelformat >> 8) & 0xFF)
-                  << static_cast<char>((fmtdesc.pixelformat >> 16) & 0xFF)
-                  << static_cast<char>((fmtdesc.pixelformat >> 24) & 0xFF)
-                  << std::endl;
-    }
-
-
-    std::pair<unsigned int, unsigned int> _width_height = { 1536, 864 };
-
-    v4l2_format fmt = {0};
-    fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    fmt.fmt.pix_mp.width = _width_height.first;
-    fmt.fmt.pix_mp.height = _width_height.second;
-    fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_YUV420;
-    fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
-    fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
-    fmt.fmt.pix_mp.num_planes = 1;
-    fmt.fmt.pix_mp.plane_fmt[0].bytesperline = _width_height.first;
-    fmt.fmt.pix_mp.plane_fmt[0].sizeimage = _width_height.first * _width_height.second * 3 / 2;
-
-    if (ioctl(_camera_fd, VIDIOC_S_FMT, &fmt) == -1) {
-        perror("ioctl VIDIOC_S_FMT failed");
-        throw std::runtime_error("failed to set capture caps");
-    }
-
-    v4l2_requestbuffers reqbufs = {};
-    reqbufs.count = buffer_count;
-    reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    reqbufs.memory = V4L2_MEMORY_MMAP;
-    if (fxioctl(_camera_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
-        throw std::runtime_error("request for output buffers failed");
-    } else if (reqbufs.count != buffer_count) {
-        std::stringstream out_str;
-        out_str << "Unable to return " << buffer_count << " capture buffers; only got " << reqbufs.count;
-        throw std::runtime_error(out_str.str());
-    }
-
-    v4l2_plane planes[VIDEO_MAX_PLANES];
-    v4l2_buffer buffer = {};
-    v4l2_exportbuffer expbuf = {};
-
-    std::cout << "Decoder fd: " << _camera_fd << std::endl;
-
-    for (int i = 0; i < buffer_count; i++) {
-
-        buffer = {};
-        memset(planes, 0, sizeof(planes));
-        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-        buffer.memory = V4L2_MEMORY_MMAP;
-        buffer.index = i;
-        buffer.length = 1;
-        buffer.m.planes = planes;
-
-        if (fxioctl(_camera_fd, VIDIOC_QUERYBUF, &buffer) < 0)
-            throw std::runtime_error("failed to query output buffer");
-
-        /*
-         * mmap
-         */
-
-        auto capture_size = buffer.m.planes[0].length;
-        auto capture_offset = buffer.m.planes[0].m.mem_offset;
-        auto capture_mem = mmap(
-                nullptr, capture_size, PROT_READ | PROT_WRITE, MAP_SHARED, _camera_fd, capture_offset
-        );
-        if (capture_mem == MAP_FAILED)
-            throw std::runtime_error("failed to mmap output buffer");
-
-        /*
-         * export to dmabuf
-         */
-
-        memset(&expbuf, 0, sizeof(expbuf));
-        expbuf.type = buffer.type;
-        expbuf.index = buffer.index;
-        expbuf.flags = O_RDWR;
-
-        if (fxioctl(_camera_fd, VIDIOC_EXPBUF, &expbuf) < 0)
-            throw std::runtime_error("failed to export the capture buffer");
-
-        std::cout << "exp buffer params: " << expbuf.fd << ", " << capture_size << std::endl;
-
-        auto camera_buffer = new CameraBuffer(&buffer.index, capture_mem, expbuf.fd, capture_size, 0);
+        auto camera_buffer = new CameraBuffer(nullptr, capture_mem, fd, buffer_size, 0);
         _camera_buffers.push_back(camera_buffer);
-
     }
-
 }
 
 std::shared_ptr<CameraBuffer> FakeCamera::GetBuffer() {
@@ -150,15 +93,6 @@ std::shared_ptr<CameraBuffer> FakeCamera::GetBuffer() {
 
 FakeCamera::~FakeCamera() {
     for (auto &c_buffer: _camera_buffers) {
-        munmap(c_buffer->GetMemory(), c_buffer->GetSize());
-        close(c_buffer->GetFd());
+        free_dma_buf(c_buffer->GetFd(), c_buffer->GetMemory(), c_buffer->GetSize());
     }
-    v4l2_requestbuffers reqbufs = {};
-    reqbufs.count = 0;
-    reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    reqbufs.memory = V4L2_MEMORY_MMAP;
-    if (fxioctl(_camera_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
-        std::cout << "Failed to free capture buffers" << std::endl;
-    }
-    close(_camera_fd);
 }

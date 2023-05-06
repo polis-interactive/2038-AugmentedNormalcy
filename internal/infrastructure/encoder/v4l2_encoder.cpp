@@ -139,7 +139,7 @@ namespace infrastructure {
         }
 
         /*
-         * queue output buffer, wait for it to finish
+         * dequeue output buffer, wait for it to finish
          */
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
@@ -151,9 +151,10 @@ namespace infrastructure {
         buffer.length = 1;
         buffer.m.planes = planes;
         buffer.m.planes[0].m.fd = cam_buffer->GetFd();
-        std::cout << "queueing buffer: " << cam_buffer->GetFd() << std::endl;
+        buffer.m.planes[0].bytesused = cam_buffer->GetSize();
+        buffer.m.planes[0].length = cam_buffer->GetSize();
         if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
-            perror("xioctl VIDIOC_QBUF failed");
+            perror("ioctl VIDIOC_S_FMT failed");
             throw std::runtime_error("failed to queue output buffer");
         }
 
@@ -249,8 +250,9 @@ namespace infrastructure {
         fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_YUV420;
         fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
         fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
-        fmt.fmt.pix_mp.plane_fmt[0].bytesperline = _width_height.first;
         fmt.fmt.pix_mp.num_planes = 1;
+        fmt.fmt.pix_mp.plane_fmt[0].bytesperline = _width_height.first;
+        fmt.fmt.pix_mp.plane_fmt[0].sizeimage = _width_height.first * _width_height.second * 3 / 2;
 
         if (xioctl(_encoder_fd, VIDIOC_S_FMT, &fmt))
             throw std::runtime_error("failed to set output caps");
