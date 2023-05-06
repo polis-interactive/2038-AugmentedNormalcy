@@ -153,8 +153,10 @@ namespace infrastructure {
         buffer.m.planes[0].m.fd = cam_buffer->GetFd();
         buffer.m.planes[0].bytesused = cam_buffer->GetSize();
         buffer.m.planes[0].length = cam_buffer->GetSize();
-        if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+        if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
+            perror("xioctl VIDIOC_QBUF failed");
             throw std::runtime_error("failed to queue output buffer");
+        }
 
         // may need to pump the encoder here
 
