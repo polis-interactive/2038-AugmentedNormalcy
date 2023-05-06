@@ -243,7 +243,7 @@ namespace infrastructure {
         _encoder_fd = open(_device_name, O_RDWR, 0);
 
         v4l2_fmtdesc fmtdesc{0};
-        fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        fmtdesc.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
         std::cout << "Wants caps: "
                   << "FourCC: " << static_cast<char>((V4L2_PIX_FMT_YUV420 >> 0) & 0xFF)
                   << static_cast<char>((V4L2_PIX_FMT_YUV420 >> 8) & 0xFF)
