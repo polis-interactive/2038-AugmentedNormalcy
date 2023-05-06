@@ -35,8 +35,8 @@ namespace infrastructure {
         auto upstream_count = config.get_encoder_upstream_buffer_count();
         auto downstream_count = config.get_encoder_downstream_buffer_count();
         setupEncoder();
-        setupUpstreamBuffers(upstream_count);
         setupDownstreamBuffers(downstream_count);
+        setupUpstreamBuffers(upstream_count);
     }
 
     void V4l2Encoder::Start() {
@@ -341,10 +341,20 @@ namespace infrastructure {
             auto upstream_buffer = new EncoderBuffer(buffer.index, output_mem, output_size, output_offset);
 
             if (i == 0) {
+
+                int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+                if (xioctl(_encoder_fd, VIDIOC_STREAMON, &type) < 0)
+                    throw std::runtime_error("failed to start output");
+
+                type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+                if (xioctl(_encoder_fd, VIDIOC_STREAMON, &type) < 0)
+                    throw std::runtime_error("failed to start capture");
+
+
                 buffer = {};
                 memset(planes, 0, sizeof(planes));
                 buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-                buffer.index = upstream_buffer->GetIndex();
+                buffer.index = 0;
                 buffer.field = V4L2_FIELD_NONE;
                 buffer.memory = V4L2_MEMORY_MMAP;
                 buffer.length = 1;
@@ -352,9 +362,9 @@ namespace infrastructure {
                 buffer.timestamp.tv_usec = 0;
                 buffer.flags = V4L2_BUF_FLAG_PREPARED;
                 buffer.m.planes = planes;
-                buffer.m.planes[0].length = upstream_buffer->GetSize();
-                buffer.m.planes[0].bytesused = upstream_buffer->GetSize();
-                buffer.m.planes[0].m.mem_offset = upstream_buffer->GetOffset();
+                buffer.m.planes[0].length = output_size;
+                buffer.m.planes[0].bytesused = output_size;
+                buffer.m.planes[0].m.mem_offset = output_offset;
                 if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
                     perror("ioctl VIDIOC_QBUF failed");
                     throw std::runtime_error("failed to queue output buffer early");
