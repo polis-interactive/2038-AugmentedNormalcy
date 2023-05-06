@@ -149,12 +149,8 @@ namespace infrastructure {
         buffer.field = V4L2_FIELD_NONE;
         buffer.memory = V4L2_MEMORY_DMABUF;
         buffer.length = 1;
-        buffer.timestamp.tv_sec = 156 / 1000000;
-        buffer.timestamp.tv_usec = 156 % 1000000;
         buffer.m.planes = planes;
         buffer.m.planes[0].m.fd = cam_buffer->GetFd();
-        buffer.m.planes[0].bytesused = cam_buffer->GetSize();
-        buffer.m.planes[0].length = cam_buffer->GetSize();
         if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
             perror("xioctl VIDIOC_QBUF failed");
             throw std::runtime_error("failed to queue output buffer");
@@ -309,8 +305,6 @@ namespace infrastructure {
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
-
-        std::cout << "Encoder fd: " << _encoder_fd << std::endl;
 
         for (int i = 0; i < request_downstream_buffers; i++) {
 
