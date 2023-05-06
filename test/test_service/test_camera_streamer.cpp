@@ -126,11 +126,10 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
     auto srv = infrastructure::TcpServer::Create(srv_conf, ctx->GetContext(), srv_manager);
     srv->Start();
 
-    std::this_thread::sleep_for(2s);
-    REQUIRE(manager->ClientIsConnected());
-
     {
         auto streamer = service::CameraStreamer::Create(streamer_conf);
+        std::this_thread::sleep_for(2s);
+        REQUIRE(manager->ClientIsConnected());
         streamer->Start();
         in_time = Clock::now();
         std::this_thread::sleep_for(1s);
