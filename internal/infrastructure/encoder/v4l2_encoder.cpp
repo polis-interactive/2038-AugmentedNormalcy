@@ -106,6 +106,44 @@ namespace infrastructure {
 
     void V4l2Encoder::run() {
 
+        v4l2_plane planes[VIDEO_MAX_PLANES];
+        v4l2_buffer buffer = {};
+        memset(planes, 0, sizeof(planes));
+        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buffer.index = 0;
+        buffer.field = V4L2_FIELD_NONE;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.length = 1;
+        buffer.flags = V4L2_BUF_FLAG_PREPARED;
+        buffer.m.planes = planes;
+        buffer.m.planes[0].length = 1990656;
+        buffer.m.planes[0].bytesused = 1990656;
+        buffer.m.planes[0].m.mem_offset = 0;
+        if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+            throw std::runtime_error("failed to queue output buffer early");
+
+        if (!waitForEncoder()) {
+            std::cout << "I think this should be an error..." << std::endl;
+            return;
+        }
+
+        if (xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+            throw std::runtime_error("failed to dequeue output buffer early");
+
+        buffer = {};
+        memset(planes, 0, sizeof(planes));
+        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.length = 1;
+        buffer.m.planes = planes;
+
+        if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+            throw std::runtime_error("failed to deque capture buffer early");
+
+        if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+            throw std::runtime_error("failed to queue capture buffer early");
+
+
         while(!_work_stop) {
             std::shared_ptr<CameraBuffer> buffer;
             {
