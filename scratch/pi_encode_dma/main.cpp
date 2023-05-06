@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <cstring>
 #include <fstream>
+#include <thread>
 
 #include <chrono>
 using namespace std::literals;
@@ -323,54 +324,62 @@ int main(int argc, char *argv[]) {
      * QUEUE OUTPUT BUFFER
      */
 
-    in_time = Clock::now();
-    // memcpy((void *)output_mem, (void *) dma_mem, max_size);
+    auto _work_thread = std::make_unique<std::thread>([&]() mutable {
 
-    buffer = {};
-    memset(planes, 0, sizeof(planes));
-    buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.index = 0;
-    buffer.field = V4L2_FIELD_NONE;
-    buffer.memory = V4L2_MEMORY_MMAP;
-    buffer.length = 1;
-    buffer.timestamp.tv_sec = 0;
-    buffer.timestamp.tv_usec = 0;
-    buffer.flags = V4L2_BUF_FLAG_PREPARED;
-    buffer.m.planes = planes;
-    buffer.m.planes[0].length = max_size;
-    buffer.m.planes[0].bytesused = max_size;
-    buffer.m.planes[0].m.mem_offset = output_offset;
-    if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
-        throw std::runtime_error("failed to queue output buffer");
+        in_time = Clock::now();
+        memcpy((void *)output_mem, (void *) dma_mem, max_size);
 
-    std::cout << "v4l2 decoder queued output buffer" << std::endl;
+        buffer = {};
+        memset(planes, 0, sizeof(planes));
+        buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+        buffer.index = 0;
+        buffer.field = V4L2_FIELD_NONE;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.length = 1;
+        buffer.timestamp.tv_sec = 0;
+        buffer.timestamp.tv_usec = 0;
+        buffer.flags = V4L2_BUF_FLAG_PREPARED;
+        buffer.m.planes = planes;
+        buffer.m.planes[0].length = max_size;
+        buffer.m.planes[0].bytesused = max_size;
+        buffer.m.planes[0].m.mem_offset = output_offset;
+        if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+            throw std::runtime_error("failed to queue output buffer");
 
-    /*
-     * Dequeue the capture buffer
-     */
+        std::cout << "v4l2 decoder queued output buffer" << std::endl;
 
-    buffer = {};
-    memset(planes, 0, sizeof(planes));
-    buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-    buffer.memory = V4L2_MEMORY_MMAP;
-    buffer.index = 0;
-    buffer.length = 1;
-    buffer.m.planes = planes;
-    buffer.m.planes[0].length = capture_size;
-    buffer.m.planes[0].m.mem_offset = capture_offset;
+        /*
+         * Dequeue the capture buffer
+         */
 
-    if (xioctl(encoder_fd, VIDIOC_DQBUF, &buffer) < 0)
-        throw std::runtime_error("failed to dequeue capture buffer");
+        buffer = {};
+        memset(planes, 0, sizeof(planes));
+        buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        buffer.memory = V4L2_MEMORY_MMAP;
+        buffer.index = 0;
+        buffer.length = 1;
+        buffer.m.planes = planes;
+        buffer.m.planes[0].length = capture_size;
+        buffer.m.planes[0].m.mem_offset = capture_offset;
 
-    out_time = Clock::now();
+        if (xioctl(encoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+            throw std::runtime_error("failed to dequeue capture buffer");
 
-    auto out_size = buffer.m.planes[0].bytesused;
-    std::cout << "v4l2 decoder dequeued capture buffer with size: " << out_size << std::endl;
+        out_time = Clock::now();
 
-    std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-    test_file_out.write((char *) capture_mem, out_size);
-    test_file_out.flush();
-    test_file_out.close();
+        auto out_size = buffer.m.planes[0].bytesused;
+        std::cout << "v4l2 decoder dequeued capture buffer with size: " << out_size << std::endl;
+
+        std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+        test_file_out.write((char *) capture_mem, out_size);
+        test_file_out.flush();
+        test_file_out.close();
+
+    });
+
+    _work_thread->join();
+
+
 
     /*
      * STOP ENCODER
