@@ -323,6 +323,9 @@ int main(int argc, char *argv[]) {
      * QUEUE OUTPUT BUFFER
      */
 
+    in_time = Clock::now();
+    memcpy((void *)output_mem, (void *) dma_mem, max_size);
+
     buffer = {};
     memset(planes, 0, sizeof(planes));
     buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -349,8 +352,7 @@ int main(int argc, char *argv[]) {
     buffer.timestamp.tv_sec = 0;
     buffer.timestamp.tv_usec = 33000;
 
-    in_time = Clock::now();
-    memcpy((void *)output_mem, (void *) dma_mem, max_size);
+
 
 
     if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
