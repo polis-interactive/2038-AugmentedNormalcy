@@ -373,6 +373,7 @@ namespace infrastructure {
                     perror("ioctl VIDIOC_DQBUF failed");
                     throw std::runtime_error("failed to dequeue output buffer early");
                 }
+                std::cout << "got through!" << std::endl;
             }
 
             _available_upstream_buffers.push(upstream_buffer);
