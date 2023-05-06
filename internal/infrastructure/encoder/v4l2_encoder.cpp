@@ -37,13 +37,6 @@ namespace infrastructure {
         setupEncoder();
         setupUpstreamBuffers(upstream_count);
         setupDownstreamBuffers(downstream_count);
-    }
-
-    void V4l2Encoder::Start() {
-
-        if (!_work_stop) {
-            return;
-        }
 
         int type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         if (xioctl(_encoder_fd, VIDIOC_STREAMON, &type) < 0)
@@ -55,13 +48,12 @@ namespace infrastructure {
 
         v4l2_plane planes[VIDEO_MAX_PLANES];
         v4l2_buffer buffer = {};
+        memset(planes, 0, sizeof(planes));
         buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
         buffer.index = 0;
         buffer.field = V4L2_FIELD_NONE;
         buffer.memory = V4L2_MEMORY_MMAP;
         buffer.length = 1;
-        buffer.timestamp.tv_sec = 0;
-        buffer.timestamp.tv_usec = 0;
         buffer.flags = V4L2_BUF_FLAG_PREPARED;
         buffer.m.planes = planes;
         buffer.m.planes[0].length = 1990656;
@@ -77,6 +69,14 @@ namespace infrastructure {
 
         if (xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer) < 0)
             throw std::runtime_error("failed to dequeue output buffer early");
+    }
+
+    void V4l2Encoder::Start() {
+
+        if (!_work_stop) {
+            return;
+        }
+        return;
 
         _is_primed = false;
         _work_stop = false;
