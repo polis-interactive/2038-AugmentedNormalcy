@@ -128,9 +128,9 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
 
     {
         auto streamer = service::CameraStreamer::Create(streamer_conf);
+        streamer->Start();
         std::this_thread::sleep_for(2s);
         REQUIRE(manager->ClientIsConnected());
-        streamer->Start();
         in_time = Clock::now();
         std::this_thread::sleep_for(1s);
         streamer->Stop();
