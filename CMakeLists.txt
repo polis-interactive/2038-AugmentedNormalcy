@@ -69,7 +69,7 @@ endif()
 
 add_subdirectory(${internal_dir}/service)
 
-add_subdirectory(scratch/pi_encode_av)
+add_subdirectory(scratch/pi_encode_sw)
 
 add_subdirectory(test)
 

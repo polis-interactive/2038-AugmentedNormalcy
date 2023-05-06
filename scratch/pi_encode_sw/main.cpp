@@ -21,19 +21,14 @@ using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
 
-extern "C"
-{
-#include "libavcodec/avcodec.h"
-#include "libavdevice/avdevice.h"
-#include "libavformat/avformat.h"
-#include "libavutil/audio_fifo.h"
-#include "libavutil/hwcontext.h"
-#include "libavutil/hwcontext_drm.h"
-#include "libavutil/imgutils.h"
-#include "libavutil/timestamp.h"
-#include "libavutil/version.h"
-#include "libswresample/swresample.h"
-}
+#include <jpeglib.h>
+
+#if JPEG_LIB_VERSION_MAJOR > 9 || (JPEG_LIB_VERSION_MAJOR == 9 && JPEG_LIB_VERSION_MINOR >= 4)
+typedef size_t jpeg_mem_len_t;
+#else
+typedef unsigned long jpeg_mem_len_t;
+#endif
+
 
 int xioctl(int fd, unsigned long ctl, void *arg) {
     int ret, num_tries = 10;
@@ -80,23 +75,6 @@ void free_dma_buf(int fd, void* addr, size_t size) {
     close(fd);
 }
 
-void print_buffer_info(const v4l2_buffer &buffer, const v4l2_plane *planes) {
-    std::cout << "Buffer information:\n";
-    std::cout << "  Type: " << buffer.type << "\n";
-    std::cout << "  Memory: " << buffer.memory << "\n";
-    std::cout << "  Index: " << buffer.index << "\n";
-    std::cout << "  Length: " << buffer.length << "\n";
-    std::cout << "  flags: " << buffer.flags << "\n";
-    std::cout << "  field: " << buffer.field << "\n";
-
-    for (unsigned int i = 0; i < buffer.length; ++i) {
-        std::cout << "  Plane " << i << ":\n";
-        std::cout << "    Bytes used: " << planes[i].bytesused << "\n";
-        std::cout << "    Length: " << planes[i].length << "\n";
-        std::cout << "    Data offset: " << planes[i].data_offset << "\n";
-        std::cout << "    DMABUF file descriptor: " << planes[i].m.fd << "\n";
-    }
-}
 
 
 int main(int argc, char *argv[]) {
@@ -125,10 +103,10 @@ int main(int argc, char *argv[]) {
 
     std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
 
-
     /*
      * CREATE DMA BUFFER
      */
+
     void *dma_mem = nullptr;
     int dma_fd = -1;
     if (alloc_dma_buf(max_size, &dma_fd, &dma_mem) < 0) {
@@ -137,11 +115,72 @@ int main(int argc, char *argv[]) {
 
     memcpy((void *)dma_mem, (void *) in_buf.data(), max_size);
 
+    /*
+     * setup encoder
+     */
+
+    struct jpeg_compress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_compress(&cinfo);
+    std::chrono::duration<double> encode_time(0);
+    uint32_t frames = 0;
+
+    uint8_t *encoded_buffer = nullptr;
+    size_t buffer_len = 0;
+    in_time = std::chrono::high_resolution_clock::now();
 
 
-    const AVCodec *codec = avcodec_find_encoder_by_name("mjpeg_v4l2m2m");
-    if (!codec)
-        throw std::runtime_error("libav: cannot find video encoder mjpeg_v4l2m2m");
+    cinfo.image_width = width;
+    cinfo.image_height = height;
+    cinfo.input_components = 3;
+    cinfo.in_color_space = JCS_YCbCr;
+    cinfo.restart_interval = 0;
+
+    jpeg_set_defaults(&cinfo);
+    cinfo.raw_data_in = TRUE;
+    jpeg_set_quality(&cinfo, 192, TRUE);
+
+    jpeg_mem_len_t jpeg_mem_len;
+    jpeg_mem_dest(&cinfo, &encoded_buffer, &jpeg_mem_len);
+    jpeg_start_compress(&cinfo, TRUE);
+
+    int stride2 = stride / 2;
+    uint8_t *Y = (uint8_t *) dma_mem;
+    uint8_t *U = (uint8_t *)Y + stride * height;
+    uint8_t *V = (uint8_t *)U + stride2 * (height / 2);
+    uint8_t *Y_max = U - stride;
+    uint8_t *U_max = V - stride2;
+    uint8_t *V_max = U_max + stride2 * (height / 2);
+
+    JSAMPROW y_rows[16];
+    JSAMPROW u_rows[8];
+    JSAMPROW v_rows[8];
+
+    for (uint8_t *Y_row = Y, *U_row = U, *V_row = V; cinfo.next_scanline < height;)
+    {
+        for (int i = 0; i < 16; i++, Y_row += stride)
+            y_rows[i] = std::min(Y_row, Y_max);
+        for (int i = 0; i < 8; i++, U_row += stride2, V_row += stride2)
+            u_rows[i] = std::min(U_row, U_max), v_rows[i] = std::min(V_row, V_max);
+
+        JSAMPARRAY rows[] = { y_rows, u_rows, v_rows };
+        jpeg_write_raw_data(&cinfo, rows, 16);
+    }
+
+    jpeg_finish_compress(&cinfo);
+    buffer_len = jpeg_mem_len;
+
+    out_time = std::chrono::high_resolution_clock::now();
+
+    auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(out_time - in_time);
+    std::cout << "Time to encode: " << d1.count() << std::endl;
+
+    std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+    test_file_out.write((char *) encoded_buffer, buffer_len);
+    test_file_out.flush();
+    test_file_out.close();
+
 
     /*
      * CLEANUP
