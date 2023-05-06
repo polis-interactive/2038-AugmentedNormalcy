@@ -222,17 +222,21 @@ int main(int argc, char *argv[]) {
     v4l2_plane planes[VIDEO_MAX_PLANES];
     v4l2_buffer buffer = {};
 
-    /*
-
 
     buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-    buffer.memory = V4L2_MEMORY_MMAP;
+    buffer.memory = V4L2_MEMORY_DMABUF;
     buffer.index = 0;
     buffer.length = 1;
     buffer.m.planes = planes;
 
     if (xioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
         throw std::runtime_error("failed to query output buffer");
+
+    /*
+
+
+
+
 
     auto output_size = buffer.m.planes[0].length;
     auto output_offset = buffer.m.planes[0].m.mem_offset;
