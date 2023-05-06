@@ -152,11 +152,7 @@ namespace infrastructure {
     void V4l2Encoder::encodeBuffer(std::shared_ptr<CameraBuffer> &&cam_buffer) {
 
         // in the future, we may need this; but as is, we run synchronously so meh
-        EncoderBuffer *output_buffer = _available_upstream_buffers.front();
-        if (output_buffer == nullptr) {
-            throw std::runtime_error("failed to get output buffer");
-        }
-        memcpy(output_buffer->GetMemory(), cam_buffer->GetMemory(), cam_buffer->GetSize());
+        memcpy(_output_mem, cam_buffer->GetMemory(), cam_buffer->GetSize());
 
 
         /*
