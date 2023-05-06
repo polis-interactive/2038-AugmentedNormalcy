@@ -65,6 +65,22 @@ void free_dma_buf(int fd, void* addr, size_t size) {
     close(fd);
 }
 
+void print_buffer_info(const v4l2_buffer &buffer, const v4l2_plane *planes) {
+    std::cout << "Buffer information:\n";
+    std::cout << "  Type: " << buffer.type << "\n";
+    std::cout << "  Memory: " << buffer.memory << "\n";
+    std::cout << "  Index: " << buffer.index << "\n";
+    std::cout << "  Length: " << buffer.length << "\n";
+
+    for (unsigned int i = 0; i < buffer.length; ++i) {
+        std::cout << "  Plane " << i << ":\n";
+        std::cout << "    Bytes used: " << planes[i].bytesused << "\n";
+        std::cout << "    Length: " << planes[i].length << "\n";
+        std::cout << "    Data offset: " << planes[i].data_offset << "\n";
+        std::cout << "    DMABUF file descriptor: " << planes[i].m.fd << "\n";
+    }
+}
+
 
 int main(int argc, char *argv[]) {
     const char device_name[] = "/dev/video11";
@@ -231,6 +247,8 @@ int main(int argc, char *argv[]) {
 
     if (xioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
         throw std::runtime_error("failed to query output buffer");
+
+    print_buffer_info(buffer, planes);
 
     /*
 
