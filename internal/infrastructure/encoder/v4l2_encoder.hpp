@@ -19,11 +19,12 @@
 namespace infrastructure {
 
     struct EncoderBuffer: public SizedBuffer {
-        EncoderBuffer(unsigned int buffer_index, void *memory, std::size_t size):
+        EncoderBuffer(unsigned int buffer_index, void *memory, std::size_t size, std::size_t offset):
                 _buffer_index(buffer_index),
                 _memory(memory),
                 _max_size(size),
-                _size(size)
+                _size(size),
+                _offset(offset)
         {}
 
         [[nodiscard]] void *GetMemory() override {
@@ -35,6 +36,9 @@ namespace infrastructure {
         void SetSize(const std::size_t &size) {
             _size = size;
         }
+        [[nodiscard]] std::size_t GetOffset() const {
+            return _offset;
+        };
         [[nodiscard]] std::size_t GetIndex() const {
             return _buffer_index;
         };
@@ -43,6 +47,7 @@ namespace infrastructure {
         void *_memory;
         std::size_t _max_size;
         std::size_t _size;
+        std::size_t _offset;
     };
 
     struct EncoderConfig {

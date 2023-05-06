@@ -152,8 +152,13 @@ namespace infrastructure {
         buffer.field = V4L2_FIELD_NONE;
         buffer.memory = V4L2_MEMORY_MMAP;
         buffer.length = 1;
+        buffer.timestamp.tv_sec = 0;
+        buffer.timestamp.tv_usec = 0;
+        buffer.flags = V4L2_BUF_FLAG_PREPARED;
         buffer.m.planes = planes;
+        buffer.m.planes[0].length = output_buffer->GetSize();
         buffer.m.planes[0].bytesused = output_buffer->GetSize();
+        buffer.m.planes[0].m.mem_offset = output_buffer->GetOffset();
         if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
             perror("ioctl VIDIOC_QBUF failed");
             throw std::runtime_error("failed to queue output buffer");
@@ -198,7 +203,7 @@ namespace infrastructure {
         buffer = {};
         memset(planes, 0, sizeof(planes));
         buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-        buffer.memory = V4L2_MEMORY_DMABUF;
+        buffer.memory = V4L2_MEMORY_MMAP;
         buffer.length = 1;
         buffer.m.planes = planes;
         ret = xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer);
@@ -249,11 +254,10 @@ namespace infrastructure {
         fmt.fmt.pix_mp.width = _width_height.first;
         fmt.fmt.pix_mp.height = _width_height.second;
         fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_YUV420;
+        fmt.fmt.pix_mp.plane_fmt[0].bytesperline = _width_height.first;
         fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
         fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
         fmt.fmt.pix_mp.num_planes = 1;
-        fmt.fmt.pix_mp.plane_fmt[0].bytesperline = _width_height.first;
-        fmt.fmt.pix_mp.plane_fmt[0].sizeimage = _width_height.first * _width_height.second * 3 / 2;
 
         if (xioctl(_encoder_fd, VIDIOC_S_FMT, &fmt))
             throw std::runtime_error("failed to set output caps");
@@ -320,7 +324,7 @@ namespace infrastructure {
             if (output_mem == MAP_FAILED)
                 throw std::runtime_error("failed to mmap output buffer");
 
-            std::cout << "V4l2 Decoder MMAPed output buffer with size like so: " <<
+            std::cout << "V4l2 Encoder MMAPed output buffer with size like so: " <<
                       output_size << ", " << output_offset << ", " << buffer.index <<
                       ", " << (void *) output_mem << std::endl;
 
@@ -328,7 +332,7 @@ namespace infrastructure {
              * Create proxy
              */
 
-            auto upstream_buffer = new EncoderBuffer(buffer.index, output_mem, output_size);
+            auto upstream_buffer = new EncoderBuffer(buffer.index, output_mem, output_size, output_offset);
             _available_upstream_buffers.push(upstream_buffer);
         }
     }
@@ -386,7 +390,7 @@ namespace infrastructure {
             if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0)
                 throw std::runtime_error("failed to dequeue capture buffer");
 
-            auto downstream_buffer = new EncoderBuffer(buffer.index, capture_mem, capture_size);
+            auto downstream_buffer = new EncoderBuffer(buffer.index, capture_mem, capture_size, capture_offset);
             _downstream_buffers.insert({ buffer.index, downstream_buffer });
         }
 
