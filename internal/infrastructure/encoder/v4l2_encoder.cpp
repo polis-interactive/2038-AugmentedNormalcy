@@ -107,7 +107,7 @@ namespace infrastructure {
     void V4l2Encoder::run() {
 
         while(!_work_stop) {
-            std::shared_ptr<CameraBuffer> cam_buffer;
+            std::shared_ptr<CameraBuffer> buffer;
             {
                 std::unique_lock<std::mutex> lock(_work_mutex);
                 _work_cv.wait(lock, [this]() {
@@ -118,39 +118,10 @@ namespace infrastructure {
                 } else if (_work_queue.empty()) {
                     continue;
                 }
-                cam_buffer = std::move(_work_queue.front());
+                buffer = std::move(_work_queue.front());
                 _work_queue.pop();
             }
-
-            // encodeBuffer(std::move(buffer));
-            v4l2_plane planes[VIDEO_MAX_PLANES];
-            v4l2_buffer buffer = {};
-            buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-            buffer.index = 0;
-            buffer.field = V4L2_FIELD_NONE;
-            buffer.memory = V4L2_MEMORY_MMAP;
-            buffer.length = 1;
-            buffer.timestamp.tv_sec = 0;
-            buffer.timestamp.tv_usec = 0;
-            buffer.flags = V4L2_BUF_FLAG_PREPARED;
-            buffer.m.planes = planes;
-            buffer.m.planes[0].length = 1990656;
-            buffer.m.planes[0].bytesused = 1990656;
-            buffer.m.planes[0].m.mem_offset = 0;
-            if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
-                perror("ioctl VIDIOC_QBUF failed");
-                throw std::runtime_error("failed to queue output buffer");
-            }
-
-            if (!waitForEncoder()) {
-                std::cout << "I think this should be an error..." << std::endl;
-                return;
-            }
-
-            if (xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer) < 0) {
-                perror("ioctl VIDIOC_DQBUF failed");
-                throw std::runtime_error("failed to deque output buffer");
-            }
+            encodeBuffer(std::move(buffer));
         }
     }
 
