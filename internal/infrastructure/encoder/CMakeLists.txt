@@ -1,11 +1,9 @@
 
 
-if (V4L2_ENCODER_AVAILABLE)
+find_library(JPEG_LIBRARY jpeg REQUIRED)
 
-    set(SOURCES v4l2_encoder.cpp)
-    set(TARGET_LIBS pthread)
+set(SOURCES sw_encoder.cpp)
+set(TARGET_LIBS pthread jpeg)
 
-    add_library(encoder STATIC ${SOURCES})
-    target_link_libraries(encoder PRIVATE ${TARGET_LIBS})
-
-endif()
+add_library(encoder STATIC ${SOURCES})
+target_link_libraries(encoder PRIVATE ${TARGET_LIBS})

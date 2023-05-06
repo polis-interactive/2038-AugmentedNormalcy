@@ -11,14 +11,11 @@
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
-#include "infrastructure/encoder/v4l2_encoder.hpp"
+#include "infrastructure/encoder/sw_encoder.hpp"
 
 #include "fake_camera.hpp"
 
 class TestEncoderConfig : public infrastructure::EncoderConfig {
-    [[nodiscard]] unsigned int get_encoder_upstream_buffer_count() const override {
-        return 1;
-    };
     [[nodiscard]] unsigned int get_encoder_downstream_buffer_count() const override {
         return 4;
     };
@@ -32,7 +29,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-Start_and_Stop") {
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4, t5;
     {
         t1 = Clock::now();
-        auto encoder = infrastructure::V4l2Encoder::Create(conf, [](std::shared_ptr<SizedBuffer> &&buffer) { });
+        auto encoder = infrastructure::SwEncoder::Create(conf, [](std::shared_ptr<SizedBuffer> &&buffer) { });
         t2 = Clock::now();
         encoder->Start();
         t3 = Clock::now();
@@ -84,7 +81,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-Encode_a_frame") {
     FakeCamera camera(5);
 
     {
-        auto encoder = infrastructure::V4l2Encoder::Create(conf, std::move(callback));
+        auto encoder = infrastructure::SwEncoder::Create(conf, std::move(callback));
         encoder->Start();
         auto buffer = camera.GetBuffer();
         memcpy((char *)buffer->GetMemory(), in_buf.data(), 1990656);
@@ -112,17 +109,24 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-StressTest") {
     auto in_frame = this_dir;
     in_frame /= "in.yuv";
 
+    auto out_frame = this_dir;
+    out_frame /= "out_multi.jpeg";
+
     std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
 
     std::atomic<int> counter = { 0 };
     std::atomic<bool> is_done = { false };
 
-    SizedBufferCallback callback = [&out_time, &counter, &is_done](
+    SizedBufferCallback callback = [&out_time, &out_frame, &counter, &is_done](
             std::shared_ptr<SizedBuffer> &&ptr
     ) mutable {
         if (++counter >= 300 && !is_done) {
             out_time = Clock::now();
             is_done = true;
+            std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+            test_file_out.write((char *)(ptr->GetMemory()), ptr->GetSize());
+            test_file_out.flush();
+            test_file_out.close();
         }
     };
 
@@ -134,7 +138,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_V4L2_ENCODER-StressTest") {
     FakeCamera camera(5);
 
     {
-        auto encoder = infrastructure::V4l2Encoder::Create(conf, std::move(callback));
+        auto encoder = infrastructure::SwEncoder::Create(conf, std::move(callback));
         encoder->Start();
         in_time = Clock::now();
 

@@ -10,7 +10,7 @@
 #include "infrastructure/tcp/tcp_context.hpp"
 #include "infrastructure/tcp/tcp_client.hpp"
 #include "infrastructure/camera/libcamera_camera.hpp"
-#include "infrastructure/encoder/v4l2_encoder.hpp"
+#include "infrastructure/encoder/sw_encoder.hpp"
 
 namespace service {
     struct CameraStreamerConfig:
@@ -22,12 +22,11 @@ namespace service {
         CameraStreamerConfig(
             std::string tcp_server_host, int tcp_server_port,
             std::pair<int, int> camera_width_height,
-            int encoder_buffers_upstream, int encoder_buffers_downstream
+            int encoder_buffers_downstream
         ):
             _tcp_server_host(std::move(tcp_server_host)),
             _tcp_server_port(tcp_server_port),
             _camera_width_height(std::move(camera_width_height)),
-            _encoder_buffers_upstream(encoder_buffers_upstream),
             _encoder_buffers_downstream(encoder_buffers_downstream)
         {}
         [[nodiscard]] int get_tcp_pool_size() const override {
@@ -54,9 +53,6 @@ namespace service {
         [[nodiscard]] int get_tcp_client_timeout_on_read() const override {
             return 5;
         };
-        [[nodiscard]] unsigned int get_encoder_upstream_buffer_count() const override {
-            return _encoder_buffers_upstream;
-        };
         [[nodiscard]] unsigned int get_encoder_downstream_buffer_count() const override {
             return _encoder_buffers_downstream;
         };
@@ -67,7 +63,6 @@ namespace service {
         const std::string _tcp_server_host;
         const int _tcp_server_port;
         const std::pair<int, int> _camera_width_height;
-        const int _encoder_buffers_upstream;
         const int _encoder_buffers_downstream;
     };
 
@@ -113,7 +108,7 @@ namespace service {
         void initialize(const CameraStreamerConfig &config);
         std::atomic_bool _is_started = false;
         std::shared_ptr<infrastructure::LibcameraCamera> _camera = nullptr;
-        std::shared_ptr<infrastructure::V4l2Encoder> _encoder = nullptr;
+        std::shared_ptr<infrastructure::SwEncoder> _encoder = nullptr;
         std::shared_ptr<infrastructure::TcpContext> _tcp_context = nullptr;
         std::shared_ptr<infrastructure::TcpClient> _tcp_client = nullptr;
     };

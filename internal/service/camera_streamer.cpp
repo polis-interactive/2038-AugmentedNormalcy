@@ -16,7 +16,7 @@ namespace service {
         _tcp_context = infrastructure::TcpContext::Create(config);
         auto self(shared_from_this());
         _tcp_client = infrastructure::TcpClient::Create(config, _tcp_context->GetContext(), self);
-        _encoder = infrastructure::V4l2Encoder::Create(
+        _encoder = infrastructure::SwEncoder::Create(
             config,
             [this, self](std::shared_ptr<SizedBuffer> &&buffer) {
                 _tcp_client->Post(std::move(buffer));
