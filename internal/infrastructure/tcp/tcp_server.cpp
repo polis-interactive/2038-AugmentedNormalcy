@@ -152,7 +152,7 @@ namespace infrastructure {
     }
 
     void TcpCameraSession::readHeader(std::size_t last_bytes) {
-        startTimer();
+        // startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
                 net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
@@ -160,7 +160,7 @@ namespace infrastructure {
                     if (ec ==  boost::asio::error::operation_aborted) {
                         return;
                     }
-                    _read_timer.cancel();
+                    // _read_timer.cancel();
                     auto total_bytes = last_bytes + bytes_written;
                     if (!ec && total_bytes == _header.Size() && _header.Ok()) {
                         readBody();
@@ -191,7 +191,7 @@ namespace infrastructure {
         std::cout << _receive_buffer->GetSize() << std::endl;
         std::cout << _receive_buffer->GetMemory() << std::endl;
 
-        startTimer();
+        // startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
             boost::asio::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
@@ -202,7 +202,7 @@ namespace infrastructure {
                     return;
                 }
                 std::cout << "am" << std::endl;
-                _read_timer.cancel();
+                // _read_timer.cancel();
                 std::cout << "i" << std::endl;
                 if (ec) {
                     std::cout << "TcpCameraSession: error reading body: " << ec << "; closing" << std::endl;
