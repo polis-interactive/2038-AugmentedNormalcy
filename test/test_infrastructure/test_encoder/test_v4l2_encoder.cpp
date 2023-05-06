@@ -72,7 +72,7 @@ break;
 default:
 std::cerr << "Unknown error" << std::endl;
 };
-return 1;
+return;
 }
 v4l2_format fmt = {0};
 fmt.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -120,6 +120,18 @@ if (jioctl(encoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
 std::cout << errno << std::endl;
 throw std::runtime_error("request for capture buffers failed");
 }
+
+v4l2_plane planes[VIDEO_MAX_PLANES];
+v4l2_buffer buffer = {};
+
+
+buffer.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+buffer.memory = V4L2_MEMORY_MMAP;
+buffer.index = 0;
+buffer.length = 1;
+buffer.m.planes = planes;
+if (xioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+throw std::runtime_error("failed to query capture buffer");
 
 buffer = {};
 memset(planes, 0, sizeof(planes));
