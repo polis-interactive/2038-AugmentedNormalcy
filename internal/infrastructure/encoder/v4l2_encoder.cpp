@@ -70,7 +70,7 @@ namespace infrastructure {
         buffer.m.planes[0].m.mem_offset = 0;
         if (xioctl(_encoder_fd, VIDIOC_QBUF, &buffer) < 0) {
             perror("ioctl VIDIOC_QBUF failed");
-            throw std::runtime_error("failed to queue output buffer");
+            throw std::runtime_error("failed to queue output buffer early");
         }
 
         if (!waitForEncoder()) {
@@ -86,7 +86,7 @@ namespace infrastructure {
         buffer.m.planes = planes;
         if (xioctl(_encoder_fd, VIDIOC_DQBUF, &buffer) < 0) {
             perror("ioctl VIDIOC_DQBUF failed");
-            throw std::runtime_error("failed to dequee output buffer");
+            throw std::runtime_error("failed to dequee output buffer early");
         }
 
 
