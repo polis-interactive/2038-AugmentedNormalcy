@@ -143,7 +143,7 @@ buffer.memory = V4L2_MEMORY_MMAP;
 buffer.index = 0;
 buffer.length = 1;
 buffer.m.planes = planes;
-if (xioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+if (jioctl(encoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
 throw std::runtime_error("failed to query capture buffer");
 
 auto capture_size = buffer.m.planes[0].length;
