@@ -71,6 +71,8 @@ void print_buffer_info(const v4l2_buffer &buffer, const v4l2_plane *planes) {
     std::cout << "  Memory: " << buffer.memory << "\n";
     std::cout << "  Index: " << buffer.index << "\n";
     std::cout << "  Length: " << buffer.length << "\n";
+    std::cout << "  flags: " << buffer.flags << "\n";
+    std::cout << "  field: " << buffer.field << "\n";
 
     for (unsigned int i = 0; i < buffer.length; ++i) {
         std::cout << "  Plane " << i << ":\n";
