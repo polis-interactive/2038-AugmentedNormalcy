@@ -344,8 +344,6 @@ int main(int argc, char *argv[]) {
     buffer.timestamp.tv_sec = 0;
     buffer.timestamp.tv_usec = 0;
     buffer.m.planes = planes;
-    buffer.m.planes[0].length = max_size;
-    buffer.m.planes[0].bytesused = max_size;
     buffer.m.planes[0].m.fd = dma_fd;
     if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
         throw std::runtime_error("failed to queue output buffer");
