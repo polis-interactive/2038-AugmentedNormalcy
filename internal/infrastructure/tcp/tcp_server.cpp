@@ -185,20 +185,14 @@ namespace infrastructure {
             _receive_buffer = _receive_buffer_pool->GetCameraBuffer();
         }
 
-        std::cout << "maybe?" << std::endl;
-        std::cout << (void *) _receive_buffer.get() << std::endl;
-        std::cout << _receive_buffer->GetMemory() << std::endl;
-        std::cout << _header.DataLength() << std::endl;
-        std::cout << _header.BytesWritten() << std::endl;
-
-        std::cout << "Passed" << std::endl;
-
         startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
             boost::asio::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
+                std::cout << "Do you segfault?" << std::endl;
                 if (ec ==  boost::asio::error::operation_aborted) {
+                    std::cout << "aborted" << std::endl;
                     return;
                 }
                 _read_timer.cancel();
@@ -207,18 +201,23 @@ namespace infrastructure {
                     TryClose(true);
                     return;
                 } else if (bytes_written != _header.DataLength()) {
+                    std::cout << "offset" << std::endl;
                     _header.OffsetPacket(bytes_written);
                     readBody();
                     return;
                 }
                 else if (_header.IsFinished()) {
+                    std::cout << "finished" << std::endl;
                     if (!_receive_buffer->IsLeakyBuffer()) {
+                        std::cout << "hmmm" << std::endl;
                         _receive_buffer->SetSize(_header.BytesWritten());
                         _manager->PostCameraServerBuffer(_addr, std::move(_receive_buffer));
                     }
+                    std::cout << "hass" << std::endl;
                     _receive_buffer = nullptr;
                     _header.ResetHeader();
                 }
+                std::cout << "sah" << std::endl;
                 readHeader(0);
             }
         );
