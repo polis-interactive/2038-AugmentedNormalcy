@@ -324,11 +324,8 @@ int main(int argc, char *argv[]) {
      * QUEUE OUTPUT BUFFER
      */
 
-    auto _work_thread = std::make_unique<std::thread>([&]() mutable {
 
         for (int i = 0; i < 500; i++) {
-
-        std::cout << "why" << std::endl;
 
         in_time = Clock::now();
         memcpy((void *)output_mem, (void *) dma_mem, max_size);
@@ -349,6 +346,15 @@ int main(int argc, char *argv[]) {
         buffer.m.planes[0].m.mem_offset = output_offset;
         if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
             throw std::runtime_error("failed to queue output buffer");
+
+        if (i == 0) {
+            if (xioctl(encoder_fd, VIDIOC_DQBUF, &buffer) < 0)
+                throw std::runtime_error("failed to queue output buffer");
+
+            if (xioctl(encoder_fd, VIDIOC_QBUF, &buffer) < 0)
+                throw std::runtime_error("failed to queue output buffer");
+        }
+
 
         std::cout << "v4l2 decoder queued output buffer" << std::endl;
 
@@ -385,9 +391,7 @@ int main(int argc, char *argv[]) {
 
         }
 
-    });
 
-    _work_thread->join();
 
 
 
