@@ -195,7 +195,9 @@ namespace infrastructure {
                     std::cout << "aborted" << std::endl;
                     return;
                 }
+                std::cout << "am" << std::endl;
                 _read_timer.cancel();
+                std::cout << "i" << std::endl;
                 if (ec) {
                     std::cout << "TcpCameraSession: error reading body: " << ec << "; closing" << std::endl;
                     TryClose(true);
