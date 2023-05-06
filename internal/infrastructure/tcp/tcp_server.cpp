@@ -157,6 +157,7 @@ namespace infrastructure {
         _socket.async_receive(
                 net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
                 [this, s = std::move(self), last_bytes] (error_code ec, std::size_t bytes_written) mutable {
+                    std::cout << "reading header" << std::endl;
                     if (ec ==  boost::asio::error::operation_aborted) {
                         return;
                     }
