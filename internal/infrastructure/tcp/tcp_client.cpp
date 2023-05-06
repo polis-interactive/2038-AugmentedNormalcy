@@ -90,6 +90,7 @@ namespace infrastructure {
 
     void TcpClient::Post(std::shared_ptr<SizedBuffer> &&buffer) {
         if (_is_stopped || !_is_connected) return;
+        std::cout << "posting" << std::endl;
         bool write_in_progress = false;
         {
             std::unique_lock<std::mutex> lock(_send_buffer_mutex);
