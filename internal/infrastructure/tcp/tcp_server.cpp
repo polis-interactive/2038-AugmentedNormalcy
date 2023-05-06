@@ -186,6 +186,7 @@ namespace infrastructure {
         }
 
         std::cout << _receive_buffer->GetSize() << std::endl;
+        std::cout << _receive_buffer->GetMemory() << std::endl;
 
         startTimer();
         auto self(shared_from_this());
