@@ -33,17 +33,19 @@ int alloc_dma_buf(size_t size, int* fd, void** addr) {
 
     int heap_fd = open("/dev/dma_heap/system", O_RDWR);
     if (heap_fd < 0) {
+        perror("Error opening file");
         return -1;
     }
 
-    ret = ioctl(heap_fd, DMA_HEAP_IOCTL_ALLOC, &alloc_data);
-    if (ret < 0) {
+    if (fxioctl(heap_fd, DMA_HEAP_IOCTL_ALLOC, &alloc_data) < 0) {
         close(heap_fd);
-        return ret;
+        perror("ioctl DMA_HEAP_IOCTL_ALLOC failed");
+        return -1;
     }
 
     *addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, alloc_data.fd, 0);
     if (*addr == MAP_FAILED) {
+        perror("mmap failed");
         close(alloc_data.fd);
         close(heap_fd);
         return -1;
