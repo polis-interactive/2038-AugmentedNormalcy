@@ -108,6 +108,7 @@ namespace infrastructure {
             }
         }
         if (buffer == nullptr) {
+            std::cout << "nothing to do" << std::endl;
             return;
         }
         buffer->ResetSize();
