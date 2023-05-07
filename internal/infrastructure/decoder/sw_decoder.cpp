@@ -156,6 +156,8 @@ namespace infrastructure {
         if (buffer == nullptr) {
             return;
         }
+
+
         jpeg_mem_src(&cinfo, (unsigned char*)sz_buffer->GetMemory(), sz_buffer->GetSize());
         jpeg_read_header(&cinfo, TRUE);
         cinfo.out_color_space = JCS_YCbCr;
@@ -183,6 +185,11 @@ namespace infrastructure {
             jpeg_read_raw_data(&cinfo, data, 16);
         }
         jpeg_finish_decompress(&cinfo);
+
+        if (msync(buffer->GetMemory(), buffer->GetSize(), MS_SYNC) == -1) {
+            perror("msync failed");
+            return;
+        }
 
         auto self(shared_from_this());
         auto output_buffer = std::shared_ptr<DecoderBuffer>(
