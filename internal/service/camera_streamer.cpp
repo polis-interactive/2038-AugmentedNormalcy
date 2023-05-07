@@ -19,12 +19,14 @@ namespace service {
         _encoder = infrastructure::SwEncoder::Create(
             config,
             [this, self](std::shared_ptr<SizedBuffer> &&buffer) {
+                std::cout << "Post encoder" << std::endl;
                 _tcp_client->Post(std::move(buffer));
             }
         );
         _camera = infrastructure::LibcameraCamera::Create(
             config,
             [this, self](std::shared_ptr<CameraBuffer> &&camera_buffer) {
+                std::cout << "Post camera" << std::endl;
                 _encoder->PostCameraBuffer(std::move(camera_buffer));
             }
         );
