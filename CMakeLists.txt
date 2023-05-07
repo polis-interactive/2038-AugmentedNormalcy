@@ -73,4 +73,6 @@ add_subdirectory(${internal_dir}/service)
 
 add_subdirectory(test)
 
+add_subdirectory(scratch/pi_decode_sw)
+
 add_subdirectory(application)
