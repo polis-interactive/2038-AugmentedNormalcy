@@ -21,10 +21,11 @@ namespace service {
     {
         HeadsetStreamerConfig(
                 std::string tcp_server_host, int tcp_server_port, std::pair<int, int> image_width_height,
-                int decoder_buffers_upstream, int decoder_buffers_downstream
+                int tcp_read_buffers, int decoder_buffers_downstream
         ):
             _tcp_server_host(std::move(tcp_server_host)),
             _tcp_server_port(tcp_server_port),
+            _tcp_read_buffers(tcp_read_buffers),
             _decoder_buffers_downstream(decoder_buffers_downstream),
             _image_width_height(std::move(image_width_height))
         {}
@@ -52,9 +53,16 @@ namespace service {
         [[nodiscard]] int get_tcp_client_timeout_on_read() const override {
             return 1;
         };
+        [[nodiscard]] int get_tcp_client_read_buffer_count() const override {
+            return _tcp_read_buffers;
+        };
+        [[nodiscard]] int get_tcp_client_read_buffer_size() const override {
+            return _image_width_height.first * _image_width_height.second * 3 / 2;
+        };
     private:
         const std::string _tcp_server_host;
         const int _tcp_server_port;
+        const int _tcp_read_buffers;
         const int _decoder_buffers_downstream;
         const std::pair<int, int> _image_width_height;
     };
