@@ -89,6 +89,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_SW_DECODER-One_Frame") {
         decoder->Start();
         auto buffer = pool.GetSizedBuffer();
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
+        in_time = Clock::now();
         decoder->PostJpegBuffer(std::move(buffer));
         std::this_thread::sleep_for(100ms);
         decoder->Stop();
