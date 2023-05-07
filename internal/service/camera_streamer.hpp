@@ -59,6 +59,13 @@ namespace service {
         [[nodiscard]] std::pair<int, int> get_encoder_width_height() const override {
             return _camera_width_height;
         };
+        /* not use but meh */
+        [[nodiscard]] int get_tcp_client_read_buffer_count() const override {
+            return _encoder_buffers_downstream;
+        };
+        [[nodiscard]] int get_tcp_client_read_buffer_size() const override {
+            return _camera_width_height.first * _camera_width_height.second * 3 / 2;
+        };
     private:
         const std::string _tcp_server_host;
         const int _tcp_server_port;
