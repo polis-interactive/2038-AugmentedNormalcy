@@ -54,6 +54,7 @@ public:
     [[nodiscard]]  unsigned long CreateCameraServerConnection(
         std::shared_ptr<infrastructure::TcpSession> session
     ) override {
+        std::cout << "i get called 1" << std::endl;
         client_is_connected = true;
         return 0;
     };
@@ -62,6 +63,7 @@ public:
     }
     ResizableBufferCallback _on_receive;
     void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> session) override {
+        std::cout << "i get called 2" << std::endl;
         client_is_connected = false;
     }
     [[nodiscard]] bool ClientIsConnected() const {

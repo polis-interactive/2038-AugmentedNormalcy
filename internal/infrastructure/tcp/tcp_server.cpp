@@ -189,10 +189,6 @@ namespace infrastructure {
             _receive_buffer = _receive_buffer_pool->GetCameraBuffer();
         }
 
-        std::cout << _receive_buffer->GetSize() << std::endl;
-        std::cout << _receive_buffer->GetMemory() << std::endl;
-        std::cout << _header.DataLength() << std::endl;
-
         // startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
