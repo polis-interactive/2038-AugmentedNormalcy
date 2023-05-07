@@ -136,10 +136,12 @@ namespace infrastructure {
         if (_is_stopped || !_is_connected) return;
         auto &buffer = _send_buffer_queue.front();
         auto self(shared_from_this());
+        std::cout << "Writing bites bytes: " << _header.DataLength() << std::endl;
         _socket->async_send(
             net::buffer((uint8_t *) buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
+                std::cout << "Written bytes: " << bytes_written << std::endl;
                 if (ec) {
                     std::cout << "TcpClient: error writing body: " << ec << "; reconnecting" << std::endl;
                     reconnect(ec);
