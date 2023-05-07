@@ -26,6 +26,9 @@ const auto rolling_less_than = [](const uint16_t &a, const uint16_t &b) {
 namespace infrastructure {
     struct PacketHeader {
     public:
+        PacketHeader() {
+            memset(_data, 0, sizeof(_data));
+        }
         /* common */
         static constexpr uint64_t MaxSize = 65536;
         char *Data() {

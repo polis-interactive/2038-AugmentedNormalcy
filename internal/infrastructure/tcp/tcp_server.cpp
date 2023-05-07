@@ -157,18 +157,19 @@ namespace infrastructure {
         _socket.async_receive(
                 net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
                 [this, s = std::move(self), last_bytes] (error_code ec, std::size_t bytes_written) mutable {
-                    std::cout << "reading header" << std::endl;
                     if (ec ==  boost::asio::error::operation_aborted) {
                         return;
                     }
                     // _read_timer.cancel();
                     auto total_bytes = last_bytes + bytes_written;
-                    if (!ec && total_bytes == _header.Size() && _header.Ok()) {
-                        readBody();
-                        return;
-                    } else if (!ec && total_bytes != _header.Size()) {
-                        readHeader(total_bytes);
-                        return;
+                    if (!ec) {
+                        if (total_bytes == _header.Size() && _header.Ok()) {
+                            readBody();
+                            return;
+                        } else if (total_bytes != _header.Size()) {
+                            readHeader(total_bytes);
+                            return;
+                        }
                     }
                     std::cout << "TcpCameraSession: error reading header: ";
                     if (ec) {
@@ -194,7 +195,7 @@ namespace infrastructure {
         _socket.async_receive(
             boost::asio::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
-                std::cout << "Do you segfault?" << std::endl;
+                std::cout << "Do you segfault? " <<  bytes_written << std::endl;
                 if (ec ==  boost::asio::error::operation_aborted) {
                     std::cout << "aborted" << std::endl;
                     return;
@@ -281,12 +282,14 @@ namespace infrastructure {
             net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
             [this, s = std::move(self), last_bytes](error_code ec, std::size_t bytes_written) mutable {
                 auto total_bytes = last_bytes + bytes_written;
-                if (!ec && total_bytes == _header.Size()) {
-                    writeBody();
-                    return;
-                } else if (total_bytes < _header.Size()) {
-                    writeHeader(total_bytes);
-                    return;
+                if (!ec) {
+                    if (total_bytes == _header.Size()) {
+                        writeBody();
+                        return;
+                    } else if (total_bytes < _header.Size()) {
+                        writeHeader(total_bytes);
+                        return;
+                    }
                 }
                 std::cout << "TcpHeadsetSession: error writing header: ";
                 if (ec) {
