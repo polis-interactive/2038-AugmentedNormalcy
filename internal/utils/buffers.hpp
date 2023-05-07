@@ -78,8 +78,7 @@ private:
 using CameraBufferCallback = std::function<void(std::shared_ptr<CameraBuffer>&&)>;
 
 struct DecoderBuffer: public SizedBuffer {
-    DecoderBuffer(unsigned int buffer_index, int fd, void *memory, std::size_t size):
-        _buffer_index(buffer_index),
+    DecoderBuffer(int fd, void *memory, std::size_t size):
         _fd(fd),
         _memory(memory),
         _size(size)
@@ -94,11 +93,7 @@ struct DecoderBuffer: public SizedBuffer {
     [[nodiscard]] std::size_t GetSize() override {
         return _size;
     };
-    [[nodiscard]] std::size_t GetIndex() const {
-        return _buffer_index;
-    };
 private:
-    const unsigned int _buffer_index;
     const int _fd;
     void *_memory;
     std::size_t _size;

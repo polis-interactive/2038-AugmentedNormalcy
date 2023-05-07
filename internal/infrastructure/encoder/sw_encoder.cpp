@@ -96,6 +96,8 @@ namespace infrastructure {
             }
             encodeBuffer(cinfo, std::move(buffer));
         }
+
+        jpeg_destroy_compress(&cinfo);
     }
 
     void SwEncoder::encodeBuffer(struct jpeg_compress_struct &cinfo, std::shared_ptr<CameraBuffer> &&cam_buffer) {
@@ -108,7 +110,6 @@ namespace infrastructure {
             }
         }
         if (buffer == nullptr) {
-            std::cout << "nothing to do" << std::endl;
             return;
         }
         buffer->ResetSize();
@@ -148,7 +149,6 @@ namespace infrastructure {
         _output_callback(std::move(output_buffer));
 
     }
-
 
     void SwEncoder::queueDownstreamBuffer(EncoderBuffer *e) {
         std::unique_lock<std::mutex> lock(_downstream_buffers_mutex);

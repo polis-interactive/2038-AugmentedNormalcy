@@ -121,7 +121,7 @@ namespace infrastructure {
         _socket(std::move(socket)), _manager(manager), _addr(std::move(addr)),
         _read_timer(socket.get_executor()), _read_timeout(read_timeout)
     {
-        _receive_buffer_pool = TcpCameraBufferPool::Create(buffer_count, buffer_size);
+        _receive_buffer_pool = TcpReadBufferPool::Create(buffer_count, buffer_size);
     }
 
     void TcpCameraSession::Run() {
@@ -184,7 +184,7 @@ namespace infrastructure {
 
     void TcpCameraSession::readBody() {
         if (_receive_buffer == nullptr) {
-            _receive_buffer = _receive_buffer_pool->GetCameraBuffer();
+            _receive_buffer = _receive_buffer_pool->GetReadBuffer();
         }
 
         // startTimer();

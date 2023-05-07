@@ -23,7 +23,12 @@ namespace infrastructure {
         _read_timer(context.get_executor()),
         _read_timeout(config.get_tcp_client_timeout_on_read())
     {
-
+        if (!_is_camera) {
+            _receive_buffer_pool = TcpReadBufferPool::Create(
+                config.get_tcp_client_read_buffer_count(),
+                config.get_tcp_client_read_buffer_size()
+            );
+        }
     }
 
     void TcpClient::Start() {
@@ -170,7 +175,7 @@ namespace infrastructure {
 
     void TcpClient::startRead() {
         std::cout << "TcpClient connected; starting to read" << std::endl;
-        _receive_buffer_pool = _manager->CreateHeadsetClientConnection();
+        _manager->CreateHeadsetClientConnection();
         auto self(shared_from_this());
         net::dispatch(
             _socket->get_executor(),
@@ -228,7 +233,7 @@ namespace infrastructure {
     void TcpClient::readBody() {
         if (_is_stopped || !_is_connected) return;
         if (_receive_buffer == nullptr) {
-            _receive_buffer = _receive_buffer_pool->GetResizableBuffer();
+            _receive_buffer = _receive_buffer_pool->GetReadBuffer();
         }
         startTimer();
         auto self(shared_from_this());
@@ -249,9 +254,11 @@ namespace infrastructure {
                     readBody();
                     return;
                 }
-                else if (_header.IsFinished()) {
-                    _receive_buffer->SetSize(_header.BytesWritten());
-                    _receive_buffer_pool->PostResizableBuffer(std::move(_receive_buffer));
+                if (_header.IsFinished()) {
+                    if (!_receive_buffer->IsLeakyBuffer()) {
+                        _receive_buffer->SetSize(_header.BytesWritten());
+                        _manager->PostHeadsetClientBuffer(std::move(_receive_buffer));
+                    }
                     _receive_buffer = nullptr;
                     _header.ResetHeader();
                 }

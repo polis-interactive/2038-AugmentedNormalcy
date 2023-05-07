@@ -11,12 +11,11 @@
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
-#include "infrastructure/decoder/v4l2_decoder.hpp"
+#include "infrastructure/decoder/sw_decoder.hpp"
 
-class TestV4l2DecoderConfig: public infrastructure::DecoderConfig {
-    [[nodiscard]] unsigned int get_decoder_upstream_buffer_count() const override {
-        return 4;
-    };
+#include "fake_buffer_pool.hpp"
+
+class TestSwDecoderConfig: public infrastructure::DecoderConfig {
     [[nodiscard]] unsigned int get_decoder_downstream_buffer_count() const override {
         return 4;
     };
@@ -25,12 +24,12 @@ class TestV4l2DecoderConfig: public infrastructure::DecoderConfig {
     };
 };
 
-TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Start_And_Stop") {
-    TestV4l2DecoderConfig conf;
+TEST_CASE("INFRASTRUCTURE_DECODER_SW_DECODER-Start_And_Stop") {
+    TestSwDecoderConfig conf;
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4, t5;
     {
         t1 = Clock::now();
-        auto decoder = infrastructure::V4l2Decoder::Create(conf, [](std::shared_ptr<DecoderBuffer> &&buffer) { });
+        auto decoder = infrastructure::SwDecoder::Create(conf, [](std::shared_ptr<DecoderBuffer> &&buffer) { });
         t2 = Clock::now();
         decoder->Start();
         t3 = Clock::now();
@@ -43,12 +42,12 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Start_And_Stop") {
     auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2);
     auto d3 = std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3);
     auto d4 = std::chrono::duration_cast<std::chrono::milliseconds>(t5 - t4);
-    std::cout << "test_infrastructure/decoder/v4l2_decoder startup and teardown: " <<
+    std::cout << "test_infrastructure/decoder/sw_decoder startup and teardown: " <<
               d1.count() << ", " << d2.count() << ", " << d3.count() <<
               d4.count() << ", " << std::endl;
 }
 
-TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-One_Frame") {
+TEST_CASE("INFRASTRUCTURE_DECODER_SW_DECODER-One_Frame") {
 
     std::filesystem::path this_dir = TEST_DIR;
     this_dir /= "test_infrastructure";
@@ -82,15 +81,15 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-One_Frame") {
         test_file_out.close();
     };
 
+    DecoderSizedBufferPool pool(input_size, 5);
+
     {
-        TestV4l2DecoderConfig conf;
-        auto decoder = infrastructure::V4l2Decoder::Create(conf, std::move(callback));
+        TestSwDecoderConfig conf;
+        auto decoder = infrastructure::SwDecoder::Create(conf, std::move(callback));
         decoder->Start();
-        auto buffer = decoder->GetResizableBuffer();
+        auto buffer = pool.GetSizedBuffer();
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
-        buffer->SetSize(input_size);
-        in_time = Clock::now();
-        decoder->PostResizableBuffer(std::move(buffer));
+        decoder->PostJpegBuffer(std::move(buffer));
         std::this_thread::sleep_for(100ms);
         decoder->Stop();
     }
@@ -102,7 +101,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-One_Frame") {
 
 }
 
-TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
+TEST_CASE("INFRASTRUCTURE_DECODER_SW_DECODER-Stress_test") {
     std::filesystem::path this_dir = TEST_DIR;
     this_dir /= "test_infrastructure";
     this_dir /= "test_decoder";
@@ -143,19 +142,19 @@ TEST_CASE("INFRASTRUCTURE_DECODER_V4L2_DECODER-Stress_test") {
         }
     };
 
+    DecoderSizedBufferPool pool(input_size, 5);
+
     {
-        TestV4l2DecoderConfig conf;
-        auto decoder = infrastructure::V4l2Decoder::Create(conf, std::move(callback));
+        TestSwDecoderConfig conf;
+        auto decoder = infrastructure::SwDecoder::Create(conf, std::move(callback));
         decoder->Start();
         in_time = Clock::now();
         for (int i = 0; i < 500; i++){
-            auto buffer = decoder->GetResizableBuffer();
+            auto buffer = pool.GetSizedBuffer();
             memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
-            buffer->SetSize(input_size);
-            decoder->PostResizableBuffer(std::move(buffer));
+            decoder->PostJpegBuffer(std::move(buffer));
             std::this_thread::sleep_for(30ms);
         }
-
         std::this_thread::sleep_for(100ms);
         decoder->Stop();
     }

@@ -101,6 +101,83 @@ namespace infrastructure {
         uint16_t _last_sequence_number = 0;
 
     };
+
+    class TcpReadBuffer: public ResizableBuffer {
+    public:
+        TcpReadBuffer(std::size_t size, const bool is_leaky):
+                _max_size(size), _is_leaky(is_leaky)
+        {
+            _buffer = new unsigned char[_max_size];
+        }
+        [[nodiscard]] void * GetMemory() final {
+            return _buffer;
+        }
+        [[nodiscard]] std::size_t GetSize() final {
+            return _size;
+        }
+        virtual void SetSize(std::size_t used_size) {
+            _size = used_size;
+        };
+        [[nodiscard]] bool IsLeakyBuffer() final {
+            return _is_leaky;
+        };
+        ~TcpReadBuffer() {
+            delete[] _buffer;
+        }
+    private:
+        const std::size_t _max_size;
+        const bool _is_leaky;
+        unsigned char *_buffer;
+        std::size_t _size;
+    };
+
+    class TcpReadBufferPool: public std::enable_shared_from_this<TcpReadBufferPool> {
+    public:
+        static std::shared_ptr<TcpReadBufferPool> Create(const int buffer_count, const int buffer_size) {
+            auto buffer_pool = std::make_shared<TcpReadBufferPool>(buffer_count, buffer_size);
+            return buffer_pool;
+        }
+        TcpReadBufferPool(const int buffer_count, const int buffer_size) {
+            for (int i = 0; i < buffer_count; i++) {
+                _buffers.push_back(new TcpReadBuffer(buffer_size, false));
+            }
+            _leaky_buffer = std::make_shared<TcpReadBuffer>(buffer_size, true);
+        }
+        [[nodiscard]] std::shared_ptr<TcpReadBuffer> GetReadBuffer() {
+            TcpReadBuffer *buffer = nullptr;
+            {
+                std::unique_lock<std::mutex> lock(_buffer_mutex);
+                if (!_buffers.empty()) {
+                    buffer = _buffers.front();
+                    _buffers.pop_front();
+                }
+            }
+            if (buffer == nullptr) {
+                return _leaky_buffer;
+            }
+            auto self(shared_from_this());
+            auto wrapped_buffer = std::shared_ptr<TcpReadBuffer>(
+                    buffer, [this, s = std::move(self)](TcpReadBuffer * b) mutable {
+                        std::unique_lock<std::mutex> lock(_buffer_mutex);
+                        _buffers.push_back(b);
+                    }
+            );
+            return wrapped_buffer;
+        };
+        ~TcpReadBufferPool() {
+            TcpReadBuffer *buffer;
+            std::unique_lock<std::mutex> lock(_buffer_mutex);
+            while (!_buffers.empty()) {
+                buffer = _buffers.front();
+                _buffers.pop_front();
+                delete buffer;
+            }
+        }
+    private:
+        std::shared_ptr<TcpReadBuffer> _leaky_buffer;
+        std::deque<TcpReadBuffer *> _buffers;
+        std::mutex _buffer_mutex;
+    };
 }
 
 #endif //AUGMENTEDNORMALCY_INFRASTRUCTURE_TCP_PACKET_HEADER_HPP
