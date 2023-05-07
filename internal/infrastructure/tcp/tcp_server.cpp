@@ -142,12 +142,9 @@ namespace infrastructure {
         _read_timer.expires_from_now(boost::posix_time::seconds(_read_timeout));
         auto self(shared_from_this());
         _read_timer.async_wait([this, s = std::move(self)](error_code ec) {
-            std::cout << "AM" << std::endl;
             if (!ec) {
-                std::cout << "i" << std::endl;
                 TryClose(true);
             }
-            std::cout << "called" << std::endl;
         });
     }
 
@@ -195,36 +192,28 @@ namespace infrastructure {
         _socket.async_receive(
             boost::asio::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
-                std::cout << "Do you segfault? " <<  bytes_written << std::endl;
                 if (ec ==  boost::asio::error::operation_aborted) {
                     std::cout << "aborted" << std::endl;
                     return;
                 }
-                std::cout << "am" << std::endl;
                 // _read_timer.cancel();
-                std::cout << "i" << std::endl;
                 if (ec) {
                     std::cout << "TcpCameraSession: error reading body: " << ec << "; closing" << std::endl;
                     TryClose(true);
                     return;
                 } else if (bytes_written != _header.DataLength()) {
-                    std::cout << "offset" << std::endl;
                     _header.OffsetPacket(bytes_written);
                     readBody();
                     return;
                 }
-                else if (_header.IsFinished()) {
-                    std::cout << "finished" << std::endl;
+                if (_header.IsFinished()) {
                     if (!_receive_buffer->IsLeakyBuffer()) {
-                        std::cout << "hmmm" << std::endl;
                         _receive_buffer->SetSize(_header.BytesWritten());
                         _manager->PostCameraServerBuffer(_addr, std::move(_receive_buffer));
                     }
-                    std::cout << "hass" << std::endl;
                     _receive_buffer = nullptr;
                     _header.ResetHeader();
                 }
-                std::cout << "sah" << std::endl;
                 readHeader(0);
             }
         );

@@ -105,13 +105,11 @@ namespace infrastructure {
     void TcpClient::writeHeader(std::size_t last_bytes) {
         if (_is_stopped || !_is_connected) return;
         auto self(shared_from_this());
-        std::cout << "Writing bytes header: " << _header.Size() - last_bytes << std::endl;
         _socket->async_send(
             net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
             [this, s = std::move(self), last_bytes](error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
                 auto total_bytes = last_bytes + bytes_written;
-                std::cout << "Written bytes header: " << bytes_written << std::endl;
                 if (!ec) {
                     if (total_bytes == _header.Size()) {
                         writeBody();
@@ -138,12 +136,10 @@ namespace infrastructure {
         if (_is_stopped || !_is_connected) return;
         auto &buffer = _send_buffer_queue.front();
         auto self(shared_from_this());
-        std::cout << "Writing bytes data: " << _header.DataLength() << std::endl;
         _socket->async_send(
             net::buffer((uint8_t *) buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
-                std::cout << "Written bytes data: " << bytes_written << std::endl;
                 if (ec) {
                     std::cout << "TcpClient: error writing body: " << ec << "; reconnecting" << std::endl;
                     reconnect(ec);
