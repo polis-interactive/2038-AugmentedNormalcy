@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     std::chrono::duration<double> encode_time(0);
     uint32_t frames = 0;
 
-    // for (int inc = 0; inc < 500; inc++) {
+    for (int inc = 0; inc < 500; inc++) {
 
         auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -165,12 +165,12 @@ int main(int argc, char *argv[]) {
 
         encode_time += (std::chrono::high_resolution_clock::now() - start_time);
 
-    // }
+    }
 
     jpeg_destroy_decompress(&cinfo);
 
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(encode_time);
-    std::cout << "Time to encode: " << d1.count() / 500 << std::endl;
+    std::cout << "Time to decode total: " << d1.count()  << ", average: " << d1.count() / 500 << std::endl;
 
     std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
     test_file_out.write((char *)dma_mem, max_size);
