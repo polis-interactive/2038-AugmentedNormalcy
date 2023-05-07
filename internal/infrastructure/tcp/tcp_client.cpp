@@ -99,6 +99,8 @@ namespace infrastructure {
         if (!write_in_progress) {
             std::cout << "sending payload: " << _send_buffer_queue.front()->GetSize() << std::endl;
             _header.SetupHeader(_send_buffer_queue.front()->GetSize());
+            std::cout << _send_buffer_queue.front()->GetSize() << std::endl;
+            std::cout << _header.DataLength() << std::endl;
             writeHeader(0);
         }
     }
