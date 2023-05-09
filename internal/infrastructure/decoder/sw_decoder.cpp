@@ -186,11 +186,6 @@ namespace infrastructure {
         }
         jpeg_finish_decompress(&cinfo);
 
-        if (msync(buffer->GetMemory(), buffer->GetSize(), MS_SYNC) == -1) {
-            perror("msync failed");
-            return;
-        }
-
         auto self(shared_from_this());
         auto output_buffer = std::shared_ptr<DecoderBuffer>(
                 buffer, [this, s = std::move(self)](DecoderBuffer * e) mutable {
