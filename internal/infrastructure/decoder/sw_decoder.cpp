@@ -66,6 +66,8 @@ namespace infrastructure {
         close(fd);
     }
 
+    const char SwDecoder::_device_name[] = "/dev/video10";
+
     SwDecoder::SwDecoder(const DecoderConfig &config, DecoderBufferCallback output_callback):
         _output_callback(std::move(output_callback)),
         _width_height(config.get_decoder_width_height())
