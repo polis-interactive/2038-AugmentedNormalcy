@@ -50,6 +50,9 @@ namespace infrastructure {
         void queueDownstreamBuffer(DecoderBuffer *d);
         void teardownDownstreamBuffers();
 
+        static const char _device_name[];
+        int _decoder_fd = -1;
+
         DecoderBufferCallback _output_callback;
         const std::pair<int, int> _width_height;
 

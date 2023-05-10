@@ -10,6 +10,10 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <linux/dma-heap.h>
+#include <linux/videodev2.h>
+
+#include <cstring>
+#include <sstream>
 
 #include <chrono>
 using namespace std::literals;
@@ -67,6 +71,23 @@ namespace infrastructure {
         _width_height(config.get_decoder_width_height())
     {
         auto downstream_count = config.get_decoder_downstream_buffer_count();
+
+        _decoder_fd = open(_device_name, O_RDWR, 0);
+
+        v4l2_format fmt = {0};
+        fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        fmt.fmt.pix_mp.width = _width_height.first;
+        fmt.fmt.pix_mp.height = _width_height.second;
+        fmt.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_YUV420;
+        fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
+        fmt.fmt.pix_mp.colorspace = V4L2_COLORSPACE_REC709;
+        fmt.fmt.pix_mp.num_planes = 1;
+        fmt.fmt.pix_mp.plane_fmt[0].bytesperline = _width_height.first;
+        fmt.fmt.pix_mp.plane_fmt[0].sizeimage = _width_height.first * _width_height.second * 3 / 2;
+
+        if (xioctl(_decoder_fd, VIDIOC_S_FMT, &fmt))
+            throw std::runtime_error("failed to set capture caps");
+
         setupDownstreamBuffers(downstream_count);
     }
 
@@ -201,6 +222,7 @@ namespace infrastructure {
     }
 
     void SwDecoder::setupDownstreamBuffers(unsigned int request_downstream_buffers) {
+        /*
         const auto max_size = _width_height.first * _width_height.second * 3 / 2;
         for (int i = 0; i < request_downstream_buffers; i++) {
             void *dma_mem = nullptr;
@@ -211,19 +233,102 @@ namespace infrastructure {
             auto downstream_buffer = new DecoderBuffer(dma_fd, dma_mem, max_size);
             _downstream_buffers.push(downstream_buffer);
         }
+         */
+        v4l2_requestbuffers reqbufs = {};
+        reqbufs.count = request_downstream_buffers;
+        reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        reqbufs.memory = V4L2_MEMORY_MMAP;
+        if (xioctl(_decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+            throw std::runtime_error("request for output buffers failed");
+        } else if (reqbufs.count != request_downstream_buffers) {
+            std::stringstream out_str;
+            out_str << "Unable to return " << request_downstream_buffers << " capture buffers; only got " << reqbufs.count;
+            throw std::runtime_error(out_str.str());
+        }
+
+        v4l2_plane planes[VIDEO_MAX_PLANES];
+        v4l2_buffer buffer = {};
+        v4l2_exportbuffer expbuf = {};
+
+        for (int i = 0; i < request_downstream_buffers; i++) {
+
+            /*
+             * Get buffer
+             */
+
+            buffer = {};
+            memset(planes, 0, sizeof(planes));
+            buffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+            buffer.memory = V4L2_MEMORY_MMAP;
+            buffer.index = i;
+            buffer.length = 1;
+            buffer.m.planes = planes;
+
+            if (xioctl(_decoder_fd, VIDIOC_QUERYBUF, &buffer) < 0)
+                throw std::runtime_error("failed to query output buffer");
+
+            /*
+             * mmap
+             */
+
+            auto capture_size = buffer.m.planes[0].length;
+            auto capture_offset = buffer.m.planes[0].m.mem_offset;
+            auto capture_mem = mmap(
+                    nullptr, capture_size, PROT_READ | PROT_WRITE, MAP_SHARED, _decoder_fd, capture_offset
+            );
+            if (capture_mem == MAP_FAILED)
+                throw std::runtime_error("failed to mmap output buffer");
+
+            /*
+             * export to dmabuf
+             */
+
+            memset(&expbuf, 0, sizeof(expbuf));
+            expbuf.type = buffer.type;
+            expbuf.index = buffer.index;
+            expbuf.flags = O_RDWR;
+
+            if (xioctl(_decoder_fd, VIDIOC_EXPBUF, &expbuf) < 0)
+                throw std::runtime_error("failed to export the capture buffer");
+
+            /*
+             * setup proxy
+             */
+
+            auto downstream_buffer = new DecoderBuffer(buffer.index, expbuf.fd, capture_mem, capture_size);
+            _downstream_buffers.push(downstream_buffer);
+        }
     }
 
     SwDecoder::~SwDecoder() {
         Stop();
         teardownDownstreamBuffers();
+        close(_decoder_fd);
     }
 
     void SwDecoder::teardownDownstreamBuffers() {
+        /*
         while(!_downstream_buffers.empty()) {
             auto buffer = _downstream_buffers.front();
             _downstream_buffers.pop();
             free_dma_buf(buffer->GetFd(), buffer->GetMemory(), buffer->GetSize());
             delete buffer;
+        }
+         */
+        while(!_downstream_buffers.empty()) {
+            auto buffer = _downstream_buffers.front();
+            _downstream_buffers.pop();
+            munmap(buffer->GetMemory(), buffer->GetSize());
+            close(buffer->GetFd());
+            delete buffer;
+        }
+
+        v4l2_requestbuffers reqbufs = {};
+        reqbufs.count = 0;
+        reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+        reqbufs.memory = V4L2_MEMORY_MMAP;
+        if (xioctl(_decoder_fd, VIDIOC_REQBUFS, &reqbufs) < 0) {
+            std::cout << "Failed to free capture buffers" << std::endl;
         }
     }
 }
