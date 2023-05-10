@@ -140,7 +140,7 @@ int main(int argc, char *argv[]) {
 
         jpeg_set_defaults(&cinfo);
         cinfo.raw_data_in = TRUE;
-        jpeg_set_quality(&cinfo, 192, TRUE);
+        jpeg_set_quality(&cinfo, 75, TRUE);
 
         jpeg_mem_len_t jpeg_mem_len = 1990656;
         jpeg_mem_dest(&cinfo, &enc_buffer, &jpeg_mem_len);

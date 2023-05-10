@@ -77,7 +77,7 @@ namespace infrastructure {
 
         jpeg_set_defaults(&cinfo);
         cinfo.raw_data_in = TRUE;
-        jpeg_set_quality(&cinfo, 192, TRUE);
+        jpeg_set_quality(&cinfo, 75, TRUE);
 
         while(!_work_stop) {
             std::shared_ptr<CameraBuffer> buffer;
