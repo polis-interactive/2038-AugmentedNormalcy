@@ -14,7 +14,7 @@ void signal_handler(int signal) { shutdown_handler(signal); }
 
 int main() {
     const service::CameraStreamerConfig conf(
-        "192.168.1.10", 6969, infrastructure::CameraType::LIBCAMERA, { 1536, 864 }
+        "192.168.1.10", 6969, { 1536, 864 }, 5
     );
     auto service = service::CameraStreamer::Create(conf);
     service->Start();

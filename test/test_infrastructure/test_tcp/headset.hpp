@@ -13,17 +13,18 @@ class TcpHeadsetClientServerManager:
         public infrastructure::TcpServerManager
 {
 public:
-    explicit TcpHeadsetClientServerManager(
-        std::shared_ptr<ResizableBufferPool> buffer_pool
-    ) :
-        _buffer_pool(std::move(buffer_pool))
+    explicit TcpHeadsetClientServerManager(SizedBufferCallback callback) :
+            on_receive(std::move(callback))
     {}
 
     /* headset client */
-    std::shared_ptr<ResizableBufferPool> CreateHeadsetClientConnection() override {
+    void CreateHeadsetClientConnection() override {
         client_is_connected = true;
-        return _buffer_pool;
     };
+
+    void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) {
+        on_receive(std::move(buffer));
+    }
 
     void DestroyHeadsetClientConnection() override {
         client_is_connected = false;
@@ -32,7 +33,7 @@ public:
         return client_is_connected;
     }
     std::atomic_bool client_is_connected = false;
-    std::shared_ptr<ResizableBufferPool> _buffer_pool;
+    SizedBufferCallback on_receive;
 
     /* headset server */
     [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp_addr addr) override {
@@ -55,11 +56,12 @@ public:
     void DestroyCameraClientConnection() override {};
 
     /* dummy for camera server */
-    [[nodiscard]]  infrastructure::CameraConnectionPayload CreateCameraServerConnection(
+    [[nodiscard]]  unsigned long CreateCameraServerConnection(
         std::shared_ptr<infrastructure::TcpSession> session
     ) override {
-        return { 0, nullptr };
+        return 0;
     };
+    void PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer) override {}
     void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> session) override {}
 };
 

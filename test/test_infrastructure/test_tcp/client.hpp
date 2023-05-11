@@ -40,34 +40,41 @@ struct TestClientServerConfig:
         return _tcp_client_is_camera;
     };
     [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
-        return 5;
+        return 10;
     }
     [[nodiscard]] int get_tcp_client_timeout_on_read() const override {
+        return 10;
+    };
+    [[nodiscard]] int get_tcp_camera_session_buffer_count() const override {
+        return 6;
+    }
+    [[nodiscard]] int get_tcp_camera_session_buffer_size() const override {
         return 5;
+    }
+    [[nodiscard]] int get_tcp_client_read_buffer_count() const override {
+        return 5;
+    };
+    [[nodiscard]] int get_tcp_client_read_buffer_size() const override {
+        return 1536 * 864 * 3 / 2;
     };
 };
 
 class TcpClientManager: public infrastructure::TcpClientManager {
 public:
-    explicit TcpClientManager(std::shared_ptr<ResizableBufferPool> optional_buffer_pool) {
-        if (optional_buffer_pool != nullptr) {
-            _optional_pushing_buffer_pool = std::move(optional_buffer_pool);
-        }
+    explicit TcpClientManager() {
     }
     // camera session
     void CreateCameraClientConnection() override {};
     void DestroyCameraClientConnection() override {};
 
     // headset session
-    std::shared_ptr<ResizableBufferPool> CreateHeadsetClientConnection() override {
+    void CreateHeadsetClientConnection() override {
         is_headset_connected = true;
-        return _optional_pushing_buffer_pool;
     };
+    void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) override {}
     void DestroyHeadsetClientConnection() override {
         is_headset_connected = false;
     };
-    SizedBufferCallback _write_call;
-    std::shared_ptr<ResizableBufferPool> _optional_pushing_buffer_pool = nullptr;
     std::atomic_bool is_headset_connected = false;
 };
 

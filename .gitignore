@@ -10,6 +10,8 @@ out.nv12
 out.h264
 out.yuv
 out.jpeg
+out_single.jpeg
+out_multi.jpeg
 
 testGodotOcculus
 testNativeOcculus

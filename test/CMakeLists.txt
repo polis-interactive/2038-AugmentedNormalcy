@@ -18,30 +18,33 @@ set(tests_link_libraries pthread tcp)
 
 if (LIBCAMERA_AVAILABLE)
     set(tests ${tests} test_infrastructure/test_camera/test_frame_capture.cpp)
+    set(tests_link_libraries ${tests_link_libraries} camera)
 endif()
 
-if (FEATURE_CAMERA)
-    set(tests ${tests} test_service/test_camera_streamer.cpp)
-    set(tests_link_libraries ${tests_link_libraries} camera service)
-endif()
 
-if (FEATURE_ENCODER)
+if (FEATURE_ENCODER AND AN_PLATFORM_TYPE STREQUAL RPI)
     set(tests ${tests}
-            test_infrastructure/test_encoder/test_jetson_encoder.cpp
-            test_service/test_server_encoder.cpp
+            test_service/test_camera_streamer.cpp
+            test_infrastructure/test_encoder/fake_camera.cpp
+            test_infrastructure/test_encoder/test_sw_encoder.cpp
     )
-    set(tests_link_libraries ${tests_link_libraries} encoder service)
+    set(tests_link_libraries ${tests_link_libraries} service encoder)
+endif()
+
+if (NOT AN_PLATFORM_TYPE STREQUAL RPI)
+    set(tests ${tests} test_service/test_server_streamer.cpp)
+    set(tests_link_libraries ${tests_link_libraries} service)
 endif()
 
 if (FEATURE_DECODER AND AN_PLATFORM_TYPE STREQUAL RPI)
     set(tests ${tests}
-            test_infrastructure/test_decoder/test_v4l2_decoder.cpp
+            test_infrastructure/test_decoder/test_sw_decoder.cpp
     )
     set(tests_link_libraries ${tests_link_libraries} decoder)
 endif()
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -D_GLIBCXX_DEBUG -O0 ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -O0")
 add_definitions(-DTEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_executable(tests ${tests})
 

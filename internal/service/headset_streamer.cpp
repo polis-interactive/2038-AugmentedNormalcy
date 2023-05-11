@@ -12,8 +12,8 @@ namespace service {
         return headset_streamer;
     }
 
-    std::shared_ptr<ResizableBufferPool> HeadsetStreamer::CreateHeadsetClientConnection() {
-        return _decoder;
+    void HeadsetStreamer::PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) {
+        _decoder->PostJpegBuffer(std::move(buffer));
     }
 
     void HeadsetStreamer::initialize(const service::HeadsetStreamerConfig &config) {
@@ -22,7 +22,7 @@ namespace service {
         _tcp_client = infrastructure::TcpClient::Create(config, _tcp_context->GetContext(), std::move(self));
         _graphics = infrastructure::Graphics::Create(config);
         self = shared_from_this();
-        _decoder = infrastructure::V4l2Decoder::Create(
+        _decoder = infrastructure::SwDecoder::Create(
             config,
             [this, s = std::move(self)](std::shared_ptr<DecoderBuffer> &&buffer) {
                 _graphics->PostImage(std::move(buffer));

@@ -34,7 +34,7 @@ TEST_CASE("INFRASTRUCTURE_TCP_CLIENT-Camera-Start-and-stop") {
     TestClientServerConfig conf(2, 6969, "127.0.0.1", true);
     auto ctx = infrastructure::TcpContext::Create(conf);
     ctx->Start();
-    auto manager = std::make_shared<TcpClientManager>(nullptr);
+    auto manager = std::make_shared<TcpClientManager>();
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
     auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
     client->Start();
@@ -47,7 +47,7 @@ TEST_CASE("INFRASTRUCTURE_TCP_CLIENT-Headset-Start-and-stop") {
     TestClientServerConfig conf(2, 6969, "127.0.0.1", false);
     auto ctx = infrastructure::TcpContext::Create(conf);
     ctx->Start();
-    auto manager = std::make_shared<TcpClientManager>(nullptr);
+    auto manager = std::make_shared<TcpClientManager>();
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
     auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
     client->Start();
@@ -67,18 +67,16 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
     std::vector<std::string> samples { "hello", "world", "bar__", "baz__", "foo__", "bax__" };
     sort(samples.begin(), samples.end());
     std::vector<std::string> output {};
-    auto on_receive = [&output](std::shared_ptr<SizedBufferPool> &&buffer) {
-        auto fake_buffer = std::static_pointer_cast<FakePlaneBuffer>(buffer);
+    auto on_receive = [&output](std::shared_ptr<ResizableBuffer> &&buffer) {
         std::string s;
-        s.assign(fake_buffer->_buffer->_buffer, fake_buffer->_buffer->GetSize());
+        REQUIRE_EQ(buffer->GetSize(), 5);
+        s.assign((char *) buffer->GetMemory(), buffer->GetSize());
         std::cout << "received buffer: " << s << std::endl;
         output.push_back(s);
         buffer.reset();
     };
-    // 5 buffers total means one needs to be reused
-    auto pool = std::make_shared<FakePlaneBufferPool>(5, 5, on_receive);
 
-    auto manager = std::make_shared<TcpCameraClientServerManager>(pool);
+    auto manager = std::make_shared<TcpCameraClientServerManager>(on_receive);
 
     // just to be cheeky, we are going to start up the client first
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
@@ -93,7 +91,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
     // start sending the samples
     for (auto &sample : samples) {
         std::cout << "Writing buffer: " << sample << std::endl;
-        auto buffer = std::make_shared<FakePlaneBuffer>(sample);
+        auto buffer = std::make_shared<FakeSizedBuffer>(sample);
         client->Post(std::move(buffer));
         std::this_thread::sleep_for(1ms);
     }
@@ -103,8 +101,6 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
     REQUIRE_EQ(samples.size(), output.size());
     // make sure we got them in the same order
     REQUIRE(std::equal(samples.begin(), samples.end(), output.begin()));
-    // make sure we freed them
-    REQUIRE_EQ(pool->AvailableBuffers(), 5);
 
     client->Stop();
     srv->Stop();
@@ -120,14 +116,12 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
 
     std::atomic_int send_count = 0;
     std::atomic_int receive_count = 0;
-    auto on_receive = [&receive_count, &t2](std::shared_ptr<SizedBufferPool> &&buffer) {
+    auto on_receive = [&receive_count, &t2](std::shared_ptr<SizedBuffer> &&buffer) {
         receive_count += 1;
         t2 = Clock::now();
         buffer.reset();
     };
-    auto pool = std::make_shared<FakePlaneBufferPool>(10, 5, on_receive);
-
-    auto manager = std::make_shared<TcpCameraClientServerManager>(pool);
+    auto manager = std::make_shared<TcpCameraClientServerManager>(on_receive);
 
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
     auto srv = infrastructure::TcpServer::Create(conf, ctx->GetContext(), srv_manager);
@@ -146,7 +140,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
         if (s.size() < 10) {
             s.insert(s.begin(), 10 - s.size(), '0');
         }
-        auto buffer = std::make_shared<FakePlaneBuffer>(s);
+        auto buffer = std::make_shared<FakeSizedBuffer>(s);
         client->Post(std::move(buffer));
         send_count += 1;
     }
@@ -154,7 +148,6 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
 
     REQUIRE_EQ(send_count, 10000);
     REQUIRE_EQ(send_count, receive_count);
-    REQUIRE_EQ(pool->AvailableBuffers(), 5);
 
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
     std::cout << "test_infrastructure/test_tcp/communication/pull_server sends 10000 messages: " <<
@@ -176,20 +169,16 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset")  {
     std::vector<std::string> samples { "hello", "world", "bar__", "baz__", "foo__", "bax__" };
     sort(samples.begin(), samples.end());
     std::vector<std::string> output {};
-    auto on_receive = [&output](std::shared_ptr<ResizableBuffer> &&buffer) {
-        auto fake_buffer = std::static_pointer_cast<FakeResizableBuffer>(buffer);
+    auto on_receive = [&output](std::shared_ptr<SizedBuffer> &&buffer) {
         std::string s;
-        REQUIRE_EQ(fake_buffer->_buffer_size, 5);
-        s.assign(fake_buffer->_buffer, fake_buffer->_buffer_size);
+        REQUIRE_EQ(buffer->GetSize(), 5);
+        s.assign((char *) buffer->GetMemory(), buffer->GetSize());
         std::cout << "received buffer: " << s << std::endl;
         output.push_back(s);
         buffer.reset();
     };
 
-    // 5 buffers total means one needs to be reused
-    auto pool = std::make_shared<FakeResizableBufferPool>(16, 5, on_receive);
-
-    auto manager = std::make_shared<TcpHeadsetClientServerManager>(pool);
+    auto manager = std::make_shared<TcpHeadsetClientServerManager>(on_receive);
 
     // just to be cheeky, we are going to start up the client first
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
@@ -215,8 +204,6 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset")  {
     REQUIRE_EQ(samples.size(), output.size());
     // make sure we got them in the same order
     REQUIRE(std::equal(samples.begin(), samples.end(), output.begin()));
-    // we should have all of them b/c client now waits on header
-    REQUIRE_EQ(pool->AvailableBuffers(), 5);
 
     client->Stop();
     srv->Stop();
@@ -233,14 +220,13 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset-Stress"){
 
     std::atomic_int send_count = 0;
     std::atomic_int receive_count = 0;
-    auto on_receive = [&receive_count, &t2](std::shared_ptr<ResizableBuffer> &&buffer) {
+    auto on_receive = [&receive_count, &t2](std::shared_ptr<SizedBuffer> &&buffer) {
         receive_count += 1;
         t2 = Clock::now();
         buffer.reset();
     };
-    auto pool = std::make_shared<FakeResizableBufferPool>(10, 5, on_receive);
 
-    auto manager = std::make_shared<TcpHeadsetClientServerManager>(pool);
+    auto manager = std::make_shared<TcpHeadsetClientServerManager>(on_receive);
 
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
     auto srv = infrastructure::TcpServer::Create(conf, ctx->GetContext(), srv_manager);
@@ -267,7 +253,6 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset-Stress"){
 
     REQUIRE_EQ(send_count, 10000);
     REQUIRE_EQ(send_count, receive_count);
-    REQUIRE_EQ(pool->AvailableBuffers(), 5);
 
     auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
     std::cout << "test_infrastructure/test_tcp/communication/push_server sends 10000 messages: " <<

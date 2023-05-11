@@ -14,9 +14,9 @@
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
-#include "infrastructure/camera/camera.hpp"
+#include "infrastructure/camera/libcamera_camera.hpp"
 
-struct BaseTestConfig : infrastructure::CameraConfig {
+struct LibcameraTestConfig : infrastructure::LibcameraConfig {
     [[nodiscard]] std::pair<int, int> get_camera_width_height() const final {
 #if _AN_PLATFORM_ == PLATFORM_RPI
         return {1536, 864};
@@ -29,12 +29,6 @@ struct BaseTestConfig : infrastructure::CameraConfig {
     }
     [[nodiscard]] int get_camera_buffer_count() const final {
         return 4;
-    }
-};
-
-struct LibcameraTestConfig : BaseTestConfig {
-    [[nodiscard]] infrastructure::CameraType get_camera_type() const final {
-        return infrastructure::CameraType::LIBCAMERA;
     }
 };
 
@@ -61,7 +55,7 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
     std::chrono::time_point<std::chrono::high_resolution_clock> in_time, out_time;
     bool is_done = false;
 
-    auto callback = [&out_frame, &out_time, &is_done](std::shared_ptr<SizedBufferPool> &&ptr){
+    auto callback = [&out_frame, &out_time, &is_done](std::shared_ptr<CameraBuffer> &&ptr){
         if (is_done) {
             return;
         }
@@ -69,20 +63,13 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
         is_done = true;
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
-        std::size_t bytes_written = 0;
-        auto buffer = ptr->GetSizedBuffer();
-        while (buffer != nullptr) {
-            test_file_out.write((char *)buffer->GetMemory(), buffer->GetSize());
-            bytes_written += buffer->GetSize();
-            buffer = ptr->GetSizedBuffer();
-        }
-        std::cout << "File size: " << bytes_written << std::endl;
+        test_file_out.write((char *)ptr->GetMemory(), ptr->GetSize());
         test_file_out.flush();
         test_file_out.close();
     };
     // scope cam so it deconstructs before REQUIRE
     {
-        auto cam = infrastructure::Camera::Create(config, callback);
+        auto cam = infrastructure::LibcameraCamera::Create(config, callback);
         cam->Start();
         in_time = Clock::now();
         std::this_thread::sleep_for(500ms);

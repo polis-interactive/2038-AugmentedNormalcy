@@ -1,11 +1,9 @@
 
 
-if (JETSON_ENCODER_AVAILABLE)
+find_library(JPEG_LIBRARY jpeg REQUIRED)
 
-    set(SOURCES jetson_encoder.cpp)
-    set(TARGET_LIBS jetson_mm pthread)
+set(SOURCES sw_encoder.cpp)
+set(TARGET_LIBS pthread jpeg)
 
-    add_library(encoder STATIC ${SOURCES})
-    target_link_libraries(encoder PRIVATE ${TARGET_LIBS})
-
-endif()
+add_library(encoder STATIC ${SOURCES})
+target_link_libraries(encoder PRIVATE ${TARGET_LIBS})

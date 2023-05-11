@@ -9,7 +9,7 @@
 
 #include "infrastructure/tcp/tcp_context.hpp"
 #include "infrastructure/tcp/tcp_client.hpp"
-#include "infrastructure/decoder/v4l2_decoder.hpp"
+#include "infrastructure/decoder/sw_decoder.hpp"
 #include "infrastructure/graphics/graphics.hpp"
 
 namespace service {
@@ -21,11 +21,11 @@ namespace service {
     {
         HeadsetStreamerConfig(
                 std::string tcp_server_host, int tcp_server_port, std::pair<int, int> image_width_height,
-                int decoder_buffers_upstream, int decoder_buffers_downstream
+                int tcp_read_buffers, int decoder_buffers_downstream
         ):
             _tcp_server_host(std::move(tcp_server_host)),
             _tcp_server_port(tcp_server_port),
-            _decoder_buffers_upstream(decoder_buffers_upstream),
+            _tcp_read_buffers(tcp_read_buffers),
             _decoder_buffers_downstream(decoder_buffers_downstream),
             _image_width_height(std::move(image_width_height))
         {}
@@ -44,9 +44,6 @@ namespace service {
         [[nodiscard]] std::pair<int, int> get_image_width_height() const override {
             return _image_width_height;
         };
-        [[nodiscard]] unsigned int get_decoder_upstream_buffer_count() const override {
-            return _decoder_buffers_upstream;
-        };
         [[nodiscard]] unsigned int get_decoder_downstream_buffer_count() const override {
             return _decoder_buffers_downstream;
         };
@@ -56,10 +53,16 @@ namespace service {
         [[nodiscard]] int get_tcp_client_timeout_on_read() const override {
             return 1;
         };
+        [[nodiscard]] int get_tcp_client_read_buffer_count() const override {
+            return _tcp_read_buffers;
+        };
+        [[nodiscard]] int get_tcp_client_read_buffer_size() const override {
+            return _image_width_height.first * _image_width_height.second * 3 / 2;
+        };
     private:
         const std::string _tcp_server_host;
         const int _tcp_server_port;
-        const int _decoder_buffers_upstream;
+        const int _tcp_read_buffers;
         const int _decoder_buffers_downstream;
         const std::pair<int, int> _image_width_height;
     };
@@ -101,13 +104,14 @@ namespace service {
         // decoder; in the future, we'll make sure only one person can "have it at a time"
         void CreateCameraClientConnection() override {};
         void DestroyCameraClientConnection() override {};
-        std::shared_ptr<ResizableBufferPool> CreateHeadsetClientConnection() override;
+        void CreateHeadsetClientConnection() override {};
+        void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) override;
         void DestroyHeadsetClientConnection() override {};
     private:
         void initialize(const HeadsetStreamerConfig &config);
         std::atomic_bool _is_started = false;
         std::shared_ptr<infrastructure::Graphics> _graphics = nullptr;
-        std::shared_ptr<infrastructure::V4l2Decoder> _decoder = nullptr;
+        std::shared_ptr<infrastructure::SwDecoder> _decoder = nullptr;
         std::shared_ptr<infrastructure::TcpContext> _tcp_context = nullptr;
         std::shared_ptr<infrastructure::TcpClient> _tcp_client = nullptr;
     };

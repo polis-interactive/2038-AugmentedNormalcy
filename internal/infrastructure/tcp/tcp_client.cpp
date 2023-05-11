@@ -23,7 +23,12 @@ namespace infrastructure {
         _read_timer(context.get_executor()),
         _read_timeout(config.get_tcp_client_timeout_on_read())
     {
-
+        if (!_is_camera) {
+            _receive_buffer_pool = TcpReadBufferPool::Create(
+                config.get_tcp_client_read_buffer_count(),
+                config.get_tcp_client_read_buffer_size()
+            );
+        }
     }
 
     void TcpClient::Start() {
@@ -88,17 +93,16 @@ namespace infrastructure {
         _manager->CreateCameraClientConnection();
     }
 
-    void TcpClient::Post(std::shared_ptr<SizedBufferPool> &&buffer) {
+    void TcpClient::Post(std::shared_ptr<SizedBuffer> &&buffer) {
         if (_is_stopped || !_is_connected) return;
         bool write_in_progress = false;
         {
-            std::unique_lock<std::mutex> lock(_send_plane_buffer_mutex);
-            write_in_progress = !_send_plane_buffer_queue.empty();
-            _send_plane_buffer_queue.push(std::move(buffer));
+            std::unique_lock<std::mutex> lock(_send_buffer_mutex);
+            write_in_progress = !_send_buffer_queue.empty();
+            _send_buffer_queue.push(std::move(buffer));
         }
         if (!write_in_progress) {
-            _send_buffer = _send_plane_buffer_queue.front()->GetSizedBuffer();
-            _header.SetupHeader(_send_buffer->GetSize());
+            _header.SetupHeader(_send_buffer_queue.front()->GetSize());
             writeHeader(0);
         }
     }
@@ -111,12 +115,14 @@ namespace infrastructure {
             [this, s = std::move(self), last_bytes](error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
                 auto total_bytes = last_bytes + bytes_written;
-                if (!ec && total_bytes == _header.Size()) {
-                    writeBody();
-                    return;
-                } else if (total_bytes < _header.Size()) {
-                    writeHeader(total_bytes);
-                    return;
+                if (!ec) {
+                    if (total_bytes == _header.Size()) {
+                        writeBody();
+                        return;
+                    } else if (total_bytes < _header.Size()) {
+                        writeHeader(total_bytes);
+                        return;
+                    }
                 }
                 std::cout << "TcpClient: error writing header: ";
                 if (ec) {
@@ -133,9 +139,10 @@ namespace infrastructure {
 
     void TcpClient::writeBody() {
         if (_is_stopped || !_is_connected) return;
+        auto &buffer = _send_buffer_queue.front();
         auto self(shared_from_this());
         _socket->async_send(
-            net::buffer((uint8_t *) _send_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
+            net::buffer((uint8_t *) buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
                 if (ec) {
@@ -148,20 +155,16 @@ namespace infrastructure {
                     return;
                 }
                 if (_header.IsFinished()) {
-                    _send_buffer = _send_plane_buffer_queue.front()->GetSizedBuffer();
-                    if (_send_buffer == nullptr) {
-                        bool messages_remaining = false;
-                        {
-                            std::unique_lock<std::mutex> lock(_send_plane_buffer_mutex);
-                            _send_plane_buffer_queue.pop();
-                            messages_remaining = !_send_plane_buffer_queue.empty();
-                        }
-                        if (!messages_remaining) {
-                            return;
-                        }
-                        _send_buffer = _send_plane_buffer_queue.front()->GetSizedBuffer();
+                    bool messages_remaining = false;
+                    {
+                        std::unique_lock<std::mutex> lock(_send_buffer_mutex);
+                        _send_buffer_queue.pop();
+                        messages_remaining = !_send_buffer_queue.empty();
                     }
-                    _header.SetupHeader(_send_buffer->GetSize());
+                    if (!messages_remaining) {
+                        return;
+                    }
+                    _header.SetupHeader(_send_buffer_queue.front()->GetSize());
                 } else {
                     _header.SetupNextHeader();
                 }
@@ -172,7 +175,7 @@ namespace infrastructure {
 
     void TcpClient::startRead() {
         std::cout << "TcpClient connected; starting to read" << std::endl;
-        _receive_buffer_pool = _manager->CreateHeadsetClientConnection();
+        _manager->CreateHeadsetClientConnection();
         auto self(shared_from_this());
         net::dispatch(
             _socket->get_executor(),
@@ -230,7 +233,7 @@ namespace infrastructure {
     void TcpClient::readBody() {
         if (_is_stopped || !_is_connected) return;
         if (_receive_buffer == nullptr) {
-            _receive_buffer = _receive_buffer_pool->GetResizableBuffer();
+            _receive_buffer = _receive_buffer_pool->GetReadBuffer();
         }
         startTimer();
         auto self(shared_from_this());
@@ -251,9 +254,11 @@ namespace infrastructure {
                     readBody();
                     return;
                 }
-                else if (_header.IsFinished()) {
-                    _receive_buffer->SetSize(_header.BytesWritten());
-                    _receive_buffer_pool->PostResizableBuffer(std::move(_receive_buffer));
+                if (_header.IsFinished()) {
+                    if (!_receive_buffer->IsLeakyBuffer()) {
+                        _receive_buffer->SetSize(_header.BytesWritten());
+                        _manager->PostHeadsetClientBuffer(std::move(_receive_buffer));
+                    }
                     _receive_buffer = nullptr;
                     _header.ResetHeader();
                 }
@@ -278,11 +283,10 @@ namespace infrastructure {
             _socket = nullptr;
         }
         if (_is_camera) {
-            _send_buffer = nullptr;
             {
-                std::unique_lock<std::mutex> lock(_send_plane_buffer_mutex);
-                while(!_send_plane_buffer_queue.empty()) {
-                    _send_plane_buffer_queue.pop();
+                std::unique_lock<std::mutex> lock(_send_buffer_mutex);
+                while(!_send_buffer_queue.empty()) {
+                    _send_buffer_queue.pop();
                 }
             }
             _manager->DestroyCameraClientConnection();

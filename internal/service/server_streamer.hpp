@@ -10,10 +10,10 @@
 #include <shared_mutex>
 #include <unordered_set>
 #include <memory>
+#include <map>
 
 #include "infrastructure/tcp/tcp_context.hpp"
 #include "infrastructure/tcp/tcp_server.hpp"
-#include "infrastructure/encoder/jetson_encoder.hpp"
 
 using boost::asio::ip::tcp;
 typedef boost::asio::ip::address_v4 tcp_addr;
@@ -21,17 +21,18 @@ typedef boost::asio::ip::address_v4 tcp_addr;
 typedef std::chrono::steady_clock SteadyClock;
 
 namespace service {
-    struct ServerEncoderConfig :
+    struct ServerStreamerConfig :
             public infrastructure::TcpContextConfig,
-            public infrastructure::TcpServerConfig,
-            public infrastructure::EncoderConfig {
-        ServerEncoderConfig(
-                int tcp_pool_size, int tcp_server_port, int upstream_buffer_count, int downstream_buffer_count
+            public infrastructure::TcpServerConfig
+    {
+        ServerStreamerConfig(
+                int tcp_pool_size, int tcp_server_port, int buffer_count, int buffer_size
         ) :
                 _tcp_pool_size(tcp_pool_size),
                 _tcp_server_port(tcp_server_port),
-                _upstream_buffer_count(upstream_buffer_count),
-                _downstream_buffer_count(downstream_buffer_count) {}
+                _buffer_count(buffer_count),
+                _buffer_size(buffer_size)
+        {}
 
         [[nodiscard]] int get_tcp_pool_size() const override {
             return _tcp_pool_size;
@@ -41,17 +42,14 @@ namespace service {
             return _tcp_server_port;
         }
 
-        [[nodiscard]] unsigned int get_encoder_upstream_buffer_count() const override {
-            return _upstream_buffer_count;
+        [[nodiscard]] int get_tcp_camera_session_buffer_count() const override {
+            return _buffer_count;
         }
 
-        [[nodiscard]] unsigned int get_encoder_downstream_buffer_count() const override {
-            return _downstream_buffer_count;
+        [[nodiscard]] int get_tcp_camera_session_buffer_size() const override {
+            return _buffer_size;
         }
 
-        [[nodiscard]] std::pair<int, int> get_encoder_width_height() const override {
-            return {1536, 864};
-        }
         [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
             return 1;
         }
@@ -59,8 +57,8 @@ namespace service {
     private:
         const int _tcp_pool_size;
         const int _tcp_server_port;
-        const int _upstream_buffer_count;
-        const int _downstream_buffer_count;
+        const int _buffer_count;
+        const int _buffer_size;
     };
 
 
@@ -243,13 +241,13 @@ namespace service {
         std::map<tcp_addr, tcp_addr> _headset_to_camera;
     };
 
-    class ServerEncoder:
-        public std::enable_shared_from_this<ServerEncoder>,
+    class ServerStreamer:
+        public std::enable_shared_from_this<ServerStreamer>,
         public infrastructure::TcpServerManager
     {
     public:
-        static std::shared_ptr<ServerEncoder> Create(const ServerEncoderConfig &config);
-        explicit ServerEncoder(ServerEncoderConfig config): _is_started(false), _conf(std::move(config)) {}
+        static std::shared_ptr<ServerStreamer> Create(const ServerStreamerConfig &config);
+        explicit ServerStreamer(ServerStreamerConfig config): _is_started(false), _conf(std::move(config)) {}
         void Start();
         void Stop();
         void Unset() {
@@ -260,9 +258,10 @@ namespace service {
         [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp_addr addr) override;
 
         // camera session
-        [[nodiscard]]  infrastructure::CameraConnectionPayload CreateCameraServerConnection(
+        [[nodiscard]]  unsigned long CreateCameraServerConnection(
             std::shared_ptr<infrastructure::TcpSession> camera_session
         ) override;
+        void PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer) override;
         void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> camera_session) override;
 
         // headset session
@@ -275,7 +274,7 @@ namespace service {
 
     private:
         void initialize();
-        ServerEncoderConfig _conf;
+        ServerStreamerConfig _conf;
         std::atomic_bool _is_started = false;
         std::shared_ptr<infrastructure::TcpContext> _tcp_context = nullptr;
         std::shared_ptr<infrastructure::TcpServer> _tcp_server = nullptr;

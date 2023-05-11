@@ -2,7 +2,7 @@
 // Created by brucegoose on 4/8/23.
 //
 
-#include "server_encoder.hpp"
+#include "server_streamer.hpp"
 
 static tcp_addr ip_bound(const std::string& ip_string) {
     return tcp_addr::from_string(ip_string);
@@ -10,19 +10,19 @@ static tcp_addr ip_bound(const std::string& ip_string) {
 
 namespace service {
 
-    std::shared_ptr<ServerEncoder> ServerEncoder::Create(const service::ServerEncoderConfig &config) {
-        auto camera_streamer = std::make_shared<ServerEncoder>(config);
+    std::shared_ptr<ServerStreamer> ServerStreamer::Create(const ServerStreamerConfig &config) {
+        auto camera_streamer = std::make_shared<ServerStreamer>(config);
         camera_streamer->initialize();
         return camera_streamer;
     }
 
-    void ServerEncoder::initialize() {
+    void ServerStreamer::initialize() {
         _tcp_context = infrastructure::TcpContext::Create(_conf);
         auto self(shared_from_this());
         _tcp_server = infrastructure::TcpServer::Create(_conf, _tcp_context->GetContext(), self);
     }
 
-    void ServerEncoder::Start() {
+    void ServerStreamer::Start() {
         if (_is_started) {
             return;
         }
@@ -36,7 +36,7 @@ namespace service {
         _is_started = true;
     }
 
-    void ServerEncoder::run() {
+    void ServerStreamer::run() {
         const tcp_addr camera_1_addr = ip_bound("192.168.1.200");
         const tcp_addr camera_2_addr = ip_bound("192.168.1.201");
         while(!_work_stop) {
@@ -81,7 +81,7 @@ namespace service {
         }
     }
 
-    infrastructure::TcpConnectionType ServerEncoder::GetConnectionType(tcp_addr addr) {
+    infrastructure::TcpConnectionType ServerStreamer::GetConnectionType(tcp_addr addr) {
         static const tcp_addr min_headset_address = ip_bound("192.168.1.100");
         static const tcp_addr min_camera_address = ip_bound("192.168.1.200");
         if (addr >= min_camera_address) {
@@ -92,7 +92,7 @@ namespace service {
         return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
     }
 
-    infrastructure::CameraConnectionPayload ServerEncoder::CreateCameraServerConnection(
+    unsigned long ServerStreamer::CreateCameraServerConnection(
             std::shared_ptr<infrastructure::TcpSession> camera_session
     ) {
         bool is_only_camera = false;
@@ -112,18 +112,14 @@ namespace service {
             std::unique_lock<std::mutex> lock(_headset_mutex);
             _connection_manager.AddManyMappings(addr, _headset_sessions);
         }
-
-        auto self(shared_from_this());
-        auto enc = infrastructure::Encoder::Create(
-            _conf,
-            [this, s = std::move(self), addr] (std::shared_ptr<SizedBuffer> &&buffer) {
-                _connection_manager.PostMessage(addr, std::move(buffer));
-            }
-        );
-        return { ++_last_session_number, enc };
+        return ++_last_session_number;
     }
 
-    void ServerEncoder::DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> camera_session) {
+    void ServerStreamer::PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer) {
+        _connection_manager.PostMessage(addr, std::move(buffer));
+    }
+
+    void ServerStreamer::DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> camera_session) {
 
         const auto addr = camera_session->GetAddr();
 
@@ -143,7 +139,7 @@ namespace service {
 
     }
 
-    unsigned long ServerEncoder::CreateHeadsetServerConnection(
+    unsigned long ServerStreamer::CreateHeadsetServerConnection(
         std::shared_ptr<infrastructure::WritableTcpSession> headset_session
     ) {
 
@@ -173,7 +169,7 @@ namespace service {
         return ++_last_session_number;
     }
 
-    void ServerEncoder::DestroyHeadsetServerConnection(
+    void ServerStreamer::DestroyHeadsetServerConnection(
         std::shared_ptr<infrastructure::WritableTcpSession> headset_session
     ) {
 
@@ -195,7 +191,7 @@ namespace service {
 
     }
 
-    void ServerEncoder::Stop() {
+    void ServerStreamer::Stop() {
         if (!_is_started) {
             return;
         }

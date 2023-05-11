@@ -4,7 +4,7 @@ include_directories(${BOOST_INCLUDEDIR})
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${root_dir}/bin)
 
 if (
-    AN_PLATFORM_TYPE STREQUAL JETSON
+    NOT AN_PLATFORM_TYPE STREQUAL RPI
 )
     add_executable(app_server server.cpp)
     target_link_libraries(app_server PRIVATE pthread service)

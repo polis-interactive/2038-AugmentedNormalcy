@@ -7,16 +7,16 @@
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
-#include "service/server_encoder.hpp"
+#include "service/server_streamer.hpp"
 
 TEST_CASE("SERVICE_SERVER-ENCODER_Setup-and-teardown") {
-    service::ServerEncoderConfig conf(2, 6969, 4, 6);
+    service::ServerStreamerConfig conf(2, 6969, 4, 5);
 
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4;
 
     {
         t1 = Clock::now();
-        auto streamer = service::ServerEncoder::Create(conf);
+        auto streamer = service::ServerStreamer::Create(conf);
         t2 = Clock::now();
         streamer->Start();
         t3 = Clock::now();

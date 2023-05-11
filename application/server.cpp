@@ -2,7 +2,7 @@
 // Created by brucegoose on 4/22/23.
 //
 
-#include "service/server_encoder.hpp"
+#include "service/server_streamer.hpp"
 
 #include <csignal>
 #include <chrono>
@@ -12,8 +12,8 @@ std::function<void(int)> shutdown_handler;
 void signal_handler(int signal) { shutdown_handler(signal); }
 
 int main() {
-    const service::ServerEncoderConfig conf(3, 6969, 4, 6);
-    auto service = service::ServerEncoder::Create(conf);
+    const service::ServerStreamerConfig conf(5, 6969, 4, 1990656);
+    auto service = service::ServerStreamer::Create(conf);
     service->Start();
 
     bool exit = false;

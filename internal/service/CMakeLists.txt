@@ -7,12 +7,12 @@ include_directories(${BOOST_INCLUDEDIR})
 
 if (FEATURE_CAMERA)
     set(SOURCES ${SOURCES} camera_streamer.cpp)
-    set(TARGET_LIBS ${TARGET_LIBS} camera)
+    set(TARGET_LIBS ${TARGET_LIBS} camera encoder)
 endif()
 
-if (FEATURE_ENCODER)
-    set(SOURCES ${SOURCES} server_encoder.cpp)
-    set(TARGET_LIBS ${TARGET_LIBS} encoder)
+if (NOT AN_PLATFORM_TYPE STREQUAL RPI)
+    set(SOURCES ${SOURCES} server_streamer.cpp)
+    set(TARGET_LIBS ${TARGET_LIBS})
 endif()
 
 if (FEATURE_DISPLAY)

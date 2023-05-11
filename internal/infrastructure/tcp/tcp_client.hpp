@@ -12,7 +12,7 @@
 
 #include "utils/buffers.hpp"
 #include "tcp_context.hpp"
-#include "tcp_packet_header.hpp"
+#include "tcp_utils.hpp"
 
 using boost::asio::ip::tcp;
 using boost::system::error_code;
@@ -24,6 +24,9 @@ namespace infrastructure {
         [[nodiscard]] virtual int get_tcp_server_port() const = 0;
         [[nodiscard]] virtual bool get_tcp_client_is_camera() const = 0;
         [[nodiscard]] virtual int get_tcp_client_timeout_on_read() const = 0;
+        [[nodiscard]] virtual int get_tcp_client_read_buffer_count() const = 0;
+        [[nodiscard]] virtual int get_tcp_client_read_buffer_size() const = 0;
+
     };
 
 
@@ -34,7 +37,8 @@ namespace infrastructure {
         virtual void DestroyCameraClientConnection() = 0;
 
         // headset session
-        virtual std::shared_ptr<ResizableBufferPool> CreateHeadsetClientConnection() = 0;
+        virtual void CreateHeadsetClientConnection() = 0;
+        virtual void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) = 0;
         virtual void DestroyHeadsetClientConnection() = 0;
     };
 
@@ -54,7 +58,7 @@ namespace infrastructure {
         ~TcpClient();
         void Start();
         void Stop();
-        void Post(std::shared_ptr<SizedBufferPool> &&buffer);
+        void Post(std::shared_ptr<SizedBuffer> &&buffer);
     private:
         void startConnection(bool is_initial_connection);
         void startWrite();
@@ -79,12 +83,11 @@ namespace infrastructure {
 
         PacketHeader _header;
 
-        std::mutex _send_plane_buffer_mutex;
-        std::queue<std::shared_ptr<SizedBufferPool>> _send_plane_buffer_queue = {};
-        std::shared_ptr<SizedBuffer> _send_buffer = nullptr;
+        std::mutex _send_buffer_mutex;
+        std::queue<std::shared_ptr<SizedBuffer>> _send_buffer_queue = {};
 
-        std::shared_ptr<ResizableBufferPool> _receive_buffer_pool = nullptr;
-        std::shared_ptr<ResizableBuffer> _receive_buffer = nullptr;
+        std::shared_ptr<TcpReadBufferPool> _receive_buffer_pool = nullptr;
+        std::shared_ptr<TcpReadBuffer> _receive_buffer = nullptr;
     };
 
 }
