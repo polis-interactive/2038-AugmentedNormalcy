@@ -1,0 +1,16 @@
+[Unit]
+Description=Weston Wayland Compositor
+After=multi-user.target
+StartLimitBurst=4
+StartLimitIntervalSec=360
+OnFailure=restart-system.service
+
+[Service]
+ExecStartPre=/bin/mkdir -p /var/run/root/1000
+ExecStartPre=/bin/chmod 0700 /var/run/root/1000
+Environment=XDG_RUNTIME_DIR=/var/run/root/1000
+ExecStart=/usr/bin/weston --backend=drm-backend.so --tty="3" --config="/home/pi/build/2038-AugmentedNormalcy/run/weston.ini"
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

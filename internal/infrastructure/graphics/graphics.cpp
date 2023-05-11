@@ -161,7 +161,7 @@ namespace infrastructure {
         bool has_run = false;
         while (!_stop_running) {
             if (has_run) {
-                std::this_thread::sleep_for(100ms);
+                std::this_thread::sleep_for(1s);
             }
             has_run = true;
             std::cout << "Starting graphics thread" << std::endl;

@@ -62,3 +62,17 @@ static routers=192.168.1.1
 ```
 $ sudo vim /etc/wpa_supplicant/wpa_supplicant.conf
 ```
+
+## SYSTEMD
+
+```
+$ sudo cp /home/pi/build/2038-AugmentedNormalcy/systemd/headset.service /etc/systemd/system/ [REPLACE headset WITH camera OR server]
+$ sudo cp /home/pi/build/2038-AugmentedNormalcy/systemd/weston.service /etc/systemd/system/ [headset ONLY]
+$ sudo cp /home/pi/build/2038-AugmentedNormalcy/systemd/restart-system.service /etc/systemd/system/
+$ sudo systemctl daemon-reload
+$ sudo systemctl enable weston.service [headset only]
+$ sudo systemctl enable headset.service [REPLACE camera WITH headset OR server]
+$ sudo systemctl enable restart-system.service
+```
+
+After, sudo reboot and make sure it works!

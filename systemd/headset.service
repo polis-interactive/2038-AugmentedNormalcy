@@ -1,0 +1,17 @@
+[Unit]
+Description=Augmented Headset
+After=network-online.target
+StartLimitBurst=4
+StartLimitIntervalSec=360
+OnFailure=restart-system.service
+
+[Service]
+Restart=on-failure
+Environment="WAYLAND_DISPLAY=wayland-0"
+Environment="DISPLAY=:0"
+Environment=XDG_RUNTIME_DIR=/var/run/root/1000
+ExecStartPre=/bin/sleep 5
+ExecStart=/home/pi/build/2038-AugmentedNormalcy/bin/app_headset
+
+[Install]
+WantedBy=multi-user.target

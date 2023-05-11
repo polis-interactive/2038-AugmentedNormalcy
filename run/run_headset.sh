@@ -4,4 +4,8 @@ weston --backend=drm-backend.so --tty="3" --config="/home/pi/build/2038-Augmente
 sleep 5s # could be less
 export WAYLAND_DISPLAY=wayland-0
 export DISPLAY=:0
-exec "/home/pi/build/2038-AugmentedNormalcy/bin/app_headset"
+
+start=$(date +%s)
+
+/home/pi/build/2038-AugmentedNormalcy/bin/app_headset
+
