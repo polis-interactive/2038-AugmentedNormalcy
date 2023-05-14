@@ -1,6 +1,6 @@
 [Unit]
 Description=Augmented Camera
-Requires=network.target
+After=network-online.target
 StartLimitBurst=4
 StartLimitIntervalSec=360
 OnFailure=restart-system.service

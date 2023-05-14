@@ -1,9 +1,9 @@
 
 if (AN_PLATFORM STREQUAL JETSON_CC)
-    set(BOOST_ROOT "${TARGET_ROOTFS}/usr/src/boost_1_81_0")
+    set(BOOST_ROOT "${TARGET_ROOTFS}/home/polis/build/boost_1_81_0")
 
 elseif(AN_PLATFORM STREQUAL JETSON)
-    set(BOOST_ROOT "/usr/src/boost_1_81_0")
+    set(BOOST_ROOT "/home/polis/build/boost_1_81_0")
 
 elseif(AN_PLATFORM STREQUAL BROOSE_LINUX_LAPTOP)
     set(BOOST_ROOT "/usr/local/lib/boost_1_81_0")

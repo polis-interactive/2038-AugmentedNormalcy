@@ -1,9 +1,6 @@
 [Unit]
 Description=Weston Wayland Compositor
 After=multi-user.target
-StartLimitBurst=4
-StartLimitIntervalSec=360
-OnFailure=restart-system.service
 
 [Service]
 ExecStartPre=/bin/mkdir -p /var/run/root/1000

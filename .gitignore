@@ -17,3 +17,7 @@ testGodotOcculus
 testNativeOcculus
 
 bin/app_*
+
+images
+.img
+.img.xz

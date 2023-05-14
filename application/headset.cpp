@@ -25,7 +25,7 @@ int main() {
     }
 
 
-    const service::HeadsetStreamerConfig conf("192.168.1.10", 6969, { 1536, 864 }, 4, 4);
+    const service::HeadsetStreamerConfig conf("69.4.20.10", 6969, { 1536, 864 }, 4, 4);
     auto service = service::HeadsetStreamer::Create(conf);
     service->Start();
 

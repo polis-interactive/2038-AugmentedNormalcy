@@ -26,7 +26,7 @@ int main() {
     }
 
     const service::CameraStreamerConfig conf(
-        "192.168.1.10", 6969, { 1536, 864 }, 5
+        "69.4.20.10", 6969, { 1536, 864 }, 5
     );
     auto service = service::CameraStreamer::Create(conf);
     service->Start();

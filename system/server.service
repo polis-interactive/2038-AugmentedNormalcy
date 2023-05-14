@@ -1,13 +1,13 @@
 [Unit]
 Description=Augmented Server
-After=network.target
+After=network-online.target
 StartLimitBurst=4
 StartLimitIntervalSec=360
 OnFailure=restart-system.service
 
 [Service]
 Restart=on-failure
-ExecStart=/home/polis/build/2038-AugmentedNormalcy/bin/app_headset
+ExecStart=/home/polis/build/2038-AugmentedNormalcy/bin/app_server
 
 [Install]
 WantedBy=multi-user.target
