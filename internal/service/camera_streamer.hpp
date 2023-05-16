@@ -9,24 +9,28 @@
 
 #include "infrastructure/tcp/tcp_context.hpp"
 #include "infrastructure/tcp/tcp_client.hpp"
-#include "infrastructure/camera/libcamera_camera.hpp"
-#include "infrastructure/encoder/sw_encoder.hpp"
+#include "infrastructure/camera/camera.hpp"
+#include "infrastructure/encoder/encoder.hpp"
 
 namespace service {
     struct CameraStreamerConfig:
         public infrastructure::TcpContextConfig,
         public infrastructure::TcpClientConfig,
-        public infrastructure::LibcameraConfig,
+        public infrastructure::CameraConfig,
         public infrastructure::EncoderConfig
     {
         CameraStreamerConfig(
             std::string tcp_server_host, int tcp_server_port,
+            infrastructure::CameraType camera_type,
             std::pair<int, int> camera_width_height,
+            infrastructure::EncoderType encoder_type,
             int encoder_buffers_downstream
         ):
             _tcp_server_host(std::move(tcp_server_host)),
             _tcp_server_port(tcp_server_port),
+            _camera_type(camera_type),
             _camera_width_height(std::move(camera_width_height)),
+            _encoder_type(encoder_type),
             _encoder_buffers_downstream(encoder_buffers_downstream)
         {}
         [[nodiscard]] int get_tcp_pool_size() const override {
@@ -41,6 +45,9 @@ namespace service {
         [[nodiscard]] bool get_tcp_client_is_camera() const override {
             return true;
         }
+        [[nodiscard]] infrastructure::CameraType get_camera_type() const override {
+            return _camera_type;
+        };
         [[nodiscard]] std::pair<int, int> get_camera_width_height() const override {
             return _camera_width_height;
         };
@@ -52,6 +59,9 @@ namespace service {
         };
         [[nodiscard]] int get_tcp_client_timeout_on_read() const override {
             return 5;
+        };
+        [[nodiscard]] infrastructure::EncoderType get_encoder_type() const override {
+            return _encoder_type;
         };
         [[nodiscard]] unsigned int get_encoder_downstream_buffer_count() const override {
             return _encoder_buffers_downstream;
@@ -69,7 +79,9 @@ namespace service {
     private:
         const std::string _tcp_server_host;
         const int _tcp_server_port;
+        const infrastructure::CameraType _camera_type;
         const std::pair<int, int> _camera_width_height;
+        const infrastructure::EncoderType _encoder_type;
         const int _encoder_buffers_downstream;
     };
 
@@ -115,8 +127,8 @@ namespace service {
     private:
         void initialize(const CameraStreamerConfig &config);
         std::atomic_bool _is_started = false;
-        std::shared_ptr<infrastructure::LibcameraCamera> _camera = nullptr;
-        std::shared_ptr<infrastructure::SwEncoder> _encoder = nullptr;
+        std::shared_ptr<infrastructure::Camera> _camera = nullptr;
+        std::shared_ptr<infrastructure::Encoder> _encoder = nullptr;
         std::shared_ptr<infrastructure::TcpContext> _tcp_context = nullptr;
         std::shared_ptr<infrastructure::TcpClient> _tcp_client = nullptr;
     };

@@ -7,15 +7,15 @@
 
 namespace infrastructure {
 
-    SwEncoder::SwEncoder(const EncoderConfig &config, SizedBufferCallback output_callback):
-            _output_callback(std::move(output_callback)),
+    SwEncoder::SwEncoder(const EncoderConfig &config, SizedBufferCallback send_callback):
+            Encoder(config, std::move(send_callback)),
             _width_height(config.get_encoder_width_height())
     {
         auto downstream_count = config.get_encoder_downstream_buffer_count();
         setupDownstreamBuffers(downstream_count);
     }
 
-    void SwEncoder::Start() {
+    void SwEncoder::StartEncoder() {
 
         if (!_work_stop) {
             return;
@@ -28,7 +28,7 @@ namespace infrastructure {
 
     }
 
-    void SwEncoder::Stop() {
+    void SwEncoder::StopEncoder() {
         if (_work_stop) {
             return;
         }
@@ -146,7 +146,7 @@ namespace infrastructure {
                 queueDownstreamBuffer(e);
             }
         );
-        _output_callback(std::move(output_buffer));
+        _send_callback(std::move(output_buffer));
 
     }
 
@@ -164,7 +164,7 @@ namespace infrastructure {
     }
 
     SwEncoder::~SwEncoder() {
-        Stop();
+        StopEncoder();
         teardownDownstreamBuffers();
     }
 

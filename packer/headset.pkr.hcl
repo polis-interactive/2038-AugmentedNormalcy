@@ -14,7 +14,7 @@ source "arm-image" "raspios_lite_arm64" {
   output_filename = "images/headset.img"
   qemu_binary     = "qemu-aarch64-static"
   mount_path    = "/mnt/headset_raspios_lite_arm64"
-  target_image_size =  3969908736
+  target_image_size =  5*1024*1024*1024
 }
 
 build {

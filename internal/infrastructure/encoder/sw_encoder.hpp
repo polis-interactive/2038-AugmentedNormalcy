@@ -2,8 +2,10 @@
 // Created by brucegoose on 5/4/23.
 //
 
-#ifndef INFRASTRUCTURE_ENCODER_V4L2_ENCODER_HPP
-#define INFRASTRUCTURE_ENCODER_V4L2_ENCODER_HPP
+#ifndef INFRASTRUCTURE_ENCODER_SW_ENCODER_HPP
+#define INFRASTRUCTURE_ENCODER_SW_ENCODER_HPP
+
+#include "encoder.hpp"
 
 #include <memory>
 #include <queue>
@@ -61,32 +63,21 @@ namespace infrastructure {
         std::size_t _size;
     };
 
-    struct EncoderConfig {
-        [[nodiscard]] virtual unsigned int get_encoder_downstream_buffer_count() const = 0;
-        [[nodiscard]] virtual std::pair<int, int> get_encoder_width_height() const = 0;
-    };
-
-    class SwEncoder: public std::enable_shared_from_this<SwEncoder> {
+    class SwEncoder: public std::enable_shared_from_this<SwEncoder>, public Encoder {
     public:
-        static std::shared_ptr<SwEncoder>Create(
-                const EncoderConfig &config, SizedBufferCallback output_callback
-        ) {
-            auto encoder = std::make_shared<SwEncoder>(config, std::move(output_callback));
-            return std::move(encoder);
-        }
-        void PostCameraBuffer(std::shared_ptr<CameraBuffer> &&buffer);
-        void Start();
-        void Stop();
         SwEncoder(const EncoderConfig &config, SizedBufferCallback output_callback);
+        void PostCameraBuffer(std::shared_ptr<CameraBuffer> &&buffer) override;
         ~SwEncoder();
     private:
+        void StartEncoder() override;
+        void StopEncoder() override;
+
         void setupDownstreamBuffers(unsigned int request_downstream_buffers);
         void run();
         void encodeBuffer(struct jpeg_compress_struct &cinfo, std::shared_ptr<CameraBuffer> &&buffer);
         void queueDownstreamBuffer(EncoderBuffer *e);
         void teardownDownstreamBuffers();
 
-        SizedBufferCallback _output_callback;
         const std::pair<int, int> _width_height;
 
         std::mutex _work_mutex;
@@ -101,4 +92,4 @@ namespace infrastructure {
 
 }
 
-#endif //INFRASTRUCTURE_ENCODER_V4L2_ENCODER_HPP
+#endif //INFRASTRUCTURE_ENCODER_SW_ENCODER_HPP

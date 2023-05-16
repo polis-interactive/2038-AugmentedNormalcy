@@ -14,9 +14,9 @@
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
-#include "infrastructure/camera/libcamera_camera.hpp"
+#include "infrastructure/camera/camera.hpp"
 
-struct LibcameraTestConfig : infrastructure::LibcameraConfig {
+struct LibcameraTestConfig : infrastructure::CameraConfig {
     [[nodiscard]] std::pair<int, int> get_camera_width_height() const final {
 #if _AN_PLATFORM_ == PLATFORM_RPI
         return {1536, 864};
@@ -24,6 +24,9 @@ struct LibcameraTestConfig : infrastructure::LibcameraConfig {
         return {848, 480};
 #endif
     }
+    [[nodiscard]] infrastructure::CameraType get_camera_type() const final {
+        return infrastructure::CameraType::LIBCAMERA;
+    };
     [[nodiscard]] int get_fps() const final {
         return 30;
     }
@@ -69,7 +72,7 @@ TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {
     };
     // scope cam so it deconstructs before REQUIRE
     {
-        auto cam = infrastructure::LibcameraCamera::Create(config, callback);
+        auto cam = infrastructure::Camera::Create(config, callback);
         cam->Start();
         in_time = Clock::now();
         std::this_thread::sleep_for(500ms);

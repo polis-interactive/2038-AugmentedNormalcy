@@ -7,6 +7,8 @@
 
 #include "utils/buffers.hpp"
 
+#include "camera.hpp"
+
 #include <map>
 #include <queue>
 #include <vector>
@@ -18,34 +20,25 @@
 
 namespace infrastructure {
 
-    struct LibcameraConfig {
-        [[nodiscard]] virtual std::pair<int, int> get_camera_width_height() const = 0;
-        // as opposed to 30
-        [[nodiscard]] virtual int get_fps() const = 0;
-        [[nodiscard]] virtual int get_camera_buffer_count() const = 0;
-    };
-
-    class LibcameraCamera : public std::enable_shared_from_this<LibcameraCamera> {
+    class LibcameraCamera : public std::enable_shared_from_this<LibcameraCamera>, public Camera {
     public:
-        static std::shared_ptr<LibcameraCamera>Create(
-            const LibcameraConfig &config, CameraBufferCallback &&output_callback
-        ) {
-            auto camera = std::make_shared<LibcameraCamera>(config, std::move(output_callback));
-            return std::move(camera);
-        }
-        LibcameraCamera(const LibcameraConfig &config, CameraBufferCallback &&send_callback);
-        void Start();
-        void Stop();
+        LibcameraCamera(const CameraConfig &config, CameraBufferCallback &&send_callback):
+            Camera(config, std::move(send_callback))
+        {
+            CreateCamera(config);
+        };
         ~LibcameraCamera() {
             Stop();
             teardownCamera();
             closeCamera();
         }
     private:
-        void createCamera(const LibcameraConfig &config);
+        void CreateCamera(const CameraConfig &config) final;
+        void StartCamera() final;
+        void StopCamera() final;
 
         void openCamera();
-        void configureViewFinder(const LibcameraConfig &config);
+        void configureViewFinder(const CameraConfig &config);
         void setupBuffers(const int &camera_buffer_count);
 
         void makeRequests();
@@ -55,8 +48,6 @@ namespace infrastructure {
 
         void closeCamera();
         void teardownCamera();
-
-        CameraBufferCallback _send_callback;
 
         std::unique_ptr<libcamera::CameraManager> _camera_manager;
         std::shared_ptr<libcamera::Camera> _camera;

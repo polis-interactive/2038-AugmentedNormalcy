@@ -11,7 +11,7 @@
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
-#include "infrastructure/encoder/sw_encoder.hpp"
+#include "infrastructure/encoder/encoder.hpp"
 
 #include "fake_camera.hpp"
 
@@ -22,6 +22,9 @@ class TestEncoderConfig : public infrastructure::EncoderConfig {
     [[nodiscard]] std::pair<int, int> get_encoder_width_height() const override {
         return { 1536, 864 };
     };
+    [[nodiscard]] infrastructure::EncoderType get_encoder_type() const override {
+        return infrastructure::EncoderType::SW;
+    };
 };
 
 TEST_CASE("INFRASTRUCTURE_ENCODER_SW_ENCODER-Start_and_Stop") {
@@ -29,7 +32,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_SW_ENCODER-Start_and_Stop") {
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4, t5;
     {
         t1 = Clock::now();
-        auto encoder = infrastructure::SwEncoder::Create(conf, [](std::shared_ptr<SizedBuffer> &&buffer) { });
+        auto encoder = infrastructure::Encoder::Create(conf, [](std::shared_ptr<SizedBuffer> &&buffer) { });
         t2 = Clock::now();
         encoder->Start();
         t3 = Clock::now();
@@ -81,7 +84,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_SW_ENCODER-Encode_a_frame") {
     FakeCamera camera(5);
 
     {
-        auto encoder = infrastructure::SwEncoder::Create(conf, std::move(callback));
+        auto encoder = infrastructure::Encoder::Create(conf, std::move(callback));
         encoder->Start();
         auto buffer = camera.GetBuffer();
         memcpy((char *)buffer->GetMemory(), in_buf.data(), 1990656);
@@ -138,7 +141,7 @@ TEST_CASE("INFRASTRUCTURE_ENCODER_SW_ENCODER-StressTest") {
     FakeCamera camera(5);
 
     {
-        auto encoder = infrastructure::SwEncoder::Create(conf, std::move(callback));
+        auto encoder = infrastructure::Encoder::Create(conf, std::move(callback));
         encoder->Start();
         in_time = Clock::now();
 

@@ -24,13 +24,7 @@ using StreamRole = libcamera::StreamRole;
 using StreamRoles = libcamera::StreamRoles;
 
 namespace infrastructure {
-
-    LibcameraCamera::LibcameraCamera(const LibcameraConfig &config, CameraBufferCallback &&send_callback):
-            _send_callback(std::move(send_callback))
-    {
-        createCamera(config);
-    }
-    void LibcameraCamera::createCamera(const LibcameraConfig &config) {
+    void LibcameraCamera::CreateCamera(const CameraConfig &config) {
         openCamera();
         configureViewFinder(config);
         setupBuffers(config.get_camera_buffer_count());
@@ -54,7 +48,7 @@ namespace infrastructure {
         _camera_acquired = true;
     }
 
-    void LibcameraCamera::configureViewFinder(const LibcameraConfig &config) {
+    void LibcameraCamera::configureViewFinder(const CameraConfig &config) {
         StreamRoles stream_roles = { StreamRole::Viewfinder };
         _configuration = _camera->generateConfiguration(stream_roles);
         if (!_configuration) {
@@ -113,7 +107,7 @@ namespace infrastructure {
         }
     }
 
-    void LibcameraCamera::Start() {
+    void LibcameraCamera::StartCamera() {
         makeRequests();
         setControls();
         // set done callback
@@ -241,7 +235,7 @@ namespace infrastructure {
             throw std::runtime_error("failed to queue request");
     }
 
-    void LibcameraCamera::Stop() {
+    void LibcameraCamera::StopCamera() {
         {
             std::lock_guard<std::mutex> lock(_camera_stop_mutex);
             if (_camera_started) {

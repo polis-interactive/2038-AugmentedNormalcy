@@ -37,8 +37,8 @@ namespace service {
     }
 
     void ServerStreamer::run() {
-        const tcp_addr camera_1_addr = ip_bound("192.168.1.200");
-        const tcp_addr camera_2_addr = ip_bound("192.168.1.201");
+        const tcp_addr camera_1_addr = ip_bound("69.4.20.200");
+        const tcp_addr camera_2_addr = ip_bound("69.4.20.201");
         while(!_work_stop) {
             fd_set readfds;
             FD_ZERO(&readfds);
@@ -82,8 +82,8 @@ namespace service {
     }
 
     infrastructure::TcpConnectionType ServerStreamer::GetConnectionType(tcp_addr addr) {
-        static const tcp_addr min_headset_address = ip_bound("192.168.1.100");
-        static const tcp_addr min_camera_address = ip_bound("192.168.1.200");
+        static const tcp_addr min_headset_address = ip_bound("69.4.20.100");
+        static const tcp_addr min_camera_address = ip_bound("69.4.20.200");
         if (addr >= min_camera_address) {
             return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
         } else if (addr >= min_headset_address) {
