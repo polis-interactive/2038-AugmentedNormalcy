@@ -5,6 +5,10 @@
 #ifndef AUGMENTEDNORMALCY_FAKE_BUFFER_POOL_HPP
 #define AUGMENTEDNORMALCY_FAKE_BUFFER_POOL_HPP
 
+#include "utils/buffers.hpp"
+
+#include <mutex>
+#include <deque>
 
 class DecoderSizedBuffer: public SizedBuffer {
 public:

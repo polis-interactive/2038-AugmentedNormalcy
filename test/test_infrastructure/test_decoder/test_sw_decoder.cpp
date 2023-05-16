@@ -11,11 +11,16 @@
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
-#include "infrastructure/decoder/sw_decoder.hpp"
+#include "infrastructure/decoder/decoder.hpp"
 
 #include "fake_buffer_pool.hpp"
+#include <thread>
+#include <atomic>
 
 class TestSwDecoderConfig: public infrastructure::DecoderConfig {
+    [[nodiscard]] infrastructure::DecoderType get_decoder_type() const override {
+        return infrastructure::DecoderType::SW;
+    };
     [[nodiscard]] unsigned int get_decoder_downstream_buffer_count() const override {
         return 4;
     };
@@ -29,7 +34,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_SW_DECODER-Start_And_Stop") {
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4, t5;
     {
         t1 = Clock::now();
-        auto decoder = infrastructure::SwDecoder::Create(conf, [](std::shared_ptr<DecoderBuffer> &&buffer) { });
+        auto decoder = infrastructure::Decoder::Create(conf, [](std::shared_ptr<DecoderBuffer> &&buffer) { });
         t2 = Clock::now();
         decoder->Start();
         t3 = Clock::now();
@@ -85,7 +90,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_SW_DECODER-One_Frame") {
 
     {
         TestSwDecoderConfig conf;
-        auto decoder = infrastructure::SwDecoder::Create(conf, std::move(callback));
+        auto decoder = infrastructure::Decoder::Create(conf, std::move(callback));
         decoder->Start();
         auto buffer = pool.GetSizedBuffer();
         memcpy((void *)buffer->GetMemory(), (void *) in_buf.data(), input_size);
@@ -147,7 +152,7 @@ TEST_CASE("INFRASTRUCTURE_DECODER_SW_DECODER-Stress_test") {
 
     {
         TestSwDecoderConfig conf;
-        auto decoder = infrastructure::SwDecoder::Create(conf, std::move(callback));
+        auto decoder = infrastructure::Decoder::Create(conf, std::move(callback));
         decoder->Start();
         in_time = Clock::now();
         for (int i = 0; i < 500; i++){

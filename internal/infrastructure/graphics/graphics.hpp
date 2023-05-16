@@ -1,79 +1,40 @@
 //
-// Created by brucegoose on 4/15/23.
+// Created by brucegoose on 5/16/23.
 //
 
 #ifndef INFRASTRUCTURE_GRAPHICS_HPP
 #define INFRASTRUCTURE_GRAPHICS_HPP
 
-#include <memory>
-#include <thread>
-#include <queue>
-#include <mutex>
-#include <atomic>
-#include <map>
-
-#define GLAD_GL_IMPLEMENTATION
-#include "glad/glad_egl.h"
-#include "glad/glad.h"
-
-#define GLFW_INCLUDE_NONE 1
-#include <GLFW/glfw3.h>
-
-#define GLFW_EXPOSE_NATIVE_EGL 1
-#define GLFW_NATIVE_INCLUDE_NONE 1
-#include <GLFW/glfw3native.h>
-
 #include "utils/buffers.hpp"
-
-struct EglBuffer
-{
-    EglBuffer() : fd(-1) {}
-    int fd;
-    size_t size;
-    GLuint texture;
-};
 
 namespace infrastructure {
 
+    enum class GraphicsType {
+        GLFW,
+        NLL,
+    };
+
     struct GraphicsConfig {
+        [[nodiscard]] virtual GraphicsType get_graphics_type() const = 0;
         [[nodiscard]] virtual std::pair<int, int> get_image_width_height() const = 0;
     };
 
-    class Graphics : public std::enable_shared_from_this<Graphics> {
+    class Graphics {
     public:
-        static std::shared_ptr<Graphics> Create(const GraphicsConfig &conf) {
-            return std::make_shared<Graphics>(conf);
+        [[nodiscard]] static std::shared_ptr<Graphics> Create(const GraphicsConfig &config);
+        Graphics(const GraphicsConfig &config);
+        virtual void PostImage(std::shared_ptr<DecoderBuffer>&& buffer) = 0;
+        void Start() {
+            StartGraphics();
         }
-        explicit Graphics(const GraphicsConfig &conf):
-            _image_width(conf.get_image_width_height().first),
-            _image_height(conf.get_image_width_height().second)
-        {}
-        ~Graphics() {
-            Stop();
+        void Stop() {
+            StopGraphics();
         }
-        void Start();
-        void Stop();
-        void PostImage(std::shared_ptr<DecoderBuffer>&& buffer);
     private:
-
-        void run();
-
-        static void setWindowHints();
-        void makeBuffer(int fd, size_t size, EglBuffer &buffer);
-
-        std::atomic_bool _stop_running = true;
-        std::atomic_bool _is_ready = false;
-        std::unique_ptr<std::thread> graphics_thread = nullptr;
-        std::mutex _image_mutex;
-        std::queue<std::shared_ptr<DecoderBuffer>> _image_queue;
-
-        const int _image_width;
-        const int _image_height;
-        int _width = 0;
-        int _height = 0;
-        GLFWwindow *_window = nullptr;
-        std::map<int, EglBuffer> _buffers;
+        virtual void StartGraphics() = 0;
+        virtual void StopGraphics() = 0;
     };
+
 }
 
 #endif //INFRASTRUCTURE_GRAPHICS_HPP

@@ -25,7 +25,10 @@ int main() {
     }
 
 
-    const service::HeadsetStreamerConfig conf("69.4.20.10", 6969, { 1536, 864 }, 4, 4);
+    const service::HeadsetStreamerConfig conf(
+        "69.4.20.10", 6969, { 1536, 864 }, 4, 4, infrastructure::DecoderType::SW,
+        infrastructure::GraphicsType::GLFW
+     );
     auto service = service::HeadsetStreamer::Create(conf);
     service->Start();
 

@@ -14,7 +14,7 @@ namespace infrastructure {
             case EncoderType::NLL:
                 return std::make_shared<NullEncoder>(config, std::move(send_callback));
             default:
-                throw std::runtime_error("Selected camera unavailable... ");
+                throw std::runtime_error("Selected encoder unavailable... ");
         }
     }
 

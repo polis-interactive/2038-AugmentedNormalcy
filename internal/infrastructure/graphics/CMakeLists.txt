@@ -1,5 +1,5 @@
 
-set(SOURCES graphics.cpp ${glad_dir}/src/glad.c ${glad_dir}/src/glad_egl.c)
+set(SOURCES graphics.cpp null_graphics.cpp glfw_graphics.cpp ${glad_dir}/src/glad.c ${glad_dir}/src/glad_egl.c)
 set(TARGET_LIBS pthread ${GLFW3_LINK_LIBRARIES})
 
 if(NOT AN_PLATFORM STREQUAL RPI)

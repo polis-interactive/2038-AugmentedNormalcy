@@ -30,46 +30,10 @@ namespace infrastructure {
         return ret;
     }
 
-    int alloc_dma_buf(size_t size, int* fd, void** addr) {
-        int ret;
-        struct dma_heap_allocation_data alloc_data = {0};
-        alloc_data.len = size;
-        alloc_data.fd_flags = O_CLOEXEC | O_RDWR;
-
-        int heap_fd = open("/dev/dma_heap/system", O_RDWR | O_CLOEXEC, 0);
-        if (heap_fd < 0) {
-            perror("Error opening file");
-            return -1;
-        }
-
-        if (xioctl(heap_fd, DMA_HEAP_IOCTL_ALLOC, &alloc_data) < 0) {
-            close(heap_fd);
-            perror("ioctl DMA_HEAP_IOCTL_ALLOC failed");
-            return -1;
-        }
-
-        *addr = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, alloc_data.fd, 0);
-        if (*addr == MAP_FAILED) {
-            perror("mmap failed");
-            close(alloc_data.fd);
-            close(heap_fd);
-            return -1;
-        }
-
-        *fd = alloc_data.fd;
-        close(heap_fd);
-        return 0;
-    }
-
-    void free_dma_buf(int fd, void* addr, size_t size) {
-        munmap(addr, size);
-        close(fd);
-    }
-
     const char SwDecoder::_device_name[] = "/dev/video10";
 
-    SwDecoder::SwDecoder(const DecoderConfig &config, DecoderBufferCallback output_callback):
-        _output_callback(std::move(output_callback)),
+    SwDecoder::SwDecoder(const DecoderConfig &config, DecoderBufferCallback send_callback):
+        Decoder(config, std::move(send_callback)),
         _width_height(config.get_decoder_width_height())
     {
         auto downstream_count = config.get_decoder_downstream_buffer_count();
@@ -93,7 +57,7 @@ namespace infrastructure {
         setupDownstreamBuffers(downstream_count);
     }
 
-    void SwDecoder::Start() {
+    void SwDecoder::StartDecoder() {
 
         if (!_work_stop) {
             return;
@@ -106,7 +70,7 @@ namespace infrastructure {
 
     }
 
-    void SwDecoder::Stop() {
+    void SwDecoder::StopDecoder() {
         if (_work_stop) {
             return;
         }
@@ -215,7 +179,7 @@ namespace infrastructure {
                     queueDownstreamBuffer(e);
                 }
         );
-        _output_callback(std::move(output_buffer));
+        _send_callback(std::move(output_buffer));
     }
 
     void SwDecoder::queueDownstreamBuffer(DecoderBuffer *d) {
@@ -224,18 +188,7 @@ namespace infrastructure {
     }
 
     void SwDecoder::setupDownstreamBuffers(unsigned int request_downstream_buffers) {
-        /*
-        const auto max_size = _width_height.first * _width_height.second * 3 / 2;
-        for (int i = 0; i < request_downstream_buffers; i++) {
-            void *dma_mem = nullptr;
-            int dma_fd = -1;
-            if (alloc_dma_buf(max_size, &dma_fd, &dma_mem) < 0) {
-                throw std::runtime_error("unable to allocate dma buffer");
-            }
-            auto downstream_buffer = new DecoderBuffer(dma_fd, dma_mem, max_size);
-            _downstream_buffers.push(downstream_buffer);
-        }
-         */
+
         v4l2_requestbuffers reqbufs = {};
         reqbufs.count = request_downstream_buffers;
         reqbufs.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
@@ -309,14 +262,6 @@ namespace infrastructure {
     }
 
     void SwDecoder::teardownDownstreamBuffers() {
-        /*
-        while(!_downstream_buffers.empty()) {
-            auto buffer = _downstream_buffers.front();
-            _downstream_buffers.pop();
-            free_dma_buf(buffer->GetFd(), buffer->GetMemory(), buffer->GetSize());
-            delete buffer;
-        }
-         */
         while(!_downstream_buffers.empty()) {
             auto buffer = _downstream_buffers.front();
             _downstream_buffers.pop();

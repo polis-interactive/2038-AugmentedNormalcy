@@ -9,8 +9,8 @@
 
 #include "infrastructure/tcp/tcp_context.hpp"
 #include "infrastructure/tcp/tcp_client.hpp"
-#include "infrastructure/decoder/sw_decoder.hpp"
-#include "infrastructure/graphics/graphics.hpp"
+#include "infrastructure/decoder/decoder.hpp"
+#include "infrastructure/graphics/glfw_graphics.hpp"
 
 namespace service {
     struct HeadsetStreamerConfig:
@@ -20,13 +20,18 @@ namespace service {
         public infrastructure::GraphicsConfig
     {
         HeadsetStreamerConfig(
-                std::string tcp_server_host, int tcp_server_port, std::pair<int, int> image_width_height,
-                int tcp_read_buffers, int decoder_buffers_downstream
+                std::string tcp_server_host, int tcp_server_port,
+                std::pair<int, int> image_width_height,
+                int tcp_read_buffers, int decoder_buffers_downstream,
+                infrastructure::DecoderType decoder_type,
+                infrastructure::GraphicsType graphics_type
         ):
             _tcp_server_host(std::move(tcp_server_host)),
             _tcp_server_port(tcp_server_port),
             _tcp_read_buffers(tcp_read_buffers),
+            _decoder_type(decoder_type),
             _decoder_buffers_downstream(decoder_buffers_downstream),
+            _graphics_type(graphics_type),
             _image_width_height(std::move(image_width_height))
         {}
         [[nodiscard]] int get_tcp_pool_size() const override {
@@ -44,6 +49,12 @@ namespace service {
         [[nodiscard]] std::pair<int, int> get_image_width_height() const override {
             return _image_width_height;
         };
+        [[nodiscard]] infrastructure::GraphicsType get_graphics_type() const override {
+            return _graphics_type;
+        };
+        [[nodiscard]] infrastructure::DecoderType get_decoder_type() const override {
+            return _decoder_type;
+        };
         [[nodiscard]] unsigned int get_decoder_downstream_buffer_count() const override {
             return _decoder_buffers_downstream;
         };
@@ -59,12 +70,15 @@ namespace service {
         [[nodiscard]] int get_tcp_client_read_buffer_size() const override {
             return _image_width_height.first * _image_width_height.second * 3 / 2;
         };
+
     private:
         const std::string _tcp_server_host;
         const int _tcp_server_port;
         const int _tcp_read_buffers;
+        infrastructure::DecoderType _decoder_type;
         const int _decoder_buffers_downstream;
         const std::pair<int, int> _image_width_height;
+        infrastructure::GraphicsType _graphics_type;
     };
 
     class HeadsetStreamer:
@@ -111,7 +125,7 @@ namespace service {
         void initialize(const HeadsetStreamerConfig &config);
         std::atomic_bool _is_started = false;
         std::shared_ptr<infrastructure::Graphics> _graphics = nullptr;
-        std::shared_ptr<infrastructure::SwDecoder> _decoder = nullptr;
+        std::shared_ptr<infrastructure::Decoder> _decoder = nullptr;
         std::shared_ptr<infrastructure::TcpContext> _tcp_context = nullptr;
         std::shared_ptr<infrastructure::TcpClient> _tcp_client = nullptr;
     };

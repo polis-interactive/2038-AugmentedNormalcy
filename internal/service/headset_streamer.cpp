@@ -22,7 +22,7 @@ namespace service {
         _tcp_client = infrastructure::TcpClient::Create(config, _tcp_context->GetContext(), std::move(self));
         _graphics = infrastructure::Graphics::Create(config);
         self = shared_from_this();
-        _decoder = infrastructure::SwDecoder::Create(
+        _decoder = infrastructure::Decoder::Create(
             config,
             [this, s = std::move(self)](std::shared_ptr<DecoderBuffer> &&buffer) {
                 _graphics->PostImage(std::move(buffer));

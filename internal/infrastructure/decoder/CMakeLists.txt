@@ -1,7 +1,7 @@
 
 find_library(JPEG_LIBRARY jpeg REQUIRED)
 
-set(SOURCES sw_decoder.cpp)
+set(SOURCES decoder.cpp sw_decoder.cpp null_decoder.cpp)
 set(TARGET_LIBS pthread jpeg)
 
 add_definitions(-DTHIS_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
