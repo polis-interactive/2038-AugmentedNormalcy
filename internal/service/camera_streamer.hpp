@@ -23,6 +23,7 @@ namespace service {
             std::string tcp_server_host, int tcp_server_port,
             infrastructure::CameraType camera_type,
             std::pair<int, int> camera_width_height,
+            float camera_lens_position,
             infrastructure::EncoderType encoder_type,
             int encoder_buffers_downstream
         ):
@@ -30,6 +31,7 @@ namespace service {
             _tcp_server_port(tcp_server_port),
             _camera_type(camera_type),
             _camera_width_height(std::move(camera_width_height)),
+            _camera_lens_position(camera_lens_position),
             _encoder_type(encoder_type),
             _encoder_buffers_downstream(encoder_buffers_downstream)
         {}
@@ -50,6 +52,9 @@ namespace service {
         };
         [[nodiscard]] std::pair<int, int> get_camera_width_height() const override {
             return _camera_width_height;
+        };
+        [[nodiscard]] float get_lens_position() const override {
+            return _camera_lens_position;
         };
         [[nodiscard]] int get_fps() const override {
             return 30;
@@ -81,6 +86,7 @@ namespace service {
         const int _tcp_server_port;
         const infrastructure::CameraType _camera_type;
         const std::pair<int, int> _camera_width_height;
+        const float _camera_lens_position;
         const infrastructure::EncoderType _encoder_type;
         const int _encoder_buffers_downstream;
     };

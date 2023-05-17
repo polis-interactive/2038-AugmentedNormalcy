@@ -58,6 +58,7 @@ namespace infrastructure {
         bool _camera_started = false;
 
         float _frame_rate = 0.0;
+        float _lens_position = 0.0;
 
         std::unique_ptr<libcamera::FrameBufferAllocator> _allocator;
         std::map<std::string, libcamera::Stream *> _streams;

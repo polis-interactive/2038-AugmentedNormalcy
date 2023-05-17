@@ -1,0 +1,10 @@
+{
+  "serverHost": "69.4.20.10",
+  "serverPort": 6969,
+  "imageWidth": 1536,
+  "imageHeight": 864,
+  "cameraType": "LIBCAMERA",
+  "cameraLensPosition": 0.5,
+  "encoderBuffersDownstream": 5,
+  "encoderType": "SW"
+}

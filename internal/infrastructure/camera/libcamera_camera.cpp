@@ -30,6 +30,7 @@ namespace infrastructure {
         setupBuffers(config.get_camera_buffer_count());
         _streams["viewfinder"] = _configuration->at(0).stream();
         _frame_rate = config.get_fps();
+        _lens_position = config.get_lens_position();
     }
 
     void LibcameraCamera::openCamera() {
@@ -164,7 +165,7 @@ namespace infrastructure {
         _controls.set(controls::AwbMode, 0);
         _controls.set(controls::draft::NoiseReductionMode, 3);
         _controls.set(controls::AfMode, controls::AfModeEnum::AfModeManual);
-        _controls.set(controls::LensPosition, 0.5);
+        _controls.set(controls::LensPosition, _lens_position);
 
         if (_camera->start(&_controls))
             throw std::runtime_error("failed to start camera");

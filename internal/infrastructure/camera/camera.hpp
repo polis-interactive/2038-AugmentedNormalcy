@@ -21,6 +21,7 @@ namespace infrastructure {
         // as opposed to 30
         [[nodiscard]] virtual int get_fps() const = 0;
         [[nodiscard]] virtual int get_camera_buffer_count() const = 0;
+        [[nodiscard]] virtual float get_lens_position() const = 0;
     };
 
 

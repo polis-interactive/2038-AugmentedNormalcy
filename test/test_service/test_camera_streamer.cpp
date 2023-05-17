@@ -28,6 +28,8 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Setup-and-teardown") {
 #elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
         {848, 480},
 #endif
+        0.5,
+        infrastructure::EncoderType::SW,
         5
     );
 
@@ -59,6 +61,8 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Holding-pattern") {
 #elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
             {848, 480},
 #endif
+            0.5,
+            infrastructure::EncoderType::SW,
             5
     );
 
@@ -81,6 +85,8 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
 #elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
             {848, 480},
 #endif
+            0.5,
+            infrastructure::EncoderType::SW,
             5
     );
 
@@ -151,7 +157,8 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
 
 TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
     service::CameraStreamerConfig streamer_conf(
-        "127.0.0.1", 6969, infrastructure::CameraType::LIBCAMERA, { 1536, 864 }, 5
+        "127.0.0.1", 6969, infrastructure::CameraType::LIBCAMERA, { 1536, 864 }, 0.5,
+        infrastructure::EncoderType::SW, 5
     );
 
     std::filesystem::path test_dir = TEST_DIR;

@@ -46,6 +46,7 @@ set(internal_dir ${root_dir}/internal)
 set(third_party_dir ${root_dir}/third_party)
 
 include_directories(${root_dir}/internal)
+include_directories(${third_party_dir}/nlohmann)
 
 add_subdirectory(${internal_dir}/infrastructure/tcp)
 if (FEATURE_CAMERA)

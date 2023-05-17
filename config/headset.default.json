@@ -1,0 +1,10 @@
+{
+  "serverHost": "69.4.20.10",
+  "serverPort": 6969,
+  "imageWidth": 1536,
+  "imageHeight": 864,
+  "tcpReadBuffers": 4,
+  "decoderBuffersDownstream": 4,
+  "decoderType": "SW",
+  "graphicsType": "GLFW"
+}

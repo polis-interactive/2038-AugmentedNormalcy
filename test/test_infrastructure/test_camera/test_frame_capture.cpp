@@ -33,6 +33,9 @@ struct LibcameraTestConfig : infrastructure::CameraConfig {
     [[nodiscard]] int get_camera_buffer_count() const final {
         return 4;
     }
+    [[nodiscard]] float get_lens_position() const override {
+        return 0.5;
+    };
 };
 
 TEST_CASE("INFRASTRUCTURE_CAMERA_LIBCAMERA-Capture_one_frame") {

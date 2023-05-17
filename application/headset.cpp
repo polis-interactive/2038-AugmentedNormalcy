@@ -2,60 +2,54 @@
 // Created by brucegoose on 4/22/23.
 //
 
+#include "config.hpp"
+#include "runtime.hpp"
+
 #include "service/headset_streamer.hpp"
 
-#include <filesystem>
-#include <fstream>
-
-#include <csignal>
 #include <chrono>
 using namespace std::literals;
 
-std::function<void(int)> shutdown_handler;
-void signal_handler(int signal) { shutdown_handler(signal); }
+static infrastructure::DecoderType to_decoder_type(const std::string& type) {
+    if (type == "SW") return infrastructure::DecoderType::SW;
+    else if (type == "NLL") return infrastructure::DecoderType::NLL;
+    throw std::runtime_error("Unknown decoder type: " + type);
+}
 
-int main() {
+static infrastructure::GraphicsType to_graphics_type(const std::string& type) {
+    if (type == "GLFW") return infrastructure::GraphicsType::GLFW;
+    else if (type == "NLL") return infrastructure::GraphicsType::NLL;
+    throw std::runtime_error("Unknown graphics type: " + type);
+}
 
-    const std::filesystem::path stop_file = "/tmp/augmented_normalcy_stopped_successfully";
+int main(int argc, char* argv[]) {
 
-    if(std::filesystem::remove(stop_file)) {
-        std::cout << "Removed successful stop file" << std::endl;
-    } else {
-        std::cout << "No successful stop file to remove" << std::endl;
-    }
+    application::RemoveSuccessFile();
 
+    auto config = application::get_json_config(application::AppType::HEADSET, argc, argv);
 
-    const service::HeadsetStreamerConfig conf(
-        "69.4.20.10", 6969, { 1536, 864 }, 4, 4, infrastructure::DecoderType::SW,
-        infrastructure::GraphicsType::GLFW
+    const service::HeadsetStreamerConfig headset_config(
+        config.value("serverHost", "69.4.20.10"),
+        config.value("serverPort", 6969),
+        {
+            config.value("imageWidth", 1536),
+            config.value("imageHeight", 864)
+        },
+        config.value("tcpReadBuffers", 4),
+        config.value("decoderBuffersDownstream", 4),
+        to_decoder_type(config.value("decoderType", "SW")),
+        to_graphics_type(config.value("graphicsType", "GLFW"))
      );
-    auto service = service::HeadsetStreamer::Create(conf);
+    auto service = service::HeadsetStreamer::Create(headset_config);
     service->Start();
 
-    bool exit = false;
-
-    shutdown_handler = [&](int signal) {
-        std::cout << "Server shutdown...\n";
-        exit = true;
-    };
-
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-
-    while(!exit){
-        std::this_thread::sleep_for(1s);
-    }
+    application::WaitForShutdown();
 
     service->Stop();
     std::this_thread::sleep_for(500ms);
     service->Unset();
     std::this_thread::sleep_for(500ms);
 
-    std::ofstream ofs(stop_file);
-    if (!ofs) {
-        std::cerr << "Failed to touch file: " << stop_file << '\n';
-    } else {
-        ofs.close();
-    }
+    application::CreateSuccessFile();
 
 }

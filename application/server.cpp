@@ -2,55 +2,38 @@
 // Created by brucegoose on 4/22/23.
 //
 
+#include "config.hpp"
+#include "runtime.hpp"
+
 #include "service/server_streamer.hpp"
 
-#include <filesystem>
-#include <fstream>
-
-#include <csignal>
 #include <chrono>
 using namespace std::literals;
 
-std::function<void(int)> shutdown_handler;
-void signal_handler(int signal) { shutdown_handler(signal); }
 
-int main() {
+int main(int argc, char* argv[]) {
 
-    const std::filesystem::path stop_file = "/tmp/augmented_normalcy_stopped_successfully";
+    application::RemoveSuccessFile();
 
-    if(std::filesystem::remove(stop_file)) {
-        std::cout << "Removed successful stop file" << std::endl;
-    } else {
-        std::cout << "No successful stop file to remove" << std::endl;
-    }
+    auto config = application::get_json_config(application::AppType::SERVER, argc, argv);
 
-    const service::ServerStreamerConfig conf(5, 6969, 4, 1990656);
+    const service::ServerStreamerConfig conf(
+        config.value("tcpPoolSize", 6),
+        config.value("serverPort", 6969),
+        config.value("cameraBuffersCount", 4),
+        config.value("cameraBufferSize", 1536 * 864 * 3 * 0.5)
+    );
     auto service = service::ServerStreamer::Create(conf);
     service->Start();
 
     bool exit = false;
 
-    shutdown_handler = [&](int signal) {
-        std::cout << "Server shutdown...\n";
-        exit = true;
-    };
-
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-
-    while(!exit){
-        std::this_thread::sleep_for(1s);
-    }
+    application::WaitForShutdown();
 
     service->Stop();
     std::this_thread::sleep_for(500ms);
     service->Unset();
     std::this_thread::sleep_for(500ms);
 
-    std::ofstream ofs(stop_file);
-    if (!ofs) {
-        std::cerr << "Failed to touch file: " << stop_file << '\n';
-    } else {
-        ofs.close();
-    }
+    application::CreateSuccessFile();
 }
