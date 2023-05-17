@@ -31,7 +31,7 @@
         shell: /bin/bash
     - name: Provision WiFi
       copy:
-        src: ./wpa_supplicant.conf
+        src: ./camera.wpa_supplicant.conf
         dest: /boot/wpa_supplicant.conf
     - name: Provision SSH
       file:
@@ -39,7 +39,7 @@
         state: touch
     - name: Setup dhcpcd
       copy:
-        src: ./dhcpcd.conf
+        src: ./camera.dhcpcd.conf
         dest: /etc/dhcpcd.conf
     - name: Change the Timezone
       shell:
