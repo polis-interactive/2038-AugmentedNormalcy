@@ -135,7 +135,7 @@ namespace infrastructure {
         }
         _stop_running = false;
         auto self(shared_from_this());
-        graphics_thread = std::make_unique<std::thread>([this, s = std::move(self)]() {
+        graphics_thread = std::make_unique<std::thread>([this, self]() {
             run();
         });
     }

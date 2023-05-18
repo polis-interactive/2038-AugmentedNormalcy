@@ -11,7 +11,7 @@ namespace infrastructure {
 
     enum class GraphicsType {
         GLFW,
-        NLL,
+        NONE,
     };
 
     struct GraphicsConfig {

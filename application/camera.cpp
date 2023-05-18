@@ -20,7 +20,7 @@ static infrastructure::CameraType to_camera_type(const std::string& type) {
 
 static infrastructure::EncoderType to_encoder_type(const std::string& type) {
     if (type == "SW") return infrastructure::EncoderType::SW;
-    else if (type == "NLL") return infrastructure::EncoderType::NLL;
+    else if (type == "NONE") return infrastructure::EncoderType::NONE;
     throw std::runtime_error("Unknown encoder type: " + type);
 }
 

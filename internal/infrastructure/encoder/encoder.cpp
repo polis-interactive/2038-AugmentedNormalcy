@@ -11,7 +11,7 @@ namespace infrastructure {
         switch(config.get_encoder_type()) {
             case EncoderType::SW:
                 return std::make_shared<SwEncoder>(config, std::move(send_callback));
-            case EncoderType::NLL:
+            case EncoderType::NONE:
                 return std::make_shared<NullEncoder>(config, std::move(send_callback));
             default:
                 throw std::runtime_error("Selected encoder unavailable... ");

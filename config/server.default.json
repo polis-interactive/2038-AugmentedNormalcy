@@ -2,5 +2,7 @@
   "tcpPoolSize": 6,
   "serverPort": 6969,
   "cameraBuffersCount": 4,
-  "cameraBufferSize": 1990656
+  "cameraBufferSize": 1990656,
+  "serverClientAssignmentStrategy": "IP_BOUNDS",
+  "serverCameraSwitchingStrategy": "AUTOMATIC_TIMER"
 }

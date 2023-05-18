@@ -1,0 +1,8 @@
+{
+  "tcpPoolSize": 3,
+  "serverPort": 6969,
+  "cameraBuffersCount": 4,
+  "cameraBufferSize": 64,
+  "serverClientAssignmentStrategy": "CAMERA_THEN_HEADSET",
+  "serverCameraSwitchingStrategy": "NONE"
+}

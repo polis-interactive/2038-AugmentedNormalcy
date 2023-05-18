@@ -11,7 +11,7 @@ namespace infrastructure {
 
     enum class EncoderType {
         SW,
-        NLL,
+        NONE,
     };
 
     struct EncoderConfig {

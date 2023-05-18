@@ -10,7 +10,10 @@ typedef std::chrono::high_resolution_clock Clock;
 #include "service/server_streamer.hpp"
 
 TEST_CASE("SERVICE_SERVER-ENCODER_Setup-and-teardown") {
-    service::ServerStreamerConfig conf(2, 6969, 4, 5);
+    service::ServerStreamerConfig conf(
+        2, 6969, 4, 5, service::ClientAssignmentStrategy::CAMERA_THEN_HEADSET,
+        service::CameraSwitchingStrategy::NONE
+    );
 
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4;
 

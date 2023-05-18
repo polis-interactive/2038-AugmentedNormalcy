@@ -24,7 +24,7 @@ namespace service {
         self = shared_from_this();
         _decoder = infrastructure::Decoder::Create(
             config,
-            [this, s = std::move(self)](std::shared_ptr<DecoderBuffer> &&buffer) {
+            [this, self](std::shared_ptr<DecoderBuffer> &&buffer) {
                 _graphics->PostImage(std::move(buffer));
             }
         );

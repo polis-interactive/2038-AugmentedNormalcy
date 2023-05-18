@@ -66,7 +66,7 @@ namespace infrastructure {
         _work_stop = false;
 
         auto self(shared_from_this());
-        _work_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable { run(); });
+        _work_thread = std::make_unique<std::thread>([this, self]() mutable { run(); });
 
     }
 
@@ -175,7 +175,7 @@ namespace infrastructure {
 
         auto self(shared_from_this());
         auto output_buffer = std::shared_ptr<DecoderBuffer>(
-                buffer, [this, s = std::move(self)](DecoderBuffer * e) mutable {
+                buffer, [this, self](DecoderBuffer * e) mutable {
                     queueDownstreamBuffer(e);
                 }
         );

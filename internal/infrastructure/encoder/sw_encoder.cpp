@@ -24,7 +24,7 @@ namespace infrastructure {
         _work_stop = false;
 
         auto self(shared_from_this());
-        _work_thread = std::make_unique<std::thread>([this, s = std::move(self)]() mutable { run(); });
+        _work_thread = std::make_unique<std::thread>([this, self]() mutable { run(); });
 
     }
 
@@ -142,7 +142,7 @@ namespace infrastructure {
         jpeg_finish_compress(&cinfo);
         auto self(shared_from_this());
         auto output_buffer = std::shared_ptr<EncoderBuffer>(
-            buffer, [this, s = std::move(self)](EncoderBuffer * e) mutable {
+            buffer, [this, self](EncoderBuffer * e) mutable {
                 queueDownstreamBuffer(e);
             }
         );

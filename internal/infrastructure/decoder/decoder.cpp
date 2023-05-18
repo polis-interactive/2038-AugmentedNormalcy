@@ -11,7 +11,7 @@ namespace infrastructure {
         switch(config.get_decoder_type()) {
             case DecoderType::SW:
                 return std::make_shared<SwDecoder>(config, std::move(send_callback));
-            case DecoderType::NLL:
+            case DecoderType::NONE:
                 return std::make_shared<NullDecoder>(config, std::move(send_callback));
             default:
                 throw std::runtime_error("Selected decoder unavailable... ");

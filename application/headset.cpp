@@ -12,13 +12,13 @@ using namespace std::literals;
 
 static infrastructure::DecoderType to_decoder_type(const std::string& type) {
     if (type == "SW") return infrastructure::DecoderType::SW;
-    else if (type == "NLL") return infrastructure::DecoderType::NLL;
+    else if (type == "NONE") return infrastructure::DecoderType::NONE;
     throw std::runtime_error("Unknown decoder type: " + type);
 }
 
 static infrastructure::GraphicsType to_graphics_type(const std::string& type) {
     if (type == "GLFW") return infrastructure::GraphicsType::GLFW;
-    else if (type == "NLL") return infrastructure::GraphicsType::NLL;
+    else if (type == "NONE") return infrastructure::GraphicsType::NONE;
     throw std::runtime_error("Unknown graphics type: " + type);
 }
 

@@ -50,9 +50,9 @@ public:
 
 struct CameraBuffer: public SizedBuffer {
     CameraBuffer(
-            void *request, void *buffer, int fd, std::size_t size, int64_t timestamp_us
+        void *request, void *buffer, int fd, std::size_t size, int64_t timestamp_us
     ):
-            _request(request), _buffer(buffer), _fd(fd), _size(size), _timestamp_us(timestamp_us)
+        _request(request), _buffer(buffer), _fd(fd), _size(size), _timestamp_us(timestamp_us)
     {}
     [[nodiscard]] void *GetRequest() const {
         return _request;
@@ -67,7 +67,7 @@ struct CameraBuffer: public SizedBuffer {
         return _buffer;
     };
 
-private:
+protected:
     void *_request;
     void * _buffer;
     int _fd;

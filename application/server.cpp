@@ -10,6 +10,19 @@
 #include <chrono>
 using namespace std::literals;
 
+static service::ClientAssignmentStrategy to_client_assignment_strategy(const std::string& type) {
+    if (type == "CAMERA_THEN_HEADSET") return service::ClientAssignmentStrategy::CAMERA_THEN_HEADSET;
+    if (type == "IP_BOUNDS") return service::ClientAssignmentStrategy::IP_BOUNDS;
+    throw std::runtime_error("Unknown ClientAssignmentStrategy: " + type);
+}
+
+static service::CameraSwitchingStrategy to_camera_switching_strategy(const std::string& type) {
+    if (type == "MANUAL_ENTRY") return service::CameraSwitchingStrategy::MANUAL_ENTRY;
+    if (type == "AUTOMATIC_TIMER") return service::CameraSwitchingStrategy::AUTOMATIC_TIMER;
+    if (type == "HEADSET_CONTROLLED") return service::CameraSwitchingStrategy::HEADSET_CONTROLLED;
+    if (type == "NONE") return service::CameraSwitchingStrategy::NONE;
+    throw std::runtime_error("Unknown CameraSwitchingStrategy: " + type);
+}
 
 int main(int argc, char* argv[]) {
 
@@ -21,7 +34,9 @@ int main(int argc, char* argv[]) {
         config.value("tcpPoolSize", 6),
         config.value("serverPort", 6969),
         config.value("cameraBuffersCount", 4),
-        config.value("cameraBufferSize", 1536 * 864 * 3 * 0.5)
+        config.value("cameraBufferSize", 1536 * 864 * 3 * 0.5),
+        to_client_assignment_strategy(config.value("serverClientAssignmentStrategy", "IP_BOUNDS")),
+        to_camera_switching_strategy(config.value("serverCameraSwitchingStrategy", "AUTOMATIC_TIMER"))
     );
     auto service = service::ServerStreamer::Create(conf);
     service->Start();

@@ -157,7 +157,7 @@ namespace infrastructure {
             }
             auto self(shared_from_this());
             auto wrapped_buffer = std::shared_ptr<TcpReadBuffer>(
-                    buffer, [this, s = std::move(self)](TcpReadBuffer * b) mutable {
+                    buffer, [this, self](TcpReadBuffer * b) mutable {
                         std::unique_lock<std::mutex> lock(_buffer_mutex);
                         _buffers.push_back(b);
                     }

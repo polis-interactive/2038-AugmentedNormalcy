@@ -36,7 +36,7 @@ public:
     SizedBufferCallback on_receive;
 
     /* headset server */
-    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp_addr addr) override {
+    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(const tcp_addr &addr) override {
         return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
     }
     [[nodiscard]] unsigned long CreateHeadsetServerConnection(

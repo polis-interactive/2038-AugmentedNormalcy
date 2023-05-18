@@ -46,7 +46,7 @@ namespace infrastructure {
             auto self(shared_from_this());
             boost::asio::post(
                 net::make_strand(_context),
-                [this, s = std::move(self), &done_mux, &done_cv]() {
+                [this, self, &done_mux, &done_cv]() {
                     error_code ec;
                     disconnect(ec);
                     std::lock_guard lk(done_mux);
@@ -72,9 +72,12 @@ namespace infrastructure {
         auto self(shared_from_this());
         _socket->async_connect(
             _remote_endpoint,
-            [this, s = std::move(self)](error_code ec) {
+            [this, self](error_code ec) {
                 std::cout << "TcpClient attempting connection" << std::endl;
                 if (!ec && !_is_stopped) {
+                    _socket->set_option(tcp::no_delay(true));
+                    net::socket_base::keep_alive option(true);
+                    _socket->set_option(option);
                     _is_connected = true;
                     if (_is_camera) {
                         startWrite();
@@ -112,7 +115,7 @@ namespace infrastructure {
         auto self(shared_from_this());
         _socket->async_send(
             net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
-            [this, s = std::move(self), last_bytes](error_code ec, std::size_t bytes_written) mutable {
+            [this, self, last_bytes](error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
                 auto total_bytes = last_bytes + bytes_written;
                 if (!ec) {
@@ -143,7 +146,7 @@ namespace infrastructure {
         auto self(shared_from_this());
         _socket->async_send(
             net::buffer((uint8_t *) buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
-            [this, s = std::move(self)](error_code ec, std::size_t bytes_written) mutable {
+            [this, self](error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
                 if (ec) {
                     std::cout << "TcpClient: error writing body: " << ec << "; reconnecting" << std::endl;
@@ -179,7 +182,7 @@ namespace infrastructure {
         auto self(shared_from_this());
         net::dispatch(
             _socket->get_executor(),
-            [this, s = std::move(self)]() {
+            [this, self]() {
                 if (_is_stopped || !_is_connected) return;
                 readHeader(0);
             }
@@ -189,7 +192,7 @@ namespace infrastructure {
     void TcpClient::startTimer() {
         _read_timer.expires_from_now(boost::posix_time::seconds(_read_timeout));
         auto self(shared_from_this());
-        _read_timer.async_wait([this, s = std::move(self)](error_code ec) {
+        _read_timer.async_wait([this, self](error_code ec) {
             if (!ec) {
                 reconnect(ec);
             }
@@ -202,7 +205,7 @@ namespace infrastructure {
         auto self(shared_from_this());
         _socket->async_receive(
             net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
-            [this, s = std::move(self), last_bytes] (error_code ec, std::size_t bytes_written) mutable {
+            [this, self, last_bytes] (error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
                 if (ec ==  boost::asio::error::operation_aborted) {
                     return;
@@ -239,7 +242,7 @@ namespace infrastructure {
         auto self(shared_from_this());
         _socket->async_receive(
             net::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
-            [this, s = std::move(self)] (error_code ec, std::size_t bytes_written) mutable {
+            [this, self] (error_code ec, std::size_t bytes_written) mutable {
                 if (_is_stopped || !_is_connected) return;
                 if (ec ==  boost::asio::error::operation_aborted) {
                     return;

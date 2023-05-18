@@ -11,7 +11,7 @@ namespace infrastructure {
         switch(config.get_graphics_type()) {
             case GraphicsType::GLFW:
                 return std::make_shared<GlfwGraphics>(config);
-            case GraphicsType::NLL:
+            case GraphicsType::NONE:
                 return std::make_shared<NullGraphics>(config);
             default:
                 throw std::runtime_error("Selected graphics unavailable... ");

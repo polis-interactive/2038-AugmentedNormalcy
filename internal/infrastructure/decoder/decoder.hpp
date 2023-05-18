@@ -11,7 +11,7 @@ namespace infrastructure {
 
     enum class DecoderType {
         SW,
-        NLL,
+        NONE,
     };
 
     struct DecoderConfig {
