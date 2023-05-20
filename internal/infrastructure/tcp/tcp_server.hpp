@@ -27,7 +27,7 @@ namespace infrastructure {
 
     class TcpSession {
     public:
-        virtual void TryClose(bool is_self_close) = 0;
+        virtual void TryClose(bool internal_close) = 0;
         virtual tcp_addr GetAddr() = 0;
         virtual unsigned long GetSessionId() = 0;
     };
@@ -43,18 +43,18 @@ namespace infrastructure {
         [[nodiscard]] virtual TcpConnectionType GetConnectionType(const tcp_addr &endpoint) = 0;
         // camera session
         [[nodiscard]]  virtual unsigned long CreateCameraServerConnection(
-            std::shared_ptr<TcpSession> session
+            std::shared_ptr<TcpSession> &&session
         ) = 0;
         virtual void PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer) = 0;
         virtual void DestroyCameraServerConnection(
-                std::shared_ptr<TcpSession> session
+                std::shared_ptr<TcpSession> &&session
         ) = 0;
 
         // headset session
         [[nodiscard]]  virtual unsigned long CreateHeadsetServerConnection(
-            std::shared_ptr<WritableTcpSession> session
+            std::shared_ptr<WritableTcpSession> &&session
         ) = 0;
-        virtual void DestroyHeadsetServerConnection(std::shared_ptr<WritableTcpSession> session) = 0;
+        virtual void DestroyHeadsetServerConnection(std::shared_ptr<WritableTcpSession> &&session) = 0;
     };
 
 
@@ -65,13 +65,14 @@ namespace infrastructure {
         TcpCameraSession (const TcpCameraSession&) = delete;
         TcpCameraSession& operator= (const TcpCameraSession&) = delete;
         // TODO: don't know a better way of doing this. Essentially, TcpServerManager needs to be able to call this
-        void TryClose(bool is_self_close) override;
+        void TryClose(bool internal_close) override;
         tcp_addr GetAddr() override {
             return _addr;
         };
         unsigned long GetSessionId() override {
             return _session_id;
         }
+        ~TcpCameraSession();
     protected:
         friend class TcpServer;
         TcpCameraSession(
@@ -102,7 +103,7 @@ namespace infrastructure {
         TcpHeadsetSession (const TcpHeadsetSession&) = delete;
         TcpHeadsetSession& operator= (const TcpHeadsetSession&) = delete;
         // TODO: don't know a better way of doing this. Essentially, TcpServerManager needs to be able to call this
-        void TryClose(bool is_self_close) override;
+        void TryClose(bool internal_close) override;
         tcp_addr GetAddr() override {
             return _addr;
         };
@@ -110,6 +111,7 @@ namespace infrastructure {
             return _session_id;
         }
         void Write(std::shared_ptr<SizedBuffer> &&send_buffer) override;
+        ~TcpHeadsetSession();
     protected:
         friend class TcpServer;
         TcpHeadsetSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager, tcp_addr addr);

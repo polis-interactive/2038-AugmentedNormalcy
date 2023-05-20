@@ -78,6 +78,8 @@ namespace infrastructure {
                     _socket->set_option(tcp::no_delay(true));
                     net::socket_base::keep_alive option(true);
                     _socket->set_option(option);
+                    _socket->set_option(reuse_port(true));
+                    _socket->set_option(tcp::socket::reuse_address(true));
                     _is_connected = true;
                     if (_is_camera) {
                         startWrite();
@@ -201,7 +203,7 @@ namespace infrastructure {
 
     void TcpClient::readHeader(std::size_t last_bytes) {
         if (_is_stopped || !_is_connected) return;
-        startTimer();
+        // startTimer();
         auto self(shared_from_this());
         _socket->async_receive(
             net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
@@ -210,12 +212,12 @@ namespace infrastructure {
                 if (ec ==  boost::asio::error::operation_aborted) {
                     return;
                 }
-                _read_timer.cancel();
+                // _read_timer.cancel();
                 auto total_bytes = last_bytes + bytes_written;
                 if (!ec && total_bytes == _header.Size() && _header.Ok()) {
                     readBody();
                     return;
-                } else if (total_bytes < _header.Size()) {
+                } else if (!ec && total_bytes < _header.Size()) {
                     readHeader(total_bytes);
                     return;
                 }
@@ -238,7 +240,7 @@ namespace infrastructure {
         if (_receive_buffer == nullptr) {
             _receive_buffer = _receive_buffer_pool->GetReadBuffer();
         }
-        startTimer();
+        // startTimer();
         auto self(shared_from_this());
         _socket->async_receive(
             net::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
@@ -247,7 +249,7 @@ namespace infrastructure {
                 if (ec ==  boost::asio::error::operation_aborted) {
                     return;
                 }
-                _read_timer.cancel();
+                // _read_timer.cancel();
                 if (ec) {
                     std::cout << "TcpClient: error reading body: " << ec << "; reconnecting" << std::endl;
                     reconnect(ec);
@@ -281,7 +283,6 @@ namespace infrastructure {
         _is_connected = false;
         if (_socket && _socket->is_open()) {
             _socket->shutdown(tcp::socket::shutdown_both, ec);
-            _socket->close();
             _socket.reset();
             _socket = nullptr;
         }

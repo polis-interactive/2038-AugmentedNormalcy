@@ -5,7 +5,7 @@
 #include "config.hpp"
 #include "runtime.hpp"
 
-#include "service/server_streamer.hpp"
+#include "internal/service/server/server_streamer.hpp"
 
 #include <chrono>
 using namespace std::literals;

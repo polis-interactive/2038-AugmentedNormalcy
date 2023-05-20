@@ -7,6 +7,8 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
+#include <thread>
+#include <atomic>
 #include <chrono>
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;

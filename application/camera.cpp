@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
             config.value("imageHeight", 864)
         },
         config.value("cameraLensPosition", 0.5f),
+        config.value("cameraFramesPerSecond", 30.0f),
         to_encoder_type(config.value("encoderType", "SW")),
         config.value("encoderBuffersDownstream", 4)
     );

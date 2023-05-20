@@ -29,6 +29,11 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Setup-and-teardown") {
         {848, 480},
 #endif
         0.5,
+#if _AN_PLATFORM_ == PLATFORM_RPI
+        30.0f,
+#elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
+        10.0f,
+#endif
         infrastructure::EncoderType::SW,
         5
     );
@@ -62,6 +67,11 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Holding-pattern") {
             {848, 480},
 #endif
             0.5,
+#if _AN_PLATFORM_ == PLATFORM_RPI
+            30.0f,
+#elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
+            10.0f,
+#endif
             infrastructure::EncoderType::SW,
             5
     );
@@ -86,6 +96,11 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
             {848, 480},
 #endif
             0.5,
+#if _AN_PLATFORM_ == PLATFORM_RPI
+            30.0f,
+#elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
+            10.0f,
+#endif
             infrastructure::EncoderType::SW,
             5
     );
@@ -157,7 +172,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
 
 TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
     service::CameraStreamerConfig streamer_conf(
-        "127.0.0.1", 6969, infrastructure::CameraType::LIBCAMERA, { 1536, 864 }, 0.5,
+        "127.0.0.1", 6969, infrastructure::CameraType::LIBCAMERA, { 1536, 864 }, 0.5, 30.0f,
         infrastructure::EncoderType::SW, 5
     );
 

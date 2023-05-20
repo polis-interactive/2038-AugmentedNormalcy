@@ -43,18 +43,18 @@ public:
     }
     /* dummy's for the rest */
     [[nodiscard]] unsigned long CreateCameraServerConnection(
-        std::shared_ptr<infrastructure::TcpSession> session
+        std::shared_ptr<infrastructure::TcpSession> &&session
     ) override {
         return 1;
     }
     void PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer) override {};
-    void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> session) override {}
+    void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> &&session) override {}
     [[nodiscard]] unsigned long CreateHeadsetServerConnection(
-        std::shared_ptr<infrastructure::WritableTcpSession> session
+        std::shared_ptr<infrastructure::WritableTcpSession> &&session
     ) override {
         return 0;
     }
-    void DestroyHeadsetServerConnection(std::shared_ptr<infrastructure::WritableTcpSession> session) override {}
+    void DestroyHeadsetServerConnection(std::shared_ptr<infrastructure::WritableTcpSession> &&session) override {}
 };
 
 #endif //AUGMENTEDNORMALCY_TEST_TCP_SERVER_HPP

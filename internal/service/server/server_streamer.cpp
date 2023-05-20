@@ -61,7 +61,6 @@ namespace service {
         /* startup worker thread */
         _work_stop = false;
         if (_camera_switching_strategy) {
-
             _work_thread = std::make_unique<std::thread>(_camera_switching_strategy);
         }
         /* startup server */
@@ -71,23 +70,14 @@ namespace service {
     }
 
     infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignCameraThenHeadset(const tcp_addr &addr) {
-        bool camera_is_connected;
-        {
-            std::unique_lock lk(_camera_mutex);
-            camera_is_connected = !_camera_sessions.empty();
-        }
-        if (!camera_is_connected) {
+        const auto connection_counts = _connection_manager.GetConnectionCounts();
+        if (connection_counts.first == 0 && connection_counts.second == 0) {
             return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
-        }
-        bool headset_is_connected;
-        {
-            std::unique_lock lk(_headset_mutex);
-            headset_is_connected = !_headset_sessions.empty();
-        }
-        if (!headset_is_connected) {
+        } else if (connection_counts.second == 0) {
             return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
+        } else {
+            return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
         }
-        return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
     }
 
     infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignIpBounds(const tcp_addr &addr) {
@@ -129,12 +119,8 @@ namespace service {
                     auto c_value = static_cast<unsigned char>(value);
                     std::array<unsigned char, 4> bytes = {69, 4, 20, c_value};
                     tcp_addr use_addr(bytes);
-                    std::unique_lock<std::mutex> lock(_camera_mutex);
-                    const auto &find_session = _camera_sessions.find(use_addr);
-                    if (find_session != _camera_sessions.end()) {
-                        std::cout << "Switching to camera: " <<  value << std::endl;
-                        _connection_manager.ChangeAllMappings(find_session->first);
-                    } else {
+                    const bool did_change = _connection_manager.PointReaderAtWriters(use_addr);
+                    if (!did_change) {
                         std::cout << "Camera " << value << " is unavailable" << std::endl;
                     }
                 } else {
@@ -159,102 +145,29 @@ namespace service {
     }
 
     unsigned long ServerStreamer::CreateCameraServerConnection(
-            std::shared_ptr<infrastructure::TcpSession> camera_session
+        std::shared_ptr<infrastructure::TcpSession> &&camera_session
     ) {
-        bool is_only_camera = false;
-        const auto addr = camera_session->GetAddr();
-        {
-            std::unique_lock<std::mutex> lock(_camera_mutex);
-            is_only_camera = _camera_sessions.empty();
-            auto find_session = _camera_sessions.find(camera_session->GetAddr());
-            if (find_session != _camera_sessions.end()) {
-                find_session->second->TryClose(true);
-                find_session->second.reset();
-            }
-            _camera_sessions[addr] = camera_session;
-        }
-
-        if (is_only_camera) {
-            std::unique_lock<std::mutex> lock(_headset_mutex);
-            _connection_manager.AddManyMappings(addr, _headset_sessions);
-        }
-        return ++_last_session_number;
+        return _connection_manager.AddReaderSession(std::move(camera_session));
     }
 
     void ServerStreamer::PostCameraServerBuffer(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer) {
         _connection_manager.PostMessage(addr, std::move(buffer));
     }
 
-    void ServerStreamer::DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> camera_session) {
-
-        const auto addr = camera_session->GetAddr();
-
-        std::unique_lock<std::mutex> lock(_camera_mutex);
-        auto find_session = _camera_sessions.find(addr);
-        if (
-                find_session != _camera_sessions.end() &&
-                find_session->second->GetSessionId() == camera_session->GetSessionId()
-        ) {
-            _connection_manager.RemoveCamera(addr);
-            find_session->second->TryClose(false);
-            find_session->second.reset();
-            _camera_sessions.erase(find_session);
-        } else if (find_session == _camera_sessions.end()) {
-            _connection_manager.RemoveCamera(addr);
-        }
-
+    void ServerStreamer::DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> &&camera_session) {
+        _connection_manager.RemoveReaderSession(std::move(camera_session));
     }
 
     unsigned long ServerStreamer::CreateHeadsetServerConnection(
-        std::shared_ptr<infrastructure::WritableTcpSession> headset_session
+        std::shared_ptr<infrastructure::WritableTcpSession> &&headset_session
     ) {
-
-        const auto addr = headset_session->GetAddr();
-
-        {
-            std::unique_lock<std::mutex> lock(_headset_mutex);
-            auto find_session = _headset_sessions.find(headset_session->GetAddr());
-            if (find_session != _headset_sessions.end()) {
-                find_session->second->TryClose(true);
-                find_session->second.reset();
-            }
-            _headset_sessions[addr] = headset_session;
-        }
-
-        bool did_change_mapping = _connection_manager.TryReplaceSession(
-                headset_session->GetAddr(), headset_session
-        );
-
-        if (!did_change_mapping) {
-            std::unique_lock<std::mutex> lock(_camera_mutex);
-            if (_camera_sessions.begin() != _camera_sessions.end()) {
-                _connection_manager.AddMapping(_camera_sessions.begin()->first, addr, headset_session);
-            }
-        }
-
-        return ++_last_session_number;
+        return _connection_manager.AddWriterSession(std::move(headset_session));
     }
 
     void ServerStreamer::DestroyHeadsetServerConnection(
-        std::shared_ptr<infrastructure::WritableTcpSession> headset_session
+        std::shared_ptr<infrastructure::WritableTcpSession> &&headset_session
     ) {
-
-        const auto addr = headset_session->GetAddr();
-
-        std::unique_lock<std::mutex> lock(_headset_mutex);
-        auto find_session = _headset_sessions.find(addr);
-        if (
-                find_session != _headset_sessions.end() &&
-                find_session->second->GetSessionId() == headset_session->GetSessionId()
-        ) {
-            _connection_manager.RemoveHeadset(headset_session->GetAddr());
-            find_session->second->TryClose(false);
-            find_session->second.reset();
-            _headset_sessions.erase(find_session);
-        } else if (find_session == _headset_sessions.end()) {
-            _connection_manager.RemoveHeadset(addr);
-        }
-
+        return _connection_manager.RemoveWriterSession(std::move(headset_session));
     }
 
     void ServerStreamer::Stop() {
@@ -264,23 +177,6 @@ namespace service {
         /* cleanup connections */
         _connection_manager.Clear();
 
-        /* cleanup sessions */
-        {
-            std::unique_lock<std::mutex> lock(_camera_mutex);
-            for (auto &[_, camera] : _camera_sessions) {
-                camera->TryClose(false);
-                camera.reset();
-            }
-            _camera_sessions.clear();
-        }
-        {
-            std::unique_lock<std::mutex> lock(_headset_mutex);
-            for (auto &[_, headset] : _headset_sessions) {
-                headset->TryClose(false);
-                headset.reset();
-            }
-            _headset_sessions.clear();
-        }
         /* teardown thread */
         if (_work_thread) {
             if (_work_thread->joinable()) {

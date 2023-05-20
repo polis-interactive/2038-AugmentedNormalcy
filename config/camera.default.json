@@ -5,6 +5,7 @@
   "imageHeight": 864,
   "cameraType": "LIBCAMERA",
   "cameraLensPosition": 0.5,
+  "cameraFramesPerSecond": 30.0,
   "encoderBuffersDownstream": 5,
   "encoderType": "SW"
 }

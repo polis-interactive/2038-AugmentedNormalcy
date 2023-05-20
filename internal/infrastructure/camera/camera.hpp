@@ -19,7 +19,7 @@ namespace infrastructure {
         [[nodiscard]] virtual CameraType get_camera_type() const = 0;
         [[nodiscard]] virtual std::pair<int, int> get_camera_width_height() const = 0;
         // as opposed to 30
-        [[nodiscard]] virtual int get_fps() const = 0;
+        [[nodiscard]] virtual float get_fps() const = 0;
         [[nodiscard]] virtual int get_camera_buffer_count() const = 0;
         [[nodiscard]] virtual float get_lens_position() const = 0;
     };

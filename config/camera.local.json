@@ -5,6 +5,7 @@
   "imageHeight": 8,
   "cameraType": "STRING",
   "cameraLensPosition": 0.5,
+  "cameraFramesPerSecond": 0.25,
   "encoderBuffersDownstream": 5,
   "encoderType": "NONE"
 }
