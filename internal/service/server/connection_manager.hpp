@@ -32,7 +32,8 @@ namespace service {
         void PostMessage(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer);
         // connection management
         [[nodiscard]] std::pair<int, int> GetConnectionCounts();
-        [[nodiscard]] bool PointReaderAtWriters(const tcp_addr &addr);
+        bool RotateWriterConnection(const tcp_addr &writer_addr);
+        [[nodiscard]] bool PointReaderAtWriters(const tcp_addr &reader_addr);
         void Clear();
     private:
         std::atomic<unsigned long> _last_session_number = { 0 };

@@ -5,6 +5,9 @@
 #include "connection_manager.hpp"
 
 namespace service {
+    /*
+     * Connection registration
+     */
     unsigned long ConnectionManager::AddReaderSession(Reader &&session) {
         Reader reader_to_remove = nullptr;
         bool is_first_reader = false;
@@ -66,7 +69,7 @@ namespace service {
              */
             _writer_connections.clear();
             _reader_connections.clear();
-            _reader_sessions.erase(dead_reader);
+            _reader_sessions.clear();
             return;
         }
         auto dead_reader_connections = _reader_connections.find(dead_addr);
@@ -170,7 +173,192 @@ namespace service {
     }
 
     void ConnectionManager::RemoveWriterSession(Writer &&session) {
-
+        std::unique_lock lk1(_writer_mutex, std::defer_lock);
+        std::unique_lock lk2(_connection_mutex, std::defer_lock);
+        std::lock(lk1, lk2);
+        const auto dead_addr = session->GetAddr();
+        const auto dead_id = session->GetSessionId();
+        auto dead_writer = _writer_sessions.find(dead_addr);
+        if (dead_writer == _writer_sessions.end() || dead_writer->second->GetSessionId() != dead_id) {
+            /*
+             * We've already been removed
+             */
+            return;
+        }
+        if (_writer_sessions.size() == 1) {
+            /*
+             * We are the only writer; clean up
+             */
+            _writer_connections.clear();
+            for (auto &[reader_addr, connections]: _reader_connections) {
+                connections.clear();
+            }
+            _writer_sessions.clear();
+            return;
+        }
+        auto dead_writer_connection = _writer_connections.find(dead_addr);
+        if (dead_writer_connection == _writer_connections.end()) {
+            // this should never get here
+            _writer_sessions.erase(dead_writer);
+            return;
+        }
+        auto remove_reader_connection = _reader_connections.find(dead_writer_connection->second);
+        if (remove_reader_connection == _reader_connections.end() || remove_reader_connection->second.empty()) {
+            // this should never get here
+            _writer_connections.erase(dead_writer_connection);
+            _writer_sessions.erase(dead_writer);
+            return;
+        }
+        auto &connections = remove_reader_connection->second;
+        auto remove = std::find(connections.begin(), connections.end(), session);
+        if (remove == connections.end()) {
+            // this should never get here
+            _writer_connections.erase(dead_writer_connection);
+            _writer_sessions.erase(dead_writer);
+            return;
+        }
+        connections.erase(remove);
+        _writer_connections.erase(dead_writer_connection);
+        _writer_sessions.erase(dead_writer);
     }
+
+    /*
+     * Connection
+     */
+    void ConnectionManager::PostMessage(const tcp_addr &addr, std::shared_ptr<ResizableBuffer> &&buffer) {
+        std::shared_lock lk(_connection_mutex);
+        auto connections = _reader_connections.find(addr);
+        if (connections == _reader_connections.end()) {
+            // should never get here
+            return;
+        }
+        for (auto &writer : connections->second) {
+            auto b_copy(buffer);
+            writer->Write(std::move(b_copy));
+        }
+        buffer.reset();
+    }
+
+    /*
+     * Connection Management
+     */
+    std::pair<int, int> ConnectionManager::GetConnectionCounts() {
+        std::shared_lock lk1(_writer_mutex, std::defer_lock);
+        std::shared_lock lk2(_reader_mutex, std::defer_lock);
+        std::lock(lk1, lk2);
+        return { _reader_connections.size(), _writer_connections.size() };
+    }
+
+    bool ConnectionManager::RotateWriterConnection(const tcp_addr &addr) {
+        std::shared_lock lk1(_reader_mutex, std::defer_lock);
+        std::unique_lock lk2(_connection_mutex, std::defer_lock);
+        std::lock(lk1, lk2);
+        auto writer_connection = _writer_connections.find(addr);
+        if (writer_connection == _writer_connections.end()) {
+            // couldn't find the writer
+            return false;
+        }
+        const auto &current_reader_addr = writer_connection->second;
+        // get next reader if possible
+        auto reader = _reader_sessions.find(current_reader_addr);
+        if (reader == _reader_sessions.end()) {
+            // couldn't find the reader
+            return false;
+        }
+        if (_reader_sessions.size() == 1) {
+            // we have the only reader hooked up; nothing to do
+            return true;
+        }
+        auto current_reader_connection = _reader_connections.find(current_reader_addr);
+        if (current_reader_connection == _reader_connections.end() || current_reader_connection->second.empty()) {
+            // we have no recording of the connection; bail
+            return false;
+        }
+        auto &current_connection = current_reader_connection->second;
+        auto next_reader = std::next(reader);
+        if (next_reader == _reader_sessions.end()) {
+            // we have the last reader; rotate around the pool
+            next_reader = _reader_sessions.begin();
+        }
+        const auto &next_reader_addr = next_reader->first;
+        auto next_reader_connection = _reader_connections.find(next_reader_addr);
+        if (next_reader_connection == _reader_connections.end()) {
+            // nowhere to put the new connection; bail
+            return false;
+        }
+        auto &next_connection = next_reader_connection->second;
+        // I really wish I could just compare by addr here
+        auto move_it = std::find_if(
+            current_connection.begin(), current_connection.end(), [&addr](const Writer &writer) {
+                return writer->GetAddr() == addr;
+            }
+        );
+        if (move_it == current_connection.end()) {
+            // couldn't find the connection; bail
+            return false;
+        }
+        next_connection.push_back(std::move(*move_it));
+        current_connection.erase(move_it);
+        writer_connection->second = next_reader_addr;
+        return true;
+    }
+
+    bool ConnectionManager::PointReaderAtWriters(const tcp_addr &addr) {
+        std::shared_lock lk1(_reader_mutex, std::defer_lock);
+        std::unique_lock lk2(_connection_mutex, std::defer_lock);
+        std::lock(lk1, lk2);
+        if (_reader_sessions.find(addr) == _reader_sessions.end()) {
+            return false;
+        }
+        auto reader_connection = _reader_connections.find(addr);
+        if (reader_connection == _reader_connections.end()) {
+            // shouldn't get here
+            return false;
+        }
+        auto &move_to_connection = reader_connection->second;
+
+        for (auto &writer_connection : _writer_connections) {
+            writer_connection.second = addr;
+        }
+
+        for (auto &[r_addr, connections]: _reader_connections) {
+            if (r_addr == addr || connections.empty()) {
+                continue;
+            }
+            std::move(connections.begin(), connections.end(), std::back_inserter(move_to_connection));
+            connections.erase(connections.begin(), connections.end());
+        }
+
+        return true;
+    }
+
+    void ConnectionManager::Clear() {
+        std::vector<Reader> removed_readers;
+        std::vector<Writer> removed_writers;
+        {
+            std::unique_lock lk1(_reader_mutex, std::defer_lock);
+            std::unique_lock lk2(_writer_mutex, std::defer_lock);
+            std::unique_lock lk3(_connection_mutex, std::defer_lock);
+            _reader_connections.clear();
+            _writer_connections.clear();
+            removed_readers.reserve(_reader_sessions.size());
+            for (auto &[_, reader]: _reader_sessions) {
+                removed_readers.push_back(std::move(reader));
+            }
+            _reader_sessions.clear();
+            removed_writers.reserve(_writer_sessions.size());
+            for (auto &[_, writer]: _writer_sessions) {
+                removed_writers.push_back(std::move(writer));
+            }
+            _writer_sessions.clear();
+        }
+        for (auto &reader: removed_readers) {
+            reader->TryClose(false);
+        }
+        for (auto &writer: removed_writers) {
+            writer->TryClose(false);
+        }
+    }
+
 
 }
