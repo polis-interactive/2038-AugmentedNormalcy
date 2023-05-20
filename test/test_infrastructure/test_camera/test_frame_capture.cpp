@@ -27,8 +27,8 @@ struct LibcameraTestConfig : infrastructure::CameraConfig {
     [[nodiscard]] infrastructure::CameraType get_camera_type() const final {
         return infrastructure::CameraType::LIBCAMERA;
     };
-    [[nodiscard]] int get_fps() const final {
-        return 30;
+    [[nodiscard]] float get_fps() const final {
+        return 30.0f;
     }
     [[nodiscard]] int get_camera_buffer_count() const final {
         return 4;

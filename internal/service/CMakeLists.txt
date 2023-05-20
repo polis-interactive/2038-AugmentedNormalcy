@@ -11,7 +11,7 @@ if (FEATURE_CAMERA)
 endif()
 
 if (NOT AN_PLATFORM_TYPE STREQUAL RPI)
-    set(SOURCES ${SOURCES} server_streamer.cpp)
+    set(SOURCES ${SOURCES} server/server_streamer.cpp server/connection_manager.cpp)
     set(TARGET_LIBS ${TARGET_LIBS})
 endif()
 

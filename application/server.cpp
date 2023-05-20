@@ -5,7 +5,7 @@
 #include "config.hpp"
 #include "runtime.hpp"
 
-#include "service/server_streamer.hpp"
+#include "service/server/server_streamer.hpp"
 
 #include <chrono>
 using namespace std::literals;
@@ -13,6 +13,7 @@ using namespace std::literals;
 static service::ClientAssignmentStrategy to_client_assignment_strategy(const std::string& type) {
     if (type == "CAMERA_THEN_HEADSET") return service::ClientAssignmentStrategy::CAMERA_THEN_HEADSET;
     if (type == "IP_BOUNDS") return service::ClientAssignmentStrategy::IP_BOUNDS;
+    if (type == "ENDPOINT_PORT") return service::ClientAssignmentStrategy::ENDPOINT_PORT;
     throw std::runtime_error("Unknown ClientAssignmentStrategy: " + type);
 }
 
@@ -33,6 +34,7 @@ int main(int argc, char* argv[]) {
     const service::ServerStreamerConfig conf(
         config.value("tcpPoolSize", 6),
         config.value("serverPort", 6969),
+        config.value("serverTimeoutOnRead", 3),
         config.value("cameraBuffersCount", 4),
         config.value("cameraBufferSize", 1536 * 864 * 3 * 0.5),
         to_client_assignment_strategy(config.value("serverClientAssignmentStrategy", "IP_BOUNDS")),

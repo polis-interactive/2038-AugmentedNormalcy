@@ -7,11 +7,11 @@
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
-#include "service/server_streamer.hpp"
+#include "service/server/server_streamer.hpp"
 
 TEST_CASE("SERVICE_SERVER-ENCODER_Setup-and-teardown") {
     service::ServerStreamerConfig conf(
-        2, 6969, 4, 5, service::ClientAssignmentStrategy::CAMERA_THEN_HEADSET,
+        2, 6969, 3, 4, 5, service::ClientAssignmentStrategy::CAMERA_THEN_HEADSET,
         service::CameraSwitchingStrategy::NONE
     );
 

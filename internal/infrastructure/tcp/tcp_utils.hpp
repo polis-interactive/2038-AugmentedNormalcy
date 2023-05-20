@@ -174,9 +174,9 @@ namespace infrastructure {
             }
         }
     private:
-        std::shared_ptr<TcpReadBuffer> _leaky_buffer;
-        std::deque<TcpReadBuffer *> _buffers;
         std::mutex _buffer_mutex;
+        std::deque<TcpReadBuffer *> _buffers;
+        std::shared_ptr<TcpReadBuffer> _leaky_buffer;
     };
 }
 

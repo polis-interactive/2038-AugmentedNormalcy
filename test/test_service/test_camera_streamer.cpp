@@ -21,7 +21,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 TEST_CASE("SERVICE_CAMERA-STREAMER_Setup-and-teardown") {
     service::CameraStreamerConfig conf(
-        "127.0.0.1", 6969,
+        "127.0.0.1", 6969, false,
         infrastructure::CameraType::LIBCAMERA,
 #if _AN_PLATFORM_ == PLATFORM_RPI
         { 1536, 864 },
@@ -29,6 +29,11 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Setup-and-teardown") {
         {848, 480},
 #endif
         0.5,
+#if _AN_PLATFORM_ == PLATFORM_RPI
+        30.0f,
+#elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
+        10.0f,
+#endif
         infrastructure::EncoderType::SW,
         5
     );
@@ -54,7 +59,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Setup-and-teardown") {
 
 TEST_CASE("SERVICE_CAMERA-STREAMER_Holding-pattern") {
     service::CameraStreamerConfig conf(
-            "127.0.0.1", 6969,
+            "127.0.0.1", 6969, false,
             infrastructure::CameraType::LIBCAMERA,
 #if _AN_PLATFORM_ == PLATFORM_RPI
             { 1536, 864 },
@@ -62,6 +67,11 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Holding-pattern") {
             {848, 480},
 #endif
             0.5,
+#if _AN_PLATFORM_ == PLATFORM_RPI
+            30.0f,
+#elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
+            10.0f,
+#endif
             infrastructure::EncoderType::SW,
             5
     );
@@ -78,7 +88,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Holding-pattern") {
 
 TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
     service::CameraStreamerConfig streamer_conf(
-            "127.0.0.1", 6969,
+            "127.0.0.1", 6969, false,
             infrastructure::CameraType::LIBCAMERA,
 #if _AN_PLATFORM_ == PLATFORM_RPI
             { 1536, 864 },
@@ -86,7 +96,13 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
             {848, 480},
 #endif
             0.5,
+#if _AN_PLATFORM_ == PLATFORM_RPI
+            30.0f,
             infrastructure::EncoderType::SW,
+#elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
+            10.0f,
+            infrastructure::EncoderType::NONE,
+#endif
             5
     );
 
@@ -117,6 +133,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
         is_done = true;
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+        std::cout << ptr->GetSize() << std::endl;
         test_file_out.write((char *)ptr->GetMemory(), ptr->GetSize());
         test_file_out.flush();
         test_file_out.close();
@@ -143,10 +160,15 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
         in_time = Clock::now();
         std::this_thread::sleep_for(1s);
         streamer->Stop();
+        std::cout << "What" << std::endl;
         streamer->Unset();
+        std::cout << "The" << std::endl;
     }
+    std::cout << "balls" << std::endl;
     srv->Stop();
+    std::cout << "monkey" << std::endl;
     ctx->Stop();
+    std::cout << "stuff" << std::endl;
 
     REQUIRE(std::filesystem::exists(out_frame));
 
@@ -157,7 +179,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
 
 TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
     service::CameraStreamerConfig streamer_conf(
-        "127.0.0.1", 6969, infrastructure::CameraType::LIBCAMERA, { 1536, 864 }, 0.5,
+        "127.0.0.1", 6969, false, infrastructure::CameraType::LIBCAMERA, { 1536, 864 }, 0.5, 30.0f,
         infrastructure::EncoderType::SW, 5
     );
 

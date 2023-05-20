@@ -21,6 +21,8 @@ namespace service {
     {
         HeadsetStreamerConfig(
                 std::string tcp_server_host, int tcp_server_port,
+                int tcp_client_timeout_on_read,
+                bool tcp_client_use_fixed_port,
                 std::pair<int, int> image_width_height,
                 int tcp_read_buffers, int decoder_buffers_downstream,
                 infrastructure::DecoderType decoder_type,
@@ -28,6 +30,8 @@ namespace service {
         ):
             _tcp_server_host(std::move(tcp_server_host)),
             _tcp_server_port(tcp_server_port),
+            _tcp_client_timeout_on_read(tcp_client_timeout_on_read),
+            _tcp_client_use_fixed_port(tcp_client_use_fixed_port),
             _tcp_read_buffers(tcp_read_buffers),
             _decoder_type(decoder_type),
             _decoder_buffers_downstream(decoder_buffers_downstream),
@@ -46,6 +50,9 @@ namespace service {
         [[nodiscard]] bool get_tcp_client_is_camera() const override {
             return false;
         }
+        [[nodiscard]] bool get_tcp_client_used_fixed_port() const override {
+            return _tcp_client_use_fixed_port;
+        }
         [[nodiscard]] std::pair<int, int> get_image_width_height() const override {
             return _image_width_height;
         };
@@ -62,7 +69,7 @@ namespace service {
             return _image_width_height;
         };
         [[nodiscard]] int get_tcp_client_timeout_on_read() const override {
-            return 1;
+            return _tcp_client_timeout_on_read;
         };
         [[nodiscard]] int get_tcp_client_read_buffer_count() const override {
             return _tcp_read_buffers;
@@ -74,6 +81,8 @@ namespace service {
     private:
         const std::string _tcp_server_host;
         const int _tcp_server_port;
+        const int _tcp_client_timeout_on_read;
+        const bool _tcp_client_use_fixed_port;
         const int _tcp_read_buffers;
         infrastructure::DecoderType _decoder_type;
         const int _decoder_buffers_downstream;

@@ -23,10 +23,10 @@ namespace infrastructure {
         [[nodiscard]] virtual std::string get_tcp_server_host() const = 0;
         [[nodiscard]] virtual int get_tcp_server_port() const = 0;
         [[nodiscard]] virtual bool get_tcp_client_is_camera() const = 0;
+        [[nodiscard]] virtual bool get_tcp_client_used_fixed_port() const = 0;
         [[nodiscard]] virtual int get_tcp_client_timeout_on_read() const = 0;
         [[nodiscard]] virtual int get_tcp_client_read_buffer_count() const = 0;
         [[nodiscard]] virtual int get_tcp_client_read_buffer_size() const = 0;
-
     };
 
 
@@ -80,6 +80,7 @@ namespace infrastructure {
 
         boost::asio::deadline_timer _read_timer;
         const int _read_timeout;
+        const bool _use_fixed_port;
 
         PacketHeader _header;
 

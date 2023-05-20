@@ -48,11 +48,11 @@ public:
     {}
 
     /* camera server */
-    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(tcp_addr addr) override {
+    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(const tcp::endpoint &endpoint) override {
         return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
     }
     [[nodiscard]]  unsigned long CreateCameraServerConnection(
-        std::shared_ptr<infrastructure::TcpSession> session
+        std::shared_ptr<infrastructure::TcpSession> &&session
     ) override {
         client_is_connected = true;
         return 0;
@@ -61,7 +61,7 @@ public:
         _on_receive(std::move(buffer));
     }
     ResizableBufferCallback _on_receive;
-    void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> session) override {
+    void DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> &&session) override {
         client_is_connected = false;
     }
     [[nodiscard]] bool ClientIsConnected() const {
@@ -70,10 +70,10 @@ public:
     std::atomic_bool client_is_connected = false;
 
     /* dummy for headset server */
-    unsigned long CreateHeadsetServerConnection(std::shared_ptr<infrastructure::WritableTcpSession> session) override {
+    unsigned long CreateHeadsetServerConnection(std::shared_ptr<infrastructure::WritableTcpSession> &&session) override {
         return 0;
     }
-    void DestroyHeadsetServerConnection(std::shared_ptr<infrastructure::WritableTcpSession> session) override {}
+    void DestroyHeadsetServerConnection(std::shared_ptr<infrastructure::WritableTcpSession> &&session) override {}
 };
 
 

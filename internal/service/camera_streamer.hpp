@@ -21,17 +21,21 @@ namespace service {
     {
         CameraStreamerConfig(
             std::string tcp_server_host, int tcp_server_port,
+            bool tcp_client_use_fixed_port,
             infrastructure::CameraType camera_type,
             std::pair<int, int> camera_width_height,
             float camera_lens_position,
+            float camera_frames_per_second,
             infrastructure::EncoderType encoder_type,
             int encoder_buffers_downstream
         ):
             _tcp_server_host(std::move(tcp_server_host)),
             _tcp_server_port(tcp_server_port),
+            _tcp_client_use_fixed_port(tcp_client_use_fixed_port),
             _camera_type(camera_type),
             _camera_width_height(std::move(camera_width_height)),
             _camera_lens_position(camera_lens_position),
+            _camera_frames_per_second(camera_frames_per_second),
             _encoder_type(encoder_type),
             _encoder_buffers_downstream(encoder_buffers_downstream)
         {}
@@ -47,6 +51,9 @@ namespace service {
         [[nodiscard]] bool get_tcp_client_is_camera() const override {
             return true;
         }
+        [[nodiscard]] bool get_tcp_client_used_fixed_port() const override {
+            return _tcp_client_use_fixed_port;
+        }
         [[nodiscard]] infrastructure::CameraType get_camera_type() const override {
             return _camera_type;
         };
@@ -56,8 +63,8 @@ namespace service {
         [[nodiscard]] float get_lens_position() const override {
             return _camera_lens_position;
         };
-        [[nodiscard]] int get_fps() const override {
-            return 30;
+        [[nodiscard]] float get_fps() const override {
+            return _camera_frames_per_second;
         };
         [[nodiscard]] int get_camera_buffer_count() const override {
             return 5;
@@ -84,9 +91,11 @@ namespace service {
     private:
         const std::string _tcp_server_host;
         const int _tcp_server_port;
+        const bool _tcp_client_use_fixed_port;
         const infrastructure::CameraType _camera_type;
         const std::pair<int, int> _camera_width_height;
         const float _camera_lens_position;
+        const float _camera_frames_per_second;
         const infrastructure::EncoderType _encoder_type;
         const int _encoder_buffers_downstream;
     };

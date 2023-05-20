@@ -14,6 +14,8 @@
 
 namespace net = boost::asio;
 
+typedef net::detail::socket_option::boolean<SOL_SOCKET, SO_REUSEPORT> reuse_port;
+
 namespace infrastructure {
 
 

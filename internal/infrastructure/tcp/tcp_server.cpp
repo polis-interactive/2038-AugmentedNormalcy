@@ -38,6 +38,12 @@ namespace infrastructure {
             failOut(ec, "set_option");
         }
 
+        _acceptor.set_option(reuse_port(true), ec);
+        if(ec)
+        {
+            failOut(ec, "set_option");
+        }
+
         // Bind to the server address
         _acceptor.bind(_endpoint, ec);
         if(ec)
@@ -88,8 +94,11 @@ namespace infrastructure {
                     socket.set_option(tcp::no_delay(true));
                     net::socket_base::keep_alive option(true);
                     socket.set_option(option);
-                    const auto addr = socket.remote_endpoint().address().to_v4();
-                    auto connection_type = _manager->GetConnectionType(addr);
+                    socket.set_option(reuse_port(true));
+                    socket.set_option(tcp::socket::reuse_address(true));
+                    const auto remote = socket.remote_endpoint();
+                    auto connection_type = _manager->GetConnectionType(remote);
+                    const auto addr = remote.address().to_v4();
                     if (connection_type == TcpConnectionType::CAMERA_CONNECTION) {
                         std::shared_ptr<TcpCameraSession>(
                             new TcpCameraSession(
@@ -127,7 +136,7 @@ namespace infrastructure {
     void TcpCameraSession::Run() {
         std::cout << "TcpCameraSession: creating connection" << std::endl;
         auto self(shared_from_this());
-        _session_id = _manager->CreateCameraServerConnection(self);
+        _session_id = _manager->CreateCameraServerConnection(std::move(self));
 
         std::cout << "TcpCameraSession: running read" << std::endl;
         net::dispatch(
@@ -149,15 +158,16 @@ namespace infrastructure {
     }
 
     void TcpCameraSession::readHeader(std::size_t last_bytes) {
-        // startTimer();
+        startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
                 net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
                 [this, self, last_bytes] (error_code ec, std::size_t bytes_written) mutable {
                     if (ec ==  boost::asio::error::operation_aborted) {
+                        std::cout << "TcpCameraSession: readHeader aborted" << std::endl;
                         return;
                     }
-                    // _read_timer.cancel();
+                    _read_timer.cancel();
                     auto total_bytes = last_bytes + bytes_written;
                     if (!ec) {
                         if (total_bytes == _header.Size() && _header.Ok()) {
@@ -187,16 +197,16 @@ namespace infrastructure {
             _receive_buffer = _receive_buffer_pool->GetReadBuffer();
         }
 
-        // startTimer();
+        startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
             boost::asio::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, self] (error_code ec, std::size_t bytes_written) mutable {
                 if (ec ==  boost::asio::error::operation_aborted) {
-                    std::cout << "aborted" << std::endl;
+                    std::cout << "TcpCameraSession: readBody aborted" << std::endl;
                     return;
                 }
-                // _read_timer.cancel();
+                _read_timer.cancel();
                 if (ec) {
                     std::cout << "TcpCameraSession: error reading body: " << ec << "; closing" << std::endl;
                     TryClose(true);
@@ -219,18 +229,26 @@ namespace infrastructure {
         );
     }
 
-    void TcpCameraSession::TryClose(bool is_self_close) {
+    void TcpCameraSession::TryClose(bool internal_close) {
+
+        // this might should be done async in a strand
         if (_socket.is_open()) {
             error_code ec;
             _socket.shutdown(tcp::socket::shutdown_both, ec);
+            _socket.cancel();
+            _socket.release();
         }
         if (_receive_buffer_pool) {
             _receive_buffer_pool.reset();
         }
-        if (is_self_close) {
+        if (internal_close) {
             auto self(shared_from_this());
-            _manager->DestroyCameraServerConnection(self);
+            _manager->DestroyCameraServerConnection(std::move(self));
         }
+    }
+
+    TcpCameraSession::~TcpCameraSession() {
+        std::cout << "TcpCameraSession: Deconstructed" << std::endl;
     }
 
     TcpHeadsetSession::TcpHeadsetSession(
@@ -246,7 +264,7 @@ namespace infrastructure {
 
     void TcpHeadsetSession::ConnectAndWait() {
         auto self(shared_from_this());
-        _session_id = _manager->CreateHeadsetServerConnection(self);
+        _session_id = _manager->CreateHeadsetServerConnection(std::move(self));
     }
 
     void TcpHeadsetSession::Write(std::shared_ptr<SizedBuffer> &&buffer) {
@@ -299,7 +317,7 @@ namespace infrastructure {
                 net::buffer((uint8_t *) buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
                 [this, self](error_code ec, std::size_t bytes_written) mutable {
                     if (ec) {
-                        std::cout << "TcpHeadsetSession: error writing body: " << ec << "; reconnecting" << std::endl;
+                        std::cout << "TcpHeadsetSession: error writing body: " << ec << "; disconnecting" << std::endl;
                         TryClose(true);
                         return;
                     } else if (bytes_written != _header.DataLength()) {
@@ -327,8 +345,9 @@ namespace infrastructure {
     }
 
 
-    void TcpHeadsetSession::TryClose(bool is_self_close) {
+    void TcpHeadsetSession::TryClose(const bool internal_close) {
         _is_live = false;
+        // this might should be done async in a strand
         if (_socket.is_open()) {
             error_code ec;
             _socket.shutdown(tcp::socket::shutdown_both, ec);
@@ -339,9 +358,13 @@ namespace infrastructure {
                 _message_queue.pop();
             }
         }
-        if (is_self_close) {
+        if (internal_close) {
             auto self(shared_from_this());
-            _manager->DestroyHeadsetServerConnection(self);
+            _manager->DestroyHeadsetServerConnection(std::move(self));
         }
+    }
+
+    TcpHeadsetSession::~TcpHeadsetSession() {
+        std::cout << "TcpHeadsetSession: Deconstructed" << std::endl;
     }
 }
