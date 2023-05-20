@@ -4,5 +4,5 @@
   "cameraBuffersCount": 4,
   "cameraBufferSize": 1990656,
   "serverClientAssignmentStrategy": "IP_BOUNDS",
-  "serverCameraSwitchingStrategy": "AUTOMATIC_TIMER"
+  "serverCameraSwitchingStrategy": "MANUAL_ENTRY"
 }

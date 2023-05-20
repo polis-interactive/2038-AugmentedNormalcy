@@ -7,7 +7,7 @@
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
-#include "internal/service/server/server_streamer.hpp"
+#include "service/server/server_streamer.hpp"
 
 TEST_CASE("SERVICE_SERVER-ENCODER_Setup-and-teardown") {
     service::ServerStreamerConfig conf(
