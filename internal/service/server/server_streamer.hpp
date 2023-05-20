@@ -107,6 +107,7 @@ namespace service {
         ) override;
 
     private:
+        void assignStrategies();
         void initialize();
 
         [[nodiscard]] infrastructure::TcpConnectionType ConnectionAssignCameraThenHeadset(const tcp_addr &addr);
@@ -123,7 +124,7 @@ namespace service {
         void CameraSwitchingManualEntry();
         void CameraSwitchingAutomaticTimer();
         void CameraSwitchingCameraControlled();
-        std::function<void(void)> _camera_switching_strategy;
+        std::function<void(void)> _camera_switching_strategy = nullptr;
         std::unique_ptr<std::thread> _work_thread;
         std::atomic<bool> _work_stop = { true };
     };

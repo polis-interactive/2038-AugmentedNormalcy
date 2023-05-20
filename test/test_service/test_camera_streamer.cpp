@@ -98,10 +98,11 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
             0.5,
 #if _AN_PLATFORM_ == PLATFORM_RPI
             30.0f,
+            infrastructure::EncoderType::SW,
 #elif _AN_PLATFORM_ == PLATFORM_BROOSE_LINUX_LAPTOP
             10.0f,
+            infrastructure::EncoderType::NONE,
 #endif
-            infrastructure::EncoderType::SW,
             5
     );
 
@@ -159,10 +160,15 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
         in_time = Clock::now();
         std::this_thread::sleep_for(1s);
         streamer->Stop();
+        std::cout << "What" << std::endl;
         streamer->Unset();
+        std::cout << "The" << std::endl;
     }
+    std::cout << "balls" << std::endl;
     srv->Stop();
+    std::cout << "monkey" << std::endl;
     ctx->Stop();
+    std::cout << "stuff" << std::endl;
 
     REQUIRE(std::filesystem::exists(out_frame));
 

@@ -19,14 +19,18 @@ namespace service {
     }
     ServerStreamer::ServerStreamer(ServerStreamerConfig config):
         _is_started(false), _conf(std::move(config))
-    {
+    {}
+
+    void ServerStreamer::assignStrategies() {
         auto assign_strategy = _conf.get_server_client_assignment_strategy();
         if (assign_strategy == ClientAssignmentStrategy::CAMERA_THEN_HEADSET) {
-            _connection_assignment_strategy = [this](const tcp_addr &addr) {
+            auto self(shared_from_this());
+            _connection_assignment_strategy = [this, self](const tcp_addr &addr) {
                 return ConnectionAssignCameraThenHeadset(addr);
             };
         } else if (assign_strategy == ClientAssignmentStrategy::IP_BOUNDS) {
-            _connection_assignment_strategy = [this](const tcp_addr &addr) {
+            auto self(shared_from_this());
+            _connection_assignment_strategy = [this, self](const tcp_addr &addr) {
                 return ConnectionAssignIpBounds(addr);
             };
         } else {
@@ -49,6 +53,7 @@ namespace service {
     }
 
     void ServerStreamer::initialize() {
+        assignStrategies();
         _tcp_context = infrastructure::TcpContext::Create(_conf);
         auto self(shared_from_this());
         _tcp_server = infrastructure::TcpServer::Create(_conf, _tcp_context->GetContext(), self);
@@ -60,7 +65,7 @@ namespace service {
         }
         /* startup worker thread */
         _work_stop = false;
-        if (_camera_switching_strategy) {
+        if (_camera_switching_strategy != nullptr) {
             _work_thread = std::make_unique<std::thread>(_camera_switching_strategy);
         }
         /* startup server */
