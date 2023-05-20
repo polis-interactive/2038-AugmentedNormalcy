@@ -6,6 +6,9 @@
 
 #include <functional>
 
+typedef std::chrono::high_resolution_clock Clock;
+using namespace std::literals;
+
 static tcp_addr ip_bound(const std::string& ip_string) {
     return tcp_addr::from_string(ip_string);
 }
@@ -47,7 +50,9 @@ namespace service {
                 CameraSwitchingManualEntry();
             };
         } else if (switch_strategy == CameraSwitchingStrategy::AUTOMATIC_TIMER) {
-            throw std::runtime_error("Switch strategy automatic_timer is not yet implemented");
+            _camera_switching_strategy = [this, self]() mutable {
+                CameraSwitchingAutomaticTimer();
+            };
         } else if (switch_strategy == CameraSwitchingStrategy::HEADSET_CONTROLLED) {
             throw std::runtime_error("Switch strategy headset_controlled is not yet implemented");
         } else if (switch_strategy != CameraSwitchingStrategy::NONE) {
@@ -157,10 +162,19 @@ namespace service {
     }
 
     void ServerStreamer::CameraSwitchingAutomaticTimer() {
-        // todo: implement
+        const auto automatic_timeout = _conf.get_server_camera_switching_automatic_timeout();
+        auto last_timer = Clock::now();
+        while(!_work_stop) {
+            const auto duration = std::chrono::duration_cast<std::chrono::seconds>(Clock::now() - last_timer);
+            if (duration.count() < automatic_timeout) {
+                std::this_thread::sleep_for(1s);
+                continue;
+            }
+            _connection_manager.RotateAllConnections();
+        }
     }
 
-    void ServerStreamer::CameraSwitchingCameraControlled() {
+    void ServerStreamer::CameraSwitchingHeadsetControlled() {
         // todo: implement
     }
 

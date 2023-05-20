@@ -33,6 +33,7 @@ namespace service {
         // connection management
         [[nodiscard]] std::pair<int, int> GetConnectionCounts();
         bool RotateWriterConnection(const tcp_addr &writer_addr);
+        bool RotateAllConnections();
         [[nodiscard]] bool PointReaderAtWriters(const tcp_addr &reader_addr);
         void Clear();
     private:

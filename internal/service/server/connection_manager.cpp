@@ -303,6 +303,48 @@ namespace service {
         return true;
     }
 
+    bool ConnectionManager::RotateAllConnections() {
+        std::shared_lock lk1(_reader_mutex, std::defer_lock);
+        std::unique_lock lk2(_connection_mutex, std::defer_lock);
+        std::lock(lk1, lk2);
+        if (_writer_connections.empty()) {
+            std::cout << "ConnectionManager::RotateAllConnections - no connections to rotate" << std::endl;
+            return false;
+        } else if (_reader_sessions.size() <= 1) {
+            std::cout << "ConnectionManager::RotateAllConnections - 1 or less readers; can't rotate" << std::endl;
+            return false;
+        }
+        // assume they are all in sync, and the first connection we find is correct
+        const auto old_addr = _writer_connections.begin()->second;
+        auto old_reader = _reader_sessions.find(old_addr);
+        if (old_reader == _reader_sessions.end()) {
+            std::cout << "ConnectionManager::RotateAllConnections - couldn't find old reader; can't rotate" << std::endl;
+            return false;
+        }
+        auto new_reader = std::next(old_reader);
+        if (new_reader == _reader_sessions.end()) {
+            new_reader = _reader_sessions.begin();
+        }
+        const auto &new_addr = new_reader->first;
+        auto new_reader_connections = _reader_connections.find(new_addr);
+        if (new_reader_connections == _reader_connections.end()) {
+            std::cout << "ConnectionManager::RotateAllConnections - couldn't find new reader; can't rotate" << std::endl;
+            return false;
+        }
+        auto &new_connections = new_reader_connections->second;
+        for (auto &[reader_addr, connections]: _reader_connections) {
+            if (new_addr == reader_addr || connections.empty()) {
+                continue;
+            }
+            std::move(connections.begin(), connections.end(), std::back_inserter(new_connections));
+            connections.erase(connections.begin(), connections.end());
+        }
+        for (auto &writer_connection : _writer_connections) {
+            writer_connection.second = new_addr;
+        }
+        return true;
+    }
+
     bool ConnectionManager::PointReaderAtWriters(const tcp_addr &addr) {
         std::shared_lock lk1(_reader_mutex, std::defer_lock);
         std::unique_lock lk2(_connection_mutex, std::defer_lock);

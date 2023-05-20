@@ -32,7 +32,8 @@ namespace service {
         ServerStreamerConfig(
             int tcp_pool_size, int tcp_server_port, int tcp_server_timeout_on_read,
             int buffer_count, int buffer_size,
-            ClientAssignmentStrategy assign_strategy, CameraSwitchingStrategy switch_strategy
+            ClientAssignmentStrategy assign_strategy, CameraSwitchingStrategy switch_strategy,
+            int switch_automatic_timeout
         ):
                 _tcp_pool_size(tcp_pool_size),
                 _tcp_server_port(tcp_server_port),
@@ -40,7 +41,8 @@ namespace service {
                 _buffer_count(buffer_count),
                 _buffer_size(buffer_size),
                 _assign_strategy(assign_strategy),
-                _switch_strategy(switch_strategy)
+                _switch_strategy(switch_strategy),
+                _switch_automatic_timeout(switch_automatic_timeout)
         {}
 
         [[nodiscard]] int get_tcp_pool_size() const override {
@@ -67,6 +69,9 @@ namespace service {
         [[nodiscard]] CameraSwitchingStrategy get_server_camera_switching_strategy() const {
             return _switch_strategy;
         }
+        [[nodiscard]] int get_server_camera_switching_automatic_timeout() const {
+            return _switch_automatic_timeout;
+        }
     private:
         const int _tcp_pool_size;
         const int _tcp_server_port;
@@ -75,6 +80,7 @@ namespace service {
         const int _buffer_size;
         const ClientAssignmentStrategy _assign_strategy;
         const CameraSwitchingStrategy _switch_strategy;
+        const int _switch_automatic_timeout;
     };
 
 
@@ -128,7 +134,7 @@ namespace service {
 
         void CameraSwitchingManualEntry();
         void CameraSwitchingAutomaticTimer();
-        void CameraSwitchingCameraControlled();
+        void CameraSwitchingHeadsetControlled();
         std::function<void(void)> _camera_switching_strategy = nullptr;
         std::unique_ptr<std::thread> _work_thread;
         std::atomic<bool> _work_stop = { true };
