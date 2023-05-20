@@ -132,6 +132,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
         is_done = true;
         out_time = Clock::now();
         std::ofstream test_file_out(out_frame, std::ios::out | std::ios::binary);
+        std::cout << ptr->GetSize() << std::endl;
         test_file_out.write((char *)ptr->GetMemory(), ptr->GetSize());
         test_file_out.flush();
         test_file_out.close();
