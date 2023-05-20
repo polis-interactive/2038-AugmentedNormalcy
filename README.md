@@ -76,3 +76,10 @@ $ sudo cp /home/pi/build/2038-AugmentedNormalcy/system/cron-reboot /etc/cron.d/r
 ```
 
 After, sudo reboot and make sure it works!
+
+## Packer
+
+```
+$ sudo -E $(which packer) build camera.pkr.hcl
+$ sudo -E $(which packer) build headset.pkr.hcl
+```
