@@ -158,7 +158,6 @@ namespace infrastructure {
 
     void TcpCameraSession::readHeader(std::size_t last_bytes) {
 
-        std::cout << "Reading header" << std::endl;
         // startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
@@ -193,7 +192,6 @@ namespace infrastructure {
     }
 
     void TcpCameraSession::readBody() {
-        std::cout << "Reading body" << std::endl;
         if (_receive_buffer == nullptr) {
             _receive_buffer = _receive_buffer_pool->GetReadBuffer();
         }
@@ -286,7 +284,6 @@ namespace infrastructure {
 
     void TcpHeadsetSession::writeHeader(std::size_t last_bytes) {
         auto self(shared_from_this());
-        std::cout << "Writing header" << std::endl;
         _socket.async_send(
             net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
             [this, self, last_bytes](error_code ec, std::size_t bytes_written) mutable {
@@ -315,7 +312,6 @@ namespace infrastructure {
     void TcpHeadsetSession::writeBody() {
         auto &buffer = _message_queue.front();
         auto self(shared_from_this());
-        std::cout << "Writing body" << std::endl;
         _socket.async_send(
                 net::buffer((uint8_t *) buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
                 [this, self](error_code ec, std::size_t bytes_written) mutable {
