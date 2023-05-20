@@ -96,8 +96,9 @@ namespace infrastructure {
                     socket.set_option(option);
                     socket.set_option(reuse_port(true));
                     socket.set_option(tcp::socket::reuse_address(true));
-                    const auto addr = socket.remote_endpoint().address().to_v4();
-                    auto connection_type = _manager->GetConnectionType(addr);
+                    const auto remote = socket.remote_endpoint();
+                    auto connection_type = _manager->GetConnectionType(remote);
+                    const auto addr = remote.address().to_v4();
                     if (connection_type == TcpConnectionType::CAMERA_CONNECTION) {
                         std::shared_ptr<TcpCameraSession>(
                             new TcpCameraSession(
@@ -157,16 +158,16 @@ namespace infrastructure {
     }
 
     void TcpCameraSession::readHeader(std::size_t last_bytes) {
-
-        // startTimer();
+        startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
                 net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
                 [this, self, last_bytes] (error_code ec, std::size_t bytes_written) mutable {
                     if (ec ==  boost::asio::error::operation_aborted) {
+                        std::cout << "TcpCameraSession: readHeader aborted" << std::endl;
                         return;
                     }
-                    // _read_timer.cancel();
+                    _read_timer.cancel();
                     auto total_bytes = last_bytes + bytes_written;
                     if (!ec) {
                         if (total_bytes == _header.Size() && _header.Ok()) {
@@ -196,16 +197,16 @@ namespace infrastructure {
             _receive_buffer = _receive_buffer_pool->GetReadBuffer();
         }
 
-        // startTimer();
+        startTimer();
         auto self(shared_from_this());
         _socket.async_receive(
             boost::asio::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, self] (error_code ec, std::size_t bytes_written) mutable {
                 if (ec ==  boost::asio::error::operation_aborted) {
-                    std::cout << "aborted" << std::endl;
+                    std::cout << "TcpCameraSession: readBody aborted" << std::endl;
                     return;
                 }
-                // _read_timer.cancel();
+                _read_timer.cancel();
                 if (ec) {
                     std::cout << "TcpCameraSession: error reading body: " << ec << "; closing" << std::endl;
                     TryClose(true);
@@ -247,7 +248,7 @@ namespace infrastructure {
     }
 
     TcpCameraSession::~TcpCameraSession() {
-        std::cout << "Deconstructed camera session" << std::endl;
+        std::cout << "TcpCameraSession: Deconstructed" << std::endl;
     }
 
     TcpHeadsetSession::TcpHeadsetSession(
@@ -364,6 +365,6 @@ namespace infrastructure {
     }
 
     TcpHeadsetSession::~TcpHeadsetSession() {
-        std::cout << "Headset session deconstructed" << std::endl;
+        std::cout << "TcpHeadsetSession: Deconstructed" << std::endl;
     }
 }

@@ -39,6 +39,9 @@ struct TestClientServerConfig:
     [[nodiscard]] bool get_tcp_client_is_camera() const override {
         return _tcp_client_is_camera;
     };
+    [[nodiscard]] bool get_tcp_client_used_fixed_port() const override {
+        return false;
+    };
     [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
         return 10;
     }

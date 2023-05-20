@@ -19,6 +19,7 @@ namespace infrastructure {
             config.get_tcp_server_port()
         ),
         _manager(std::move(manager)),
+        _use_fixed_port(config.get_tcp_client_used_fixed_port()),
         _is_camera(config.get_tcp_client_is_camera()),
         _read_timer(context.get_executor()),
         _read_timeout(config.get_tcp_client_timeout_on_read())
@@ -41,20 +42,18 @@ namespace infrastructure {
     void TcpClient::Stop() {
         if (!_is_stopped) {
             _is_stopped = true;
-            std::mutex done_mux;
-            std::condition_variable done_cv;
+            std::promise<void> done_promise;
+            auto done_future = done_promise.get_future();
             auto self(shared_from_this());
             boost::asio::post(
                 net::make_strand(_context),
-                [this, self, &done_mux, &done_cv]() {
+                [this, self, p = std::move(done_promise)]() mutable {
                     error_code ec;
                     disconnect(ec);
-                    std::lock_guard lk(done_mux);
-                    done_cv.notify_one();
+                    p.set_value();
                 }
             );
-            std::unique_lock lk(done_mux);
-            done_cv.wait(lk);
+            done_future.wait();
         }
     }
     TcpClient::~TcpClient() {}
@@ -66,7 +65,15 @@ namespace infrastructure {
         }
         if (_is_stopped) return;
         if (_socket == nullptr) {
-            _socket = std::make_shared<tcp::socket>(net::make_strand(_context));
+            if (_use_fixed_port) {
+                auto endpoint = _is_camera
+                                ? tcp::endpoint(tcp::v4(), 11111)
+                                : tcp::endpoint(tcp::v4(), 22222);
+                _socket = std::make_shared<tcp::socket>(net::make_strand(_context), endpoint);
+            } else {
+                _socket = std::make_shared<tcp::socket>(net::make_strand(_context));
+            }
+
         }
         std::cout << "TcpClient running async connect" << std::endl;
         auto self(shared_from_this());
@@ -203,16 +210,18 @@ namespace infrastructure {
 
     void TcpClient::readHeader(std::size_t last_bytes) {
         if (_is_stopped || !_is_connected) return;
-        // startTimer();
+        startTimer();
         auto self(shared_from_this());
         _socket->async_receive(
             net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
             [this, self, last_bytes] (error_code ec, std::size_t bytes_written) mutable {
-                if (_is_stopped || !_is_connected) return;
                 if (ec ==  boost::asio::error::operation_aborted) {
+                    std::cout << "TcpClient: readHeader aborted" << std::endl;
                     return;
                 }
-                // _read_timer.cancel();
+                _read_timer.cancel();
+                if (_is_stopped || !_is_connected) return;
+
                 auto total_bytes = last_bytes + bytes_written;
                 if (!ec && total_bytes == _header.Size() && _header.Ok()) {
                     readBody();
@@ -240,16 +249,17 @@ namespace infrastructure {
         if (_receive_buffer == nullptr) {
             _receive_buffer = _receive_buffer_pool->GetReadBuffer();
         }
-        // startTimer();
+        startTimer();
         auto self(shared_from_this());
         _socket->async_receive(
             net::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, self] (error_code ec, std::size_t bytes_written) mutable {
-                if (_is_stopped || !_is_connected) return;
                 if (ec ==  boost::asio::error::operation_aborted) {
+                    std::cout << "TcpClient: readBody aborted" << std::endl;
                     return;
                 }
-                // _read_timer.cancel();
+                _read_timer.cancel();
+                if (_is_stopped || !_is_connected) return;
                 if (ec) {
                     std::cout << "TcpClient: error reading body: " << ec << "; reconnecting" << std::endl;
                     reconnect(ec);
@@ -296,7 +306,6 @@ namespace infrastructure {
             _manager->DestroyCameraClientConnection();
         } else {
             _receive_buffer = nullptr;
-            _receive_buffer_pool = nullptr;
             _manager->DestroyHeadsetClientConnection();
         }
     }

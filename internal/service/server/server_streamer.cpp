@@ -22,16 +22,20 @@ namespace service {
     {}
 
     void ServerStreamer::assignStrategies() {
+        auto self(shared_from_this());
+
         auto assign_strategy = _conf.get_server_client_assignment_strategy();
         if (assign_strategy == ClientAssignmentStrategy::CAMERA_THEN_HEADSET) {
-            auto self(shared_from_this());
-            _connection_assignment_strategy = [this, self](const tcp_addr &addr) {
-                return ConnectionAssignCameraThenHeadset(addr);
+            _connection_assignment_strategy = [this, self](const tcp::endpoint &endpoint) {
+                return ConnectionAssignCameraThenHeadset(endpoint);
             };
         } else if (assign_strategy == ClientAssignmentStrategy::IP_BOUNDS) {
-            auto self(shared_from_this());
-            _connection_assignment_strategy = [this, self](const tcp_addr &addr) {
-                return ConnectionAssignIpBounds(addr);
+            _connection_assignment_strategy = [this, self](const tcp::endpoint &endpoint) {
+                return ConnectionAssignIpBounds(endpoint);
+            };
+        } else if (assign_strategy == ClientAssignmentStrategy::ENDPOINT_PORT) {
+            _connection_assignment_strategy = [this, self](const tcp::endpoint &endpoint) {
+                return ConnectionAssignEndpointPort(endpoint);
             };
         } else {
             throw std::runtime_error("Unknown server camera assignment strategy");
@@ -39,7 +43,6 @@ namespace service {
 
         auto switch_strategy = _conf.get_server_camera_switching_strategy();
         if (switch_strategy == CameraSwitchingStrategy::MANUAL_ENTRY) {
-            auto self(shared_from_this());
             _camera_switching_strategy = [this, self]() mutable {
                 CameraSwitchingManualEntry();
             };
@@ -74,7 +77,7 @@ namespace service {
         _is_started = true;
     }
 
-    infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignCameraThenHeadset(const tcp_addr &addr) {
+    infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignCameraThenHeadset(const tcp::endpoint &endpoint) {
         const auto connection_counts = _connection_manager.GetConnectionCounts();
         if (connection_counts.first == 0 && connection_counts.second == 0) {
             return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
@@ -85,9 +88,10 @@ namespace service {
         }
     }
 
-    infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignIpBounds(const tcp_addr &addr) {
+    infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignIpBounds(const tcp::endpoint &endpoint) {
         static const tcp_addr min_headset_address = ip_bound("69.4.20.100");
         static const tcp_addr min_camera_address = ip_bound("69.4.20.200");
+        const auto &addr = endpoint.address().to_v4();
         if (addr >= min_camera_address) {
             return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
         } else if (addr >= min_headset_address) {
@@ -96,8 +100,19 @@ namespace service {
         return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
     }
 
-    infrastructure::TcpConnectionType ServerStreamer::GetConnectionType(const tcp_addr &addr) {
-        return _connection_assignment_strategy(addr);
+    infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignEndpointPort(const tcp::endpoint &endpoint) {
+        const auto &port = endpoint.port();
+        if (port == 11111) {
+            return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
+        } else if (port == 22222) {
+            return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
+        } else {
+            return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
+        }
+    }
+
+    infrastructure::TcpConnectionType ServerStreamer::GetConnectionType(const tcp::endpoint &endpoint) {
+        return _connection_assignment_strategy(endpoint);
     }
 
     void ServerStreamer::CameraSwitchingManualEntry() {

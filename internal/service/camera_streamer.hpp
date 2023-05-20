@@ -21,6 +21,7 @@ namespace service {
     {
         CameraStreamerConfig(
             std::string tcp_server_host, int tcp_server_port,
+            bool tcp_client_use_fixed_port,
             infrastructure::CameraType camera_type,
             std::pair<int, int> camera_width_height,
             float camera_lens_position,
@@ -30,6 +31,7 @@ namespace service {
         ):
             _tcp_server_host(std::move(tcp_server_host)),
             _tcp_server_port(tcp_server_port),
+            _tcp_client_use_fixed_port(tcp_client_use_fixed_port),
             _camera_type(camera_type),
             _camera_width_height(std::move(camera_width_height)),
             _camera_lens_position(camera_lens_position),
@@ -48,6 +50,9 @@ namespace service {
         }
         [[nodiscard]] bool get_tcp_client_is_camera() const override {
             return true;
+        }
+        [[nodiscard]] bool get_tcp_client_used_fixed_port() const override {
+            return _tcp_client_use_fixed_port;
         }
         [[nodiscard]] infrastructure::CameraType get_camera_type() const override {
             return _camera_type;
@@ -86,6 +91,7 @@ namespace service {
     private:
         const std::string _tcp_server_host;
         const int _tcp_server_port;
+        const bool _tcp_client_use_fixed_port;
         const infrastructure::CameraType _camera_type;
         const std::pair<int, int> _camera_width_height;
         const float _camera_lens_position;

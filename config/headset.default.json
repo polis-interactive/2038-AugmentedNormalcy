@@ -1,6 +1,8 @@
 {
   "serverHost": "69.4.20.10",
   "serverPort": 6969,
+  "clientTimeoutOnRead": 3,
+  "clientUseFixedPort": false,
   "imageWidth": 1536,
   "imageHeight": 864,
   "tcpReadBuffers": 4,

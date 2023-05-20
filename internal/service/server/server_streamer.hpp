@@ -14,7 +14,8 @@ namespace service {
 
     enum class ClientAssignmentStrategy {
         CAMERA_THEN_HEADSET,
-        IP_BOUNDS
+        IP_BOUNDS,
+        ENDPOINT_PORT,
     };
 
     enum class CameraSwitchingStrategy {
@@ -29,11 +30,13 @@ namespace service {
             public infrastructure::TcpServerConfig
     {
         ServerStreamerConfig(
-            int tcp_pool_size, int tcp_server_port, int buffer_count, int buffer_size,
+            int tcp_pool_size, int tcp_server_port, int tcp_server_timeout_on_read,
+            int buffer_count, int buffer_size,
             ClientAssignmentStrategy assign_strategy, CameraSwitchingStrategy switch_strategy
         ):
                 _tcp_pool_size(tcp_pool_size),
                 _tcp_server_port(tcp_server_port),
+                _tcp_server_timeout_on_read(tcp_server_timeout_on_read),
                 _buffer_count(buffer_count),
                 _buffer_size(buffer_size),
                 _assign_strategy(assign_strategy),
@@ -56,7 +59,7 @@ namespace service {
         }
 
         [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
-            return 1;
+            return _tcp_server_timeout_on_read;
         }
         [[nodiscard]] ClientAssignmentStrategy get_server_client_assignment_strategy() const {
             return _assign_strategy;
@@ -67,6 +70,7 @@ namespace service {
     private:
         const int _tcp_pool_size;
         const int _tcp_server_port;
+        const int _tcp_server_timeout_on_read;
         const int _buffer_count;
         const int _buffer_size;
         const ClientAssignmentStrategy _assign_strategy;
@@ -89,7 +93,7 @@ namespace service {
             _tcp_context.reset();
         }
         // tcp server
-        [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(const tcp_addr &addr) override;
+        [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(const tcp::endpoint &endpoint) override;
 
         // camera session
         [[nodiscard]]  unsigned long CreateCameraServerConnection(
@@ -110,9 +114,10 @@ namespace service {
         void assignStrategies();
         void initialize();
 
-        [[nodiscard]] infrastructure::TcpConnectionType ConnectionAssignCameraThenHeadset(const tcp_addr &addr);
-        [[nodiscard]] infrastructure::TcpConnectionType ConnectionAssignIpBounds(const tcp_addr &addr);
-        std::function<infrastructure::TcpConnectionType(tcp_addr)> _connection_assignment_strategy;
+        [[nodiscard]] infrastructure::TcpConnectionType ConnectionAssignCameraThenHeadset(const tcp::endpoint &endpoint);
+        [[nodiscard]] infrastructure::TcpConnectionType ConnectionAssignEndpointPort(const tcp::endpoint &endpoint);
+        [[nodiscard]] infrastructure::TcpConnectionType ConnectionAssignIpBounds(const tcp::endpoint &endpoint);
+        std::function<infrastructure::TcpConnectionType(const tcp::endpoint &)> _connection_assignment_strategy;
 
         ServerStreamerConfig _conf;
         std::atomic_bool _is_started = false;

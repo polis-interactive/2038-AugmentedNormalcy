@@ -33,6 +33,7 @@ int main(int argc, char* argv[]) {
     const service::CameraStreamerConfig camera_config(
         config.value("serverHost", "69.4.20.10"),
         config.value("serverPort", 6969),
+        config.value("clientUseFixedPort", false),
         to_camera_type(config.value("cameraType", "LIBCAMERA")),
         {
             config.value("imageWidth", 1536),

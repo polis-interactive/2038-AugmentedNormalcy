@@ -40,7 +40,7 @@ namespace infrastructure {
     class TcpServerManager {
     public:
         // tcp server
-        [[nodiscard]] virtual TcpConnectionType GetConnectionType(const tcp_addr &endpoint) = 0;
+        [[nodiscard]] virtual TcpConnectionType GetConnectionType(const tcp::endpoint &endpoint) = 0;
         // camera session
         [[nodiscard]]  virtual unsigned long CreateCameraServerConnection(
             std::shared_ptr<TcpSession> &&session

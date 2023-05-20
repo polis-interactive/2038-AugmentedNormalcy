@@ -31,6 +31,8 @@ int main(int argc, char* argv[]) {
     const service::HeadsetStreamerConfig headset_config(
         config.value("serverHost", "69.4.20.10"),
         config.value("serverPort", 6969),
+        config.value("clientTimeoutOnRead", 3),
+        config.value("clientUseFixedPort", false),
         {
             config.value("imageWidth", 1536),
             config.value("imageHeight", 864)
