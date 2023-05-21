@@ -1,6 +1,10 @@
 ---
 
 - hosts: all
+  environment:
+    http_proxy: http://localhost:8080
+    https_proxy: http://localhost:8080
+
   tasks:
 
     - name: Create a file named /tmp/hello_ansible
@@ -24,14 +28,8 @@
         state: touch
       when: "'headsets' in group_names"
 
-    - name: Check internet connectivity
-      command: curl http://example.com
-      register: result
-      ignore_errors: true
-
-    - name: Show result
-      debug:
-        msg: "Internet connectivity check failed"
-      when: result.rc != 0
+    - name: Update, Upgrade
+      apt:
+        update_cache: yes
 
 ...
