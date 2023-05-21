@@ -6,7 +6,9 @@
     https_proxy: http://localhost:8080
 
   tasks:
-    - include: ../tasks/tunnel.yml
+    - name: start ssh tunnel
+      shell:
+        cmd: nohup ssh -N polis@69.4.20.10 -L 8080/localhost/8080 &
 
     - name: Create a file named /tmp/hello_ansible
       file:
