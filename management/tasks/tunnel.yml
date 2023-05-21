@@ -1,12 +1,5 @@
 ---
-- name: clear any ssh tunnel
-  shell:
-    cmd: ps -ef | grep -iE -- "ss[h].*{{local_proxy_port}}" | awk '{print $2}' | xargs kill -9
 - name: start ssh tunnel
   shell:
     cmd: nohup ssh -N polis@69.4.20.10 -L 8080/localhost/8080 &
-  notify: stop ssh tunnel
-- name: stop ssh tunnel
-  shell:
-    cmd: ps -ef | grep -iE -- "ss[h].*8080" | awk '{print $2}' | xargs kill -9
 ---
