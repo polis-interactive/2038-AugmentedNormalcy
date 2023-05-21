@@ -21,3 +21,5 @@ bin/app_*
 images
 .img
 .img.xz
+
+id_rsa.server

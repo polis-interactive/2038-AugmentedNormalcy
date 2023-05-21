@@ -1,8 +1,8 @@
 ---
 - hosts: all
   tasks:
-    - name: Create a file named /tmp/hello_ansible
+    - name: Remove the file named /tmp/hello_ansible
       file:
         path: /tmp/hello_ansible
-        state: touch
+        state: absent
 ...
