@@ -1,9 +1,8 @@
 [Unit]
 Description=Augmented Headset
 After=network-online.target
-StartLimitBurst=4
+StartLimitBurst=6
 StartLimitIntervalSec=360
-OnFailure=restart-system.service
 
 [Service]
 Restart=on-failure

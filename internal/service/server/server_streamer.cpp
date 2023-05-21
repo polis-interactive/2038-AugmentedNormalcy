@@ -170,7 +170,13 @@ namespace service {
                 std::this_thread::sleep_for(1s);
                 continue;
             }
-            _connection_manager.RotateAllConnections();
+            auto did_change = _connection_manager.RotateAllConnections();
+            if (did_change) {
+                std::cout << "ServerStreamer::CameraSwitchingAutomaticTimer Successfully rotated Connections" << std::endl;
+            } else {
+                std::cout << "ServerStreamer::CameraSwitchingAutomaticTimer Failed to rotate connections" << std::endl;
+            }
+            last_timer = Clock::now();
         }
     }
 

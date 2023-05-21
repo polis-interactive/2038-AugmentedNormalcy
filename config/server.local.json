@@ -6,5 +6,5 @@
   "cameraBufferSize": 64,
   "serverClientAssignmentStrategy": "CAMERA_THEN_HEADSET",
   "serverCameraSwitchingStrategy": "NONE",
-  "serverCameraSwitchingAutomaticTimeout": 15,
+  "serverCameraSwitchingAutomaticTimeout": 15
 }
