@@ -1,8 +1,24 @@
 ---
 - hosts: all
   tasks:
-    - name: Remove the file named /tmp/hello_ansible
+    - name: Create a file named /tmp/hello_ansible
       file:
         path: /tmp/hello_ansible
-        state: absent
+        state: touch
+
+    - name:  Create a file named /tmp/hello_ansible_cameras
+      become: yes
+      become_user: pi
+      file:
+        path: /tmp/hello_ansible_cameras
+        state: touch
+      when: "'cameras' in group_names"
+
+    - name:  Create a file named /tmp/hello_ansible_headsets
+      become: yes
+      become_user: pi
+      file:
+        path: /tmp/hello_ansible_headsets
+        state: touch
+      when: "'headsets' in group_names"
 ...
