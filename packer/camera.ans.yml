@@ -11,8 +11,10 @@
         pkg:
           - vim
           - git
+          - tmux
           - arping
           - net-tools
+          - ntp
           - build-essential
           - cmake
           - nload
@@ -136,3 +138,6 @@
     - name: Copy Cron Reboot
       shell:
         cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/cron-reboot /etc/cron.d/reboot
+    - name: Copy NTP client config
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/ntp.client.conf /etc/ntp.conf

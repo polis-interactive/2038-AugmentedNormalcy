@@ -11,8 +11,10 @@
         pkg:
           - vim
           - git
+          - tmux
           - arping
           - net-tools
+          - ntp
           - build-essential
           - cmake
           - nload
