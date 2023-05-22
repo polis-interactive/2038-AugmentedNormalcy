@@ -23,3 +23,6 @@ images
 .img.xz
 
 id_rsa.server
+*.pem
+*.crt
+*.key
