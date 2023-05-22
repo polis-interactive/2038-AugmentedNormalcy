@@ -13,7 +13,8 @@
 
     - name: Install NTP
       apt:
-        update_cache: yes
+        pkg:
+          - ntp
       environment:
         http_proxy: http://69.4.20.10:8888
         https_proxy: http://69.4.20.10:8888
@@ -57,5 +58,4 @@
     - name: System timestamp - time
       debug:
         msg: "Current date: {{ cur_time }}"
-
----
+...
