@@ -180,3 +180,14 @@
     - name: Copy Cron Reboot
       shell:
         cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/cron-reboot /etc/cron.d/reboot
+    # MANAGEMENT
+    - name: Create ssh dir
+      become: yes
+      become_user: pi
+      file:
+        path: /home/pi/.ssh
+        state: directory
+        mode: '0755'
+    - name: Copy authorized server key
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/management/authorized_keys.client /home/pi/.ssh/authorized_keys
