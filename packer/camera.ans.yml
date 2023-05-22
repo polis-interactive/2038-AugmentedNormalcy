@@ -141,3 +141,7 @@
     - name: Copy NTP client config
       shell:
         cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/ntp.client.conf /etc/ntp.conf
+    # MANAGEMENT
+    - name: Copy authorized server key
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/management/authorized_keys.client /home/pi/.ssh/authorized_keys
