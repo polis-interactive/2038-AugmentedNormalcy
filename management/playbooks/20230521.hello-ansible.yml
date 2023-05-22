@@ -1,15 +1,8 @@
 ---
 
 - hosts: 69.4.20.100
-  environment:
-    http_proxy: http://localhost:8080
-    https_proxy: http://localhost:8080
 
   tasks:
-    - name: start ssh tunnel
-      shell:
-        cmd: nohup ssh -N polis@69.4.20.10 -L 8080/localhost/8080 &
-
     - name: Create a file named /tmp/hello_ansible
       file:
         path: /tmp/hello_ansible
@@ -34,9 +27,15 @@
     - name: Update, Upgrade
       apt:
         update_cache: yes
+      environment:
+        http_proxy: http://localhost:8080
+        https_proxy: http://localhost:8080
 
     - name: Install dependencies
       apt:
         pkg:
           - emacs
+      environment:
+        http_proxy: http://localhost:8080
+        https_proxy: http://localhost:8080
 ...
