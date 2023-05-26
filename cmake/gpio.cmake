@@ -39,8 +39,8 @@ if (
         message(FATAL_ERROR "pigpio not found")
     endif()
 
-    set(PIGPIO_LINK_LIBRARIES pigpio_LIBRARY pigpiod_if_LIBRARY pigpiod_if2_LIBRARY)
-    set(PIGPIO_INCLUDE_DIRS pigpio_INCLUDE_DIR)
+    set(PIGPIO_LINK_LIBRARIES ${pigpio_LIBRARY} ${pigpiod_if_LIBRARY} ${pigpiod_if2_LIBRARY})
+    set(PIGPIO_INCLUDE_DIRS ${pigpio_INCLUDE_DIR})
 
     message(STATUS "pigpio library found:")
     message(STATUS "    libraries: ${PIGPIO_LINK_LIBRARIES}")
