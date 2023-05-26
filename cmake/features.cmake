@@ -15,7 +15,8 @@ if (
 )
     set(FEATURE_DECODER true)
     set(FEATURE_DISPLAY true)
-
+    set(FEATURE_BMS true)
+    set(FEATURE_GPIO true)
 endif()
 
 if (NOT AN_PLATFORM_TYPE STREQUAL JETSON)

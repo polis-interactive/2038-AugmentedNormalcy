@@ -5,6 +5,12 @@
 #ifndef AUGMENTEDNORMALCY_INFRASTRUCTURE_TCP_PACKET_HEADER_HPP
 #define AUGMENTEDNORMALCY_INFRASTRUCTURE_TCP_PACKET_HEADER_HPP
 
+#include "utils/buffers.hpp"
+#include <iostream>
+#include <thread>
+#include <boost/asio.hpp>
+#include <memory>
+
 #ifdef __GNUC__
 #define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
 #endif
@@ -23,7 +29,98 @@ const auto rolling_less_than = [](const uint16_t &a, const uint16_t &b) {
     );
 };
 
+typedef net::detail::socket_option::boolean<SOL_SOCKET, SO_REUSEPORT> reuse_port;
+
 namespace infrastructure {
+
+    class TcpReaderMessage
+    {
+    public:
+        static constexpr std::size_t header_length = 16;
+        static constexpr std::size_t max_body_length = 786432;
+
+        TcpReaderMessage(): _body_length(0)
+        {
+        }
+
+        [[nodiscard]] const char* Data() const
+        {
+            return _data;
+        }
+
+        char* Data()
+        {
+            return _data;
+        }
+
+        std::size_t BodyLength() const
+        {
+            return _body_length;
+        }
+
+
+        bool DecodeHeader()
+        {
+            char header[header_length + 1] = "";
+            strncat(header, _data, header_length);
+            _body_length = atoi(header);
+            if (_body_length > max_body_length)
+            {
+                _body_length = 0;
+                return false;
+            }
+            return true;
+        }
+
+        [[nodiscard]] std::size_t Length() const
+        {
+            return header_length;
+        }
+
+
+    private:
+        char _data[header_length];
+        std::size_t _body_length;
+    };
+
+    class TcpWriterMessage
+    {
+    public:
+
+        static constexpr std::size_t header_length = 16;
+        static constexpr std::size_t max_body_length = 786432;
+
+        explicit TcpWriterMessage(std::shared_ptr<SizedBuffer> &&buffer):
+                _buffer(std::move(buffer))
+        {
+            encodeHeader();
+        }
+
+        [[nodiscard]] std::shared_ptr<SizedBuffer> &GetBuffer() {
+            return _buffer;
+        }
+
+        char* Data()
+        {
+            return _data;
+        }
+
+        [[nodiscard]] std::size_t Length() const
+        {
+            return header_length;
+        }
+    private:
+        void encodeHeader()
+        {
+            char header[header_length + 1] = "";
+            std::sprintf(header, "%16d", static_cast<int>(_buffer->GetSize()));
+            std::memcpy(_data, header, header_length);
+        }
+
+        char _data[header_length]{};
+        std::shared_ptr<SizedBuffer> _buffer;
+    };
+
     struct PacketHeader {
     public:
         PacketHeader() {

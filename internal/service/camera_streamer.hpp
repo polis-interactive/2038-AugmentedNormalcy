@@ -7,14 +7,14 @@
 
 #include <utility>
 
-#include "infrastructure/tcp/tcp_context.hpp"
+#include "internal/utils/asio_context.hpp"
 #include "infrastructure/tcp/tcp_client.hpp"
 #include "infrastructure/camera/camera.hpp"
 #include "infrastructure/encoder/encoder.hpp"
 
 namespace service {
     struct CameraStreamerConfig:
-        public infrastructure::TcpContextConfig,
+        public AsioContextConfig,
         public infrastructure::TcpClientConfig,
         public infrastructure::CameraConfig,
         public infrastructure::EncoderConfig
@@ -39,7 +39,7 @@ namespace service {
             _encoder_type(encoder_type),
             _encoder_buffers_downstream(encoder_buffers_downstream)
         {}
-        [[nodiscard]] int get_tcp_pool_size() const override {
+        [[nodiscard]] int get_asio_pool_size() const override {
             return 1;
         }
         [[nodiscard]] std::string get_tcp_server_host() const override {
@@ -113,7 +113,7 @@ namespace service {
             }
             _camera->Start();
             _encoder->Start();
-            _tcp_context->Start();
+            _asio_context->Start();
             _tcp_client->Start();
             _is_started = true;
         }
@@ -122,14 +122,14 @@ namespace service {
                 return;
             }
             _tcp_client->Stop();
-            _tcp_context->Stop();
+            _asio_context->Stop();
             _encoder->Stop();
             _camera->Stop();
             _is_started = false;
         }
         void Unset() {
             _tcp_client.reset();
-            _tcp_context.reset();
+            _asio_context.reset();
             _camera.reset();
         }
         // currently, we are just trying to get this thing streaming; we don't care about
@@ -144,7 +144,7 @@ namespace service {
         std::atomic_bool _is_started = false;
         std::shared_ptr<infrastructure::Camera> _camera = nullptr;
         std::shared_ptr<infrastructure::Encoder> _encoder = nullptr;
-        std::shared_ptr<infrastructure::TcpContext> _tcp_context = nullptr;
+        std::shared_ptr<AsioContext> _asio_context = nullptr;
         std::shared_ptr<infrastructure::TcpClient> _tcp_client = nullptr;
     };
 }

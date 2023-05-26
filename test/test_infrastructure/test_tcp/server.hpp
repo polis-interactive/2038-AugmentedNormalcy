@@ -8,7 +8,7 @@
 #include "infrastructure/tcp/tcp_server.hpp"
 
 struct TestServerConfig:
-        public infrastructure::TcpContextConfig,
+        public AsioContextConfig,
         public infrastructure::TcpServerConfig
 {
     explicit TestServerConfig(int pool_size, int tcp_server_port):
@@ -17,7 +17,7 @@ struct TestServerConfig:
     {}
     const int _pool_size;
     const int _tcp_server_port;
-    [[nodiscard]] int get_tcp_pool_size() const override {
+    [[nodiscard]] int get_asio_pool_size() const override {
         return _pool_size;
     };
     [[nodiscard]] int get_tcp_server_port() const override {

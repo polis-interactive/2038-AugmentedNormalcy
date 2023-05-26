@@ -7,14 +7,14 @@
 
 #include <utility>
 
-#include "infrastructure/tcp/tcp_context.hpp"
+#include "internal/utils/asio_context.hpp"
 #include "infrastructure/tcp/tcp_client.hpp"
 #include "infrastructure/decoder/decoder.hpp"
 #include "infrastructure/graphics/glfw_graphics.hpp"
 
 namespace service {
     struct HeadsetStreamerConfig:
-        public infrastructure::TcpContextConfig,
+        public AsioContextConfig,
         public infrastructure::TcpClientConfig,
         public infrastructure::DecoderConfig,
         public infrastructure::GraphicsConfig
@@ -38,8 +38,8 @@ namespace service {
             _graphics_type(graphics_type),
             _image_width_height(std::move(image_width_height))
         {}
-        [[nodiscard]] int get_tcp_pool_size() const override {
-            return 1;
+        [[nodiscard]] int get_asio_pool_size() const override {
+            return 3;
         }
         [[nodiscard]] std::string get_tcp_server_host() const override {
             return _tcp_server_host;
@@ -103,7 +103,7 @@ namespace service {
             }
             _graphics->Start();
             _decoder->Start();
-            _tcp_context->Start();
+            _asio_context->Start();
             _tcp_client->Start();
             _is_started = true;
         }
@@ -112,14 +112,14 @@ namespace service {
                 return;
             }
             _tcp_client->Stop();
-            _tcp_context->Stop();
+            _asio_context->Stop();
             _graphics->Stop();
             _decoder->Stop();
             _is_started = false;
         }
         void Unset() {
             _tcp_client.reset();
-            _tcp_context.reset();
+            _asio_context.reset();
             _graphics.reset();
             _decoder.reset();
         }
@@ -135,7 +135,7 @@ namespace service {
         std::atomic_bool _is_started = false;
         std::shared_ptr<infrastructure::Graphics> _graphics = nullptr;
         std::shared_ptr<infrastructure::Decoder> _decoder = nullptr;
-        std::shared_ptr<infrastructure::TcpContext> _tcp_context = nullptr;
+        std::shared_ptr<AsioContext> _asio_context = nullptr;
         std::shared_ptr<infrastructure::TcpClient> _tcp_client = nullptr;
     };
 }

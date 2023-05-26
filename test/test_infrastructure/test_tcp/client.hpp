@@ -11,7 +11,7 @@
 #include "infrastructure/tcp/tcp_server.hpp"
 
 struct TestClientServerConfig:
-        public infrastructure::TcpContextConfig,
+        public AsioContextConfig,
         public infrastructure::TcpClientConfig,
         public infrastructure::TcpServerConfig
 {
@@ -27,7 +27,7 @@ struct TestClientServerConfig:
     const int _tcp_server_port;
     const std::string _tcp_server_host;
     const bool _tcp_client_is_camera;
-    [[nodiscard]] int get_tcp_pool_size() const override {
+    [[nodiscard]] int get_asio_pool_size() const override {
         return _pool_size;
     };
     [[nodiscard]] int get_tcp_server_port() const override {

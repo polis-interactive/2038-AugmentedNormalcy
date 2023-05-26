@@ -19,7 +19,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 TEST_CASE("INFRASTRUCTURE_TCP_SERVER-Start-and-stop") {
     TestServerConfig conf(3, 42069);
-    auto ctx = infrastructure::TcpContext::Create(conf);
+    auto ctx = AsioContext::Create(conf);
     ctx->Start();
     auto manager = std::make_shared<NoSessionManager>();
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
@@ -32,7 +32,7 @@ TEST_CASE("INFRASTRUCTURE_TCP_SERVER-Start-and-stop") {
 
 TEST_CASE("INFRASTRUCTURE_TCP_CLIENT-Camera-Start-and-stop") {
     TestClientServerConfig conf(2, 42069, "127.0.0.1", true);
-    auto ctx = infrastructure::TcpContext::Create(conf);
+    auto ctx = AsioContext::Create(conf);
     ctx->Start();
     auto manager = std::make_shared<TcpClientManager>();
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
@@ -45,7 +45,7 @@ TEST_CASE("INFRASTRUCTURE_TCP_CLIENT-Camera-Start-and-stop") {
 
 TEST_CASE("INFRASTRUCTURE_TCP_CLIENT-Headset-Start-and-stop") {
     TestClientServerConfig conf(2, 42069, "127.0.0.1", false);
-    auto ctx = infrastructure::TcpContext::Create(conf);
+    auto ctx = AsioContext::Create(conf);
     ctx->Start();
     auto manager = std::make_shared<TcpClientManager>();
     auto client_manager = std::static_pointer_cast<infrastructure::TcpClientManager>(manager);
@@ -59,7 +59,7 @@ TEST_CASE("INFRASTRUCTURE_TCP_CLIENT-Headset-Start-and-stop") {
 
 TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
     TestClientServerConfig conf(3, 42069, "127.0.0.1", true);
-    auto ctx = infrastructure::TcpContext::Create(conf);
+    auto ctx = AsioContext::Create(conf);
     ctx->Start();
 
     // setting up an upstream / downstream to send receive values
@@ -109,7 +109,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
 
 TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
     TestClientServerConfig conf(3, 42069, "127.0.0.1", true);
-    auto ctx = infrastructure::TcpContext::Create(conf);
+    auto ctx = AsioContext::Create(conf);
     ctx->Start();
 
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2;
@@ -161,7 +161,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
 TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset")  {
     /* this looks really similar, but all the buffers are pushed from server to client in this case */
     TestClientServerConfig conf(3, 42069, "127.0.0.1", false);
-    auto ctx = infrastructure::TcpContext::Create(conf);
+    auto ctx = AsioContext::Create(conf);
     ctx->Start();
 
     // setting up an upstream / downstream to send receive values
@@ -213,7 +213,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset")  {
 TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset-Stress"){
     /* again, looks really similar, but all the buffers are pushed from server to client in this case */
     TestClientServerConfig conf(3, 42069, "127.0.0.1", false);
-    auto ctx = infrastructure::TcpContext::Create(conf);
+    auto ctx = AsioContext::Create(conf);
     ctx->Start();
 
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2;

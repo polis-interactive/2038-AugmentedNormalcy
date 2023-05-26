@@ -62,9 +62,9 @@ namespace service {
 
     void ServerStreamer::initialize() {
         assignStrategies();
-        _tcp_context = infrastructure::TcpContext::Create(_conf);
+        _asio_context = AsioContext::Create(_conf);
         auto self(shared_from_this());
-        _tcp_server = infrastructure::TcpServer::Create(_conf, _tcp_context->GetContext(), self);
+        _tcp_server = infrastructure::TcpServer::Create(_conf, _asio_context->GetContext(), self);
     }
 
     void ServerStreamer::Start() {
@@ -77,7 +77,7 @@ namespace service {
             _work_thread = std::make_unique<std::thread>(_camera_switching_strategy);
         }
         /* startup server */
-        _tcp_context->Start();
+        _asio_context->Start();
         _tcp_server->Start();
         _is_started = true;
     }
@@ -229,7 +229,7 @@ namespace service {
         }
         /* stop server */
         _tcp_server->Stop();
-        _tcp_context->Stop();
+        _asio_context->Stop();
         _is_started = false;
     }
 }
