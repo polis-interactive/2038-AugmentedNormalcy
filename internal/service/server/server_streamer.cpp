@@ -165,7 +165,8 @@ namespace service {
         const auto automatic_timeout = _conf.get_server_camera_switching_automatic_timeout();
         auto last_timer = Clock::now();
         while(!_work_stop) {
-            const auto duration = std::chrono::duration_cast<std::chrono::seconds>(Clock::now() - last_timer);
+            const auto now = Clock::now();
+            const auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - last_timer);
             if (duration.count() < automatic_timeout) {
                 std::this_thread::sleep_for(1s);
                 continue;
@@ -176,7 +177,7 @@ namespace service {
             } else {
                 std::cout << "ServerStreamer::CameraSwitchingAutomaticTimer Failed to rotate connections" << std::endl;
             }
-            last_timer = Clock::now();
+            last_timer = now;
         }
     }
 

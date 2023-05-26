@@ -8,5 +8,6 @@
   "tcpReadBuffers": 4,
   "decoderBuffersDownstream": 4,
   "decoderType": "SW",
-  "graphicsType": "GLFW"
+  "graphicsType": "GLFW",
+  "gpioType": "PIGPIO"
 }

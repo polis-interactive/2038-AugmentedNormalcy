@@ -17,7 +17,7 @@ endif()
 
 if (FEATURE_DISPLAY)
     set(SOURCES ${SOURCES} headset_streamer.cpp)
-    set(TARGET_LIBS ${TARGET_LIBS} decoder graphics)
+    set(TARGET_LIBS ${TARGET_LIBS} decoder graphics gpio)
 endif()
 
 add_library(service STATIC ${SOURCES})

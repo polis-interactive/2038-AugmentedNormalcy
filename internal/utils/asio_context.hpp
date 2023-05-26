@@ -2,8 +2,8 @@
 // Created by brucegoose on 3/5/23.
 //
 
-#ifndef AUGMENTEDNORMALCY_INFRASTRUCTURE_TCPCONTEXT_HPP
-#define AUGMENTEDNORMALCY_INFRASTRUCTURE_TCPCONTEXT_HPP
+#ifndef UTILS_ASIO_CONTEXT_HPP
+#define UTILS_ASIO_CONTEXT_HPP
 
 #include <memory>
 #include <boost/asio.hpp>
@@ -89,4 +89,4 @@ private:
     std::atomic<bool> _started = { false };
 };
 
-#endif //AUGMENTEDNORMALCY_INFRASTRUCTURE_TCPCONTEXT_HPP
+#endif //UTILS_ASIO_CONTEXT_HPP

@@ -7,9 +7,10 @@
 
 #include "camera.hpp"
 
+#include "utils/clock.hpp"
+
 #include <thread>
 #include <atomic>
-#include <chrono>
 #include <mutex>
 #include <queue>
 #include <vector>

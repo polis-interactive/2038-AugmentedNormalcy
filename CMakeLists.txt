@@ -39,6 +39,7 @@ include(cmake/encoder.cmake)
 include(cmake/decoder.cmake)
 include(cmake/display.cmake)
 include(cmake/bms.cmake)
+include(cmake/gpio.cmake)
 # include(cmake/location.cmake)
 
 

@@ -8,7 +8,7 @@
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
-#include "internal/utils/asio_context.hpp"
+#include "utils/asio_context.hpp"
 
 struct TestContextConfig:
     AsioContextConfig

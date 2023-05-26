@@ -7,15 +7,17 @@
 
 
 #include <memory>
+#include <functional>
 
 namespace infrastructure {
 
     enum class GpioType {
         PIGPIO,
-        NLL
+        NONE
     };
 
     struct GpioConfig {
+        [[nodiscard]] virtual GpioType get_gpio_type() const = 0;
         [[nodiscard]] virtual int get_button_pin() const = 0;
         [[nodiscard]] virtual int get_button_debounce_ms() const = 0;
     };
@@ -23,11 +25,13 @@ namespace infrastructure {
     class Gpio {
     public:
         [[nodiscard]] static std::shared_ptr<Gpio> Create(
-            const GpioConfig &config
+            const GpioConfig &config, std::function<void()> &&button_push_callback
         );
-        Gpio(const GpioConfig &config);
+        Gpio(const GpioConfig &config, std::function<void()> &&button_push_callback);
         virtual void Start() = 0;
         virtual void Stop() = 0;
+    protected:
+        std::function<void()> _post_button_push_callback;
     };
 
 }

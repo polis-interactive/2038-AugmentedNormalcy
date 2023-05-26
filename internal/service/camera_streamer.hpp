@@ -7,7 +7,7 @@
 
 #include <utility>
 
-#include "internal/utils/asio_context.hpp"
+#include "utils/asio_context.hpp"
 #include "infrastructure/tcp/tcp_client.hpp"
 #include "infrastructure/camera/camera.hpp"
 #include "infrastructure/encoder/encoder.hpp"

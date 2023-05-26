@@ -4,7 +4,7 @@
 
 #include "string_camera.hpp"
 
-typedef std::chrono::high_resolution_clock Clock;
+
 
 namespace infrastructure {
 

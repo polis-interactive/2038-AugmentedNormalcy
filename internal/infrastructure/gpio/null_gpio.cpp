@@ -3,3 +3,11 @@
 //
 
 #include "null_gpio.hpp"
+
+namespace infrastructure {
+    NullGpio::NullGpio(const infrastructure::GpioConfig &config, std::function<void()> &&button_push_callback):
+        Gpio(config, std::move(button_push_callback))
+    {}
+    void NullGpio::Start() {}
+    void NullGpio::Stop() {}
+}
