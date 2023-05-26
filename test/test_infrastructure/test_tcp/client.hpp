@@ -42,7 +42,7 @@ struct TestClientServerConfig:
     [[nodiscard]] bool get_tcp_client_used_fixed_port() const override {
         return false;
     };
-    [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
+    [[nodiscard]] int get_tcp_server_timeout() const override {
         return 10;
     }
     [[nodiscard]] int get_tcp_client_timeout_on_read() const override {

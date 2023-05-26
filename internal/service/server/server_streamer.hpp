@@ -65,7 +65,7 @@ namespace service {
             return _buffer_size;
         }
 
-        [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
+        [[nodiscard]] int get_tcp_server_timeout() const override {
             return _tcp_server_timeout_on_read;
         }
         [[nodiscard]] ClientAssignmentStrategy get_server_client_assignment_strategy() const {

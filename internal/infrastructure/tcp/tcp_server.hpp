@@ -116,10 +116,11 @@ namespace infrastructure {
         friend class TcpServer;
         TcpHeadsetSession(
             tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager, tcp_addr addr,
-            const int buffer_count, const int buffer_size
+            const int write_timeout, const int buffer_count, const int buffer_size
         );
         void ConnectAndWait();
     private:
+        void startTimer();
         void writeHeader(std::size_t last_bytes);
         void writeBody();
         tcp::socket _socket;
@@ -128,6 +129,10 @@ namespace infrastructure {
         std::shared_ptr<TcpServerManager> &_manager;
         std::atomic<bool> _is_live;
         unsigned long _session_id = 0;
+
+        boost::asio::deadline_timer _write_timer;
+        const int _write_timeout;
+
         PacketHeader _header;
         std::mutex _message_mutex;
         std::shared_ptr<TcpWriteBufferPool> _copy_buffer_pool;
@@ -136,7 +141,7 @@ namespace infrastructure {
 
     struct TcpServerConfig {
         [[nodiscard]] virtual int get_tcp_server_port() const = 0;
-        [[nodiscard]] virtual int get_tcp_server_timeout_on_read() const = 0;
+        [[nodiscard]] virtual int get_tcp_server_timeout() const = 0;
         [[nodiscard]] virtual int get_tcp_camera_session_buffer_count() const = 0;
         [[nodiscard]] virtual int get_tcp_headset_session_buffer_count() const = 0;
         [[nodiscard]] virtual int get_tcp_server_buffer_size() const = 0;
@@ -164,9 +169,10 @@ namespace infrastructure {
         tcp::acceptor _acceptor;
         tcp::endpoint _endpoint;
         std::shared_ptr<TcpServerManager> _manager;
-        const int _read_timeout;
+        const int _read_write_timeout;
         const int _tcp_camera_session_buffer_count;
-        const int _tcp_camera_session_buffer_size;
+        const int _tcp_headset_session_buffer_count;
+        const int _tcp_session_buffer_size;
     };
 }
 
