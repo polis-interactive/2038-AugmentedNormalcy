@@ -17,7 +17,7 @@ ssh -i aws_ec2_keypair.pem ubuntu@3.87.4.155
 
 # start up tinyproxy
 `
-tinyproxy -d -c ./tinyproxy.conf
+tinyproxy -d -c management/tinyproxy.conf
 `
 
 # connect to proxy from ssh pi

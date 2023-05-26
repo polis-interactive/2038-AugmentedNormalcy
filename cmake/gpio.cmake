@@ -34,7 +34,6 @@ if (
     find_package_handle_standard_args(
             pigpio
             REQUIRED_VARS pigpio_INCLUDE_DIR pigpio_LIBRARY pigpiod_if_LIBRARY pigpiod_if2_LIBRARY
-            DEFAULT_MSG
     )
     if(NOT pigpio_FOUND)
         message(FATAL_ERROR "pigpio not found")
