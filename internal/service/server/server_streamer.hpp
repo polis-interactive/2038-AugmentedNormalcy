@@ -31,14 +31,15 @@ namespace service {
     {
         ServerStreamerConfig(
             int tcp_pool_size, int tcp_server_port, int tcp_server_timeout_on_read,
-            int buffer_count, int buffer_size,
+            int camera_buffer_count, int headset_buffer_count, int buffer_size,
             ClientAssignmentStrategy assign_strategy, CameraSwitchingStrategy switch_strategy,
             int switch_automatic_timeout
         ):
                 _tcp_pool_size(tcp_pool_size),
                 _tcp_server_port(tcp_server_port),
                 _tcp_server_timeout_on_read(tcp_server_timeout_on_read),
-                _buffer_count(buffer_count),
+                _camera_buffer_count(camera_buffer_count),
+                _headset_buffer_count(headset_buffer_count),
                 _buffer_size(buffer_size),
                 _assign_strategy(assign_strategy),
                 _switch_strategy(switch_strategy),
@@ -53,14 +54,18 @@ namespace service {
             return _tcp_server_port;
         }
         [[nodiscard]] int get_tcp_camera_session_buffer_count() const override {
-            return _buffer_count;
+            return _camera_buffer_count;
         }
 
-        [[nodiscard]] int get_tcp_camera_session_buffer_size() const override {
+        [[nodiscard]] virtual int get_tcp_headset_session_buffer_count() const override {
+            return _headset_buffer_count;
+        };
+
+        [[nodiscard]] int get_tcp_server_buffer_size() const override {
             return _buffer_size;
         }
 
-        [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
+        [[nodiscard]] int get_tcp_server_timeout() const override {
             return _tcp_server_timeout_on_read;
         }
         [[nodiscard]] ClientAssignmentStrategy get_server_client_assignment_strategy() const {
@@ -76,7 +81,8 @@ namespace service {
         const int _tcp_pool_size;
         const int _tcp_server_port;
         const int _tcp_server_timeout_on_read;
-        const int _buffer_count;
+        const int _camera_buffer_count;
+        const int _headset_buffer_count;
         const int _buffer_size;
         const ClientAssignmentStrategy _assign_strategy;
         const CameraSwitchingStrategy _switch_strategy;

@@ -23,13 +23,16 @@ struct TestServerConfig:
     [[nodiscard]] int get_tcp_server_port() const override {
         return _tcp_server_port;
     };
-    [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
+    [[nodiscard]] int get_tcp_server_timeout() const override {
         return 1;
     }
     [[nodiscard]] int get_tcp_camera_session_buffer_count() const override {
         return 1;
     };
-    [[nodiscard]] int get_tcp_camera_session_buffer_size() const override {
+    [[nodiscard]] int get_tcp_headset_session_buffer_count() const override {
+        return 1;
+    };
+    [[nodiscard]] int get_tcp_server_buffer_size() const override {
         return 5;
     };
 };

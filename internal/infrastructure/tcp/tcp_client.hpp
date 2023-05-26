@@ -73,12 +73,11 @@ namespace infrastructure {
         const bool _is_camera;
         std::atomic<bool> _is_stopped = {true};
         std::atomic<bool> _is_connected = {false};
-        net::io_context &_context;
         tcp::endpoint _remote_endpoint;
         std::shared_ptr<tcp::socket> _socket = nullptr;
         std::shared_ptr<TcpClientManager> _manager;
 
-        boost::asio::deadline_timer _read_timer;
+        net::deadline_timer _read_timer;
         const int _read_timeout;
         const bool _use_fixed_port;
 
@@ -88,7 +87,7 @@ namespace infrastructure {
         std::queue<std::shared_ptr<SizedBuffer>> _send_buffer_queue = {};
 
         std::shared_ptr<TcpReadBufferPool> _receive_buffer_pool = nullptr;
-        std::shared_ptr<TcpReadBuffer> _receive_buffer = nullptr;
+        std::shared_ptr<TcpBuffer> _receive_buffer = nullptr;
     };
 
 }

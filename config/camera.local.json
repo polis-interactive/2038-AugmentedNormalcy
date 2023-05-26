@@ -1,7 +1,7 @@
 {
   "serverHost": "127.0.0.1",
   "serverPort": 6969,
-  "clientUseFixedPort": false,
+  "clientUseFixedPort": true,
   "imageWidth": 8,
   "imageHeight": 8,
   "cameraType": "STRING",

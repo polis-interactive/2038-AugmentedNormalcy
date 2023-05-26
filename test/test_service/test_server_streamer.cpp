@@ -11,7 +11,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 TEST_CASE("SERVICE_SERVER-ENCODER_Setup-and-teardown") {
     service::ServerStreamerConfig conf(
-        2, 6969, 3, 4, 5, service::ClientAssignmentStrategy::CAMERA_THEN_HEADSET,
+        2, 6969, 3, 6, 4, 5, service::ClientAssignmentStrategy::CAMERA_THEN_HEADSET,
         service::CameraSwitchingStrategy::NONE, 30
     );
 
