@@ -94,7 +94,7 @@ namespace infrastructure {
 
         PacketHeader _header;
         std::shared_ptr<TcpReadBufferPool> _receive_buffer_pool = nullptr;
-        std::shared_ptr<TcpReadBuffer> _receive_buffer = nullptr;
+        std::shared_ptr<TcpBuffer> _receive_buffer = nullptr;
     };
 
     class TcpHeadsetSession : public std::enable_shared_from_this<TcpHeadsetSession>, public WritableTcpSession {
@@ -114,7 +114,10 @@ namespace infrastructure {
         ~TcpHeadsetSession();
     protected:
         friend class TcpServer;
-        TcpHeadsetSession(tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager, tcp_addr addr);
+        TcpHeadsetSession(
+            tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager, tcp_addr addr,
+            const int buffer_count, const int buffer_size
+        );
         void ConnectAndWait();
     private:
         void writeHeader(std::size_t last_bytes);
@@ -127,6 +130,7 @@ namespace infrastructure {
         unsigned long _session_id = 0;
         PacketHeader _header;
         std::mutex _message_mutex;
+        std::shared_ptr<TcpWriteBufferPool> _copy_buffer_pool;
         std::queue<std::shared_ptr<SizedBuffer>> _message_queue;
     };
 
@@ -134,7 +138,8 @@ namespace infrastructure {
         [[nodiscard]] virtual int get_tcp_server_port() const = 0;
         [[nodiscard]] virtual int get_tcp_server_timeout_on_read() const = 0;
         [[nodiscard]] virtual int get_tcp_camera_session_buffer_count() const = 0;
-        [[nodiscard]] virtual int get_tcp_camera_session_buffer_size() const = 0;
+        [[nodiscard]] virtual int get_tcp_headset_session_buffer_count() const = 0;
+        [[nodiscard]] virtual int get_tcp_server_buffer_size() const = 0;
     };
 
     class TcpServer: public std::enable_shared_from_this<TcpServer>{

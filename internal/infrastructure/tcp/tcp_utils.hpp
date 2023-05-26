@@ -102,9 +102,9 @@ namespace infrastructure {
 
     };
 
-    class TcpReadBuffer: public ResizableBuffer {
+    class TcpBuffer: public ResizableBuffer {
     public:
-        TcpReadBuffer(std::size_t size, const bool is_leaky):
+        TcpBuffer(std::size_t size, const bool is_leaky):
                 _max_size(size), _is_leaky(is_leaky)
         {
             _buffer = new unsigned char[_max_size];
@@ -115,13 +115,13 @@ namespace infrastructure {
         [[nodiscard]] std::size_t GetSize() final {
             return _size;
         }
-        virtual void SetSize(std::size_t used_size) {
+        void SetSize(std::size_t used_size) final {
             _size = used_size;
         };
         [[nodiscard]] bool IsLeakyBuffer() final {
             return _is_leaky;
         };
-        ~TcpReadBuffer() {
+        ~TcpBuffer() {
             delete[] _buffer;
         }
     private:
@@ -139,12 +139,12 @@ namespace infrastructure {
         }
         TcpReadBufferPool(const int buffer_count, const int buffer_size) {
             for (int i = 0; i < buffer_count; i++) {
-                _buffers.push_back(new TcpReadBuffer(buffer_size, false));
+                _buffers.push_back(new TcpBuffer(buffer_size, false));
             }
-            _leaky_buffer = std::make_shared<TcpReadBuffer>(buffer_size, true);
+            _leaky_buffer = std::make_shared<TcpBuffer>(buffer_size, true);
         }
-        [[nodiscard]] std::shared_ptr<TcpReadBuffer> GetReadBuffer() {
-            TcpReadBuffer *buffer = nullptr;
+        [[nodiscard]] std::shared_ptr<TcpBuffer> GetReadBuffer() {
+            TcpBuffer *buffer = nullptr;
             {
                 std::unique_lock<std::mutex> lock(_buffer_mutex);
                 if (!_buffers.empty()) {
@@ -156,8 +156,8 @@ namespace infrastructure {
                 return _leaky_buffer;
             }
             auto self(shared_from_this());
-            auto wrapped_buffer = std::shared_ptr<TcpReadBuffer>(
-                    buffer, [this, self](TcpReadBuffer * b) mutable {
+            auto wrapped_buffer = std::shared_ptr<TcpBuffer>(
+                    buffer, [this, self](TcpBuffer * b) mutable {
                         std::unique_lock<std::mutex> lock(_buffer_mutex);
                         _buffers.push_back(b);
                     }
@@ -165,7 +165,7 @@ namespace infrastructure {
             return wrapped_buffer;
         };
         ~TcpReadBufferPool() {
-            TcpReadBuffer *buffer;
+            TcpBuffer *buffer;
             std::unique_lock<std::mutex> lock(_buffer_mutex);
             while (!_buffers.empty()) {
                 buffer = _buffers.front();
@@ -175,8 +175,57 @@ namespace infrastructure {
         }
     private:
         std::mutex _buffer_mutex;
-        std::deque<TcpReadBuffer *> _buffers;
-        std::shared_ptr<TcpReadBuffer> _leaky_buffer;
+        std::deque<TcpBuffer *> _buffers;
+        std::shared_ptr<TcpBuffer> _leaky_buffer;
+    };
+
+    class TcpWriteBufferPool: public std::enable_shared_from_this<TcpWriteBufferPool> {
+    public:
+        static std::shared_ptr<TcpWriteBufferPool> Create(const int buffer_count, const int buffer_size) {
+            auto buffer_pool = std::make_shared<TcpWriteBufferPool>(buffer_count, buffer_size);
+            return buffer_pool;
+        }
+        TcpWriteBufferPool(const int buffer_count, const int buffer_size) {
+            for (int i = 0; i < buffer_count; i++) {
+                _buffers.push_back(new TcpBuffer(buffer_size, false));
+            }
+        }
+        [[nodiscard]] std::shared_ptr<TcpBuffer> CopyToWriteBuffer(std::shared_ptr<SizedBuffer> &&copy_buffer) {
+            TcpBuffer *buffer = nullptr;
+            {
+                std::unique_lock<std::mutex> lock(_buffer_mutex);
+                if (!_buffers.empty()) {
+                    buffer = _buffers.front();
+                    _buffers.pop_front();
+                }
+            }
+            if (buffer == nullptr) {
+                // just being explicit
+                return nullptr;
+            }
+            memcpy(buffer->GetMemory(), copy_buffer->GetMemory(), copy_buffer->GetSize());
+            buffer->SetSize(copy_buffer->GetSize());
+            auto self(shared_from_this());
+            auto wrapped_buffer = std::shared_ptr<TcpBuffer>(
+                buffer, [this, self](TcpBuffer * b) mutable {
+                    std::unique_lock<std::mutex> lock(_buffer_mutex);
+                    _buffers.push_back(b);
+                }
+            );
+            return wrapped_buffer;
+        };
+        ~TcpWriteBufferPool() {
+            TcpBuffer *buffer;
+            std::unique_lock<std::mutex> lock(_buffer_mutex);
+            while (!_buffers.empty()) {
+                buffer = _buffers.front();
+                _buffers.pop_front();
+                delete buffer;
+            }
+        }
+    private:
+        std::mutex _buffer_mutex;
+        std::deque<TcpBuffer *> _buffers;
     };
 }
 

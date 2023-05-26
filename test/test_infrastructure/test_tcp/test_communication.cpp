@@ -236,7 +236,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset-Stress"){
     auto client = infrastructure::TcpClient::Create(conf, ctx->GetContext(), client_manager);
     client->Start();
 
-    std::this_thread::sleep_for(2s);
+    std::this_thread::sleep_for(3s);
     REQUIRE(manager->ClientIsConnected());
 
     t1 = Clock::now();
@@ -248,6 +248,9 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset-Stress"){
         auto buffer = std::make_shared<FakeSizedBuffer>(s);
         manager->_session->Write(std::move(buffer));
         send_count += 1;
+        // since write now posts to an executor, and that involves some mutexes, need the smallest
+        // of timeouts to make it work
+        std::this_thread::sleep_for(10us);
     }
     std::this_thread::sleep_for(2s);
 

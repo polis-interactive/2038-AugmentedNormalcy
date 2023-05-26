@@ -13,7 +13,6 @@ namespace infrastructure {
         const infrastructure::TcpClientConfig &config, net::io_context &context,
         std::shared_ptr<TcpClientManager> manager
     ):
-        _context(context),
         _remote_endpoint(
             net::ip::address::from_string(config.get_tcp_server_host()),
             config.get_tcp_server_port()
@@ -21,7 +20,7 @@ namespace infrastructure {
         _manager(std::move(manager)),
         _use_fixed_port(config.get_tcp_client_used_fixed_port()),
         _is_camera(config.get_tcp_client_is_camera()),
-        _read_timer(context.get_executor()),
+        _read_timer(net::make_strand(context)),
         _read_timeout(config.get_tcp_client_timeout_on_read())
     {
         if (!_is_camera) {
@@ -46,7 +45,7 @@ namespace infrastructure {
             auto done_future = done_promise.get_future();
             auto self(shared_from_this());
             boost::asio::post(
-                net::make_strand(_context),
+                _read_timer.get_executor(),
                 [this, self, p = std::move(done_promise)]() mutable {
                     error_code ec;
                     disconnect(ec);
@@ -69,9 +68,9 @@ namespace infrastructure {
                 auto endpoint = _is_camera
                                 ? tcp::endpoint(tcp::v4(), 11111)
                                 : tcp::endpoint(tcp::v4(), 22222);
-                _socket = std::make_shared<tcp::socket>(net::make_strand(_context), endpoint);
+                _socket = std::make_shared<tcp::socket>(_read_timer.get_executor(), endpoint);
             } else {
-                _socket = std::make_shared<tcp::socket>(net::make_strand(_context));
+                _socket = std::make_shared<tcp::socket>(_read_timer.get_executor());
             }
 
         }

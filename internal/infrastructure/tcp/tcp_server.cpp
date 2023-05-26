@@ -20,7 +20,7 @@ namespace infrastructure {
         _manager(std::move(manager)),
         _read_timeout(config.get_tcp_server_timeout_on_read()),
         _tcp_camera_session_buffer_count(config.get_tcp_camera_session_buffer_count()),
-        _tcp_camera_session_buffer_size(config.get_tcp_camera_session_buffer_size())
+        _tcp_camera_session_buffer_size(config.get_tcp_server_buffer_size())
     {
         error_code ec;
 
@@ -71,10 +71,10 @@ namespace infrastructure {
         if (!_is_stopped) {
             _is_stopped = true;
             auto self(shared_from_this());
-            boost::asio::post(
-                net::make_strand(_context),
-                [&acceptor = _acceptor, self]() {
-                    acceptor.cancel();
+            net::post(
+                _acceptor.get_executor(),
+                [this, self]() {
+                    _acceptor.cancel();
                 }
             );
         }
@@ -82,37 +82,47 @@ namespace infrastructure {
 
     void TcpServer::acceptConnections() {
         std::cout << "TcpServer: starting to accept connections" << std::endl;
+
+        // make sure each session is created with a new strand
+        auto socket_ptr = std::make_shared<tcp::socket>(net::make_strand(_context));
+
         auto self(shared_from_this());
         _acceptor.async_accept(
-            net::make_strand(_context),
-            [this, self](error_code ec, tcp::socket socket) {
+            *socket_ptr,
+            [this, self, socket_ptr](error_code ec) {
                 std::cout << "TcpServer: attempting connection" << std::endl;
                 if (_is_stopped) {
                     return;
                 }
                 if (!ec) {
-                    socket.set_option(tcp::no_delay(true));
+                    socket_ptr->set_option(tcp::no_delay(true));
                     net::socket_base::keep_alive option(true);
-                    socket.set_option(option);
-                    socket.set_option(reuse_port(true));
-                    socket.set_option(tcp::socket::reuse_address(true));
-                    const auto remote = socket.remote_endpoint();
+                    socket_ptr->set_option(option);
+                    socket_ptr->set_option(reuse_port(true));
+                    socket_ptr->set_option(tcp::socket::reuse_address(true));
+                    const auto remote = socket_ptr->remote_endpoint();
                     auto connection_type = _manager->GetConnectionType(remote);
                     const auto addr = remote.address().to_v4();
                     if (connection_type == TcpConnectionType::CAMERA_CONNECTION) {
                         std::shared_ptr<TcpCameraSession>(
                             new TcpCameraSession(
-                                std::move(socket), _manager, addr, _read_timeout, _tcp_camera_session_buffer_count,
+                                std::move(*socket_ptr), _manager, addr, _read_timeout, _tcp_camera_session_buffer_count,
                                 _tcp_camera_session_buffer_size
                             )
                         )->Run();
                     } else if (connection_type == TcpConnectionType::HEADSET_CONNECTION) {
+                        /*
+                         * TODO: this should have < camera_session_buffers so we never hog a whole sessions stream
+                         */
                         std::shared_ptr<TcpHeadsetSession>(
-                                new TcpHeadsetSession(std::move(socket), _manager, addr)
+                            new TcpHeadsetSession(
+                                std::move(*socket_ptr), _manager, addr, _tcp_camera_session_buffer_count,
+                                _tcp_camera_session_buffer_size
+                            )
                         )->ConnectAndWait();
                     } else {
                         std::cout << "TcpServer: Unknown connection, abort" << std::endl;
-                        socket.shutdown(tcp::socket::shutdown_both, ec);
+                        socket_ptr->shutdown(tcp::socket::shutdown_both, ec);
                     }
                 }
                 if (ec != net::error::operation_aborted) {
@@ -252,7 +262,8 @@ namespace infrastructure {
     }
 
     TcpHeadsetSession::TcpHeadsetSession(
-        tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager, tcp_addr addr
+        tcp::socket &&socket, std::shared_ptr<TcpServerManager> &manager, tcp_addr addr, const int buffer_count,
+        const int buffer_size
     ):
         _socket(std::move(socket)),
         _is_live(true),
@@ -260,6 +271,7 @@ namespace infrastructure {
         _addr(std::move(addr))
     {
         std::cout << "TcpHeadsetSession: creating connection" << std::endl;
+        _copy_buffer_pool = TcpWriteBufferPool::Create(buffer_count, buffer_size);
     }
 
     void TcpHeadsetSession::ConnectAndWait() {
@@ -271,16 +283,29 @@ namespace infrastructure {
         if (!_is_live) {
             return;
         }
-        bool write_in_progress = false;
-        {
-            std::unique_lock<std::mutex> lock(_message_mutex);
-            write_in_progress = !_message_queue.empty();
-            _message_queue.push(std::move(buffer));
-        }
-        if (!write_in_progress) {
-            _header.SetupHeader(_message_queue.front()->GetSize());
-            writeHeader(0);
-        }
+        auto self(shared_from_this());
+        net::post(
+            _socket.get_executor(),
+            [this, self, copy_buffer = std::move(buffer)]() mutable {
+                auto out_buffer = _copy_buffer_pool->CopyToWriteBuffer(std::move(copy_buffer));
+                if (out_buffer == nullptr) {
+                    std::cout << "we aren't returning buffers, are we?" << std::endl;
+                    TryClose(true);
+                    return;
+                }
+                // TODO: this is overkill; but I'm not confident I can remove it.
+                bool write_in_progress = false;
+                {
+                    std::unique_lock<std::mutex> lock(_message_mutex);
+                    write_in_progress = !_message_queue.empty();
+                    _message_queue.push(std::move(out_buffer));
+                }
+                if (!write_in_progress) {
+                    _header.SetupHeader(_message_queue.front()->GetSize());
+                    writeHeader(0);
+                }
+            }
+        );
     }
 
     void TcpHeadsetSession::writeHeader(std::size_t last_bytes) {

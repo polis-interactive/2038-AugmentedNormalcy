@@ -2,9 +2,10 @@
   "tcpPoolSize": 6,
   "serverPort": 6969,
   "serverTimeoutOnRead": 3,
-  "cameraBuffersCount": 4,
+  "cameraBuffersCount": 8,
+  "headsetBuffersCount": 5,
   "cameraBufferSize": 1990656,
   "serverClientAssignmentStrategy": "IP_BOUNDS",
-  "serverCameraSwitchingStrategy": "MANUAL_ENTRY",
-  "serverCameraSwitchingAutomaticTimeout": 45
+  "serverCameraSwitchingStrategy": "AUTOMATIC_TIMER",
+  "serverCameraSwitchingAutomaticTimeout": 15
 }

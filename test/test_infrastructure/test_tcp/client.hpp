@@ -49,9 +49,12 @@ struct TestClientServerConfig:
         return 10;
     };
     [[nodiscard]] int get_tcp_camera_session_buffer_count() const override {
-        return 6;
+        return 8;
     }
-    [[nodiscard]] int get_tcp_camera_session_buffer_size() const override {
+    [[nodiscard]] int get_tcp_headset_session_buffer_count() const override {
+        return 5;
+    }
+    [[nodiscard]] int get_tcp_server_buffer_size() const override {
         return 5;
     }
     [[nodiscard]] int get_tcp_client_read_buffer_count() const override {
