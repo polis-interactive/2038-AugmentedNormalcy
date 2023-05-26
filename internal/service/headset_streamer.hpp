@@ -119,12 +119,14 @@ namespace service {
             _decoder->Start();
             _asio_context->Start();
             _tcp_client->Start();
+            _gpio->Start();
             _is_started = true;
         }
         void Stop() {
             if (!_is_started) {
                 return;
             }
+            _gpio->Stop();
             _tcp_client->Stop();
             _asio_context->Stop();
             _graphics->Stop();
@@ -151,6 +153,7 @@ namespace service {
         std::shared_ptr<infrastructure::Decoder> _decoder = nullptr;
         std::shared_ptr<AsioContext> _asio_context = nullptr;
         std::shared_ptr<infrastructure::TcpClient> _tcp_client = nullptr;
+        std::shared_ptr<infrastructure::Gpio> _gpio = nullptr;
     };
 }
 

@@ -28,5 +28,11 @@ namespace service {
                 _graphics->PostImage(std::move(buffer));
             }
         );
+        _gpio = infrastructure::Gpio::Create(
+            config,
+            [this, self]() {
+                std::cout << "Button pushed!" << std::endl;
+            }
+        );
     }
 }
