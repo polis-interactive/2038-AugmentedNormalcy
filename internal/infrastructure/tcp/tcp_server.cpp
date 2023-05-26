@@ -280,13 +280,14 @@ namespace infrastructure {
     }
 
     void TcpHeadsetSession::Write(std::shared_ptr<SizedBuffer> &&buffer) {
-        if (!_is_live) {
-            return;
-        }
+        // just post to the executor for synchronization
         auto self(shared_from_this());
         net::post(
             _socket.get_executor(),
             [this, self, copy_buffer = std::move(buffer)]() mutable {
+                if (!_is_live) {
+                    return;
+                }
                 auto out_buffer = _copy_buffer_pool->CopyToWriteBuffer(std::move(copy_buffer));
                 if (out_buffer == nullptr) {
                     std::cout << "we aren't returning buffers, are we?" << std::endl;
