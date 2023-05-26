@@ -190,7 +190,7 @@ namespace infrastructure {
                 _buffers.push_back(new TcpBuffer(buffer_size, false));
             }
         }
-        [[nodiscard]] std::shared_ptr<TcpBuffer> CopyToWriteBuffer(std::shared_ptr<SizedBuffer> &&copy_buffer) {
+        [[nodiscard]] std::shared_ptr<TcpBuffer> CopyToWriteBuffer(std::shared_ptr<SizedBuffer> copy_buffer) {
             TcpBuffer *buffer = nullptr;
             {
                 std::unique_lock<std::mutex> lock(_buffer_mutex);

@@ -288,9 +288,9 @@ namespace infrastructure {
                 if (!_is_live) {
                     return;
                 }
-                auto out_buffer = _copy_buffer_pool->CopyToWriteBuffer(std::move(copy_buffer));
+                auto out_buffer = _copy_buffer_pool->CopyToWriteBuffer(copy_buffer);
                 if (out_buffer == nullptr) {
-                    std::cout << "we aren't returning buffers, are we?" << std::endl;
+                    std::cout << "TcpHeadsetSession: Can't keep up with demand; bailing" << std::endl;
                     TryClose(true);
                     return;
                 }
