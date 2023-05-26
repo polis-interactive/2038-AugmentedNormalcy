@@ -290,8 +290,8 @@ namespace infrastructure {
                 }
                 auto out_buffer = _copy_buffer_pool->CopyToWriteBuffer(copy_buffer);
                 if (out_buffer == nullptr) {
-                    std::cout << "TcpHeadsetSession: Can't keep up with demand; bailing" << std::endl;
-                    TryClose(true);
+                    // we might determine this is a dead connection we should stop writing to... but for now, this
+                    // solves the bug without much overhead, and gives the connection time to catch up if needed
                     return;
                 }
                 // TODO: this is overkill; but I'm not confident I can remove it.
