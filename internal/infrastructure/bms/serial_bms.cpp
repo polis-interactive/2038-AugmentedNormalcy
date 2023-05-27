@@ -52,7 +52,7 @@ namespace infrastructure {
 
             _port->set_option(serial_port::baud_rate(9600));
             _port->set_option(serial_port::character_size(8));
-            _port->set_option(serial_port::flow_control(serial_port::flow_control::none));
+            _port->set_option(serial_port::flow_control(serial_port::flow_control::hardware));
             _port->set_option(serial_port::parity(serial_port::parity::none));
             _port->set_option(serial_port::stop_bits(serial_port::stop_bits::one));
         }
