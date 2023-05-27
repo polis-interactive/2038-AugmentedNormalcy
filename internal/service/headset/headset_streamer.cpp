@@ -8,12 +8,14 @@
 
 static void turnOnScreen() {
     std::string command = "uhubctl -l 1-1 -a 1";
-    std::system(command.c_str());
+    std::cout << "HeadsetStreamer wants to turn on screen" << std::endl;
+    // std::system(command.c_str());
 }
 
 static void turnOffScreen() {
     std::string command = "uhubctl -l 1-1 -a 0";
-    std::system(command.c_str());
+    std::cout << "HeadsetStreamer wants to turn OFF screen" << std::endl;
+    // std::system(command.c_str());
 }
 
 namespace service {
