@@ -50,7 +50,8 @@ namespace infrastructure {
                 port.set_option(serial_port::parity(serial_port::parity::none));
                 port.set_option(serial_port::stop_bits(serial_port::stop_bits::one));
 
-
+                // wait to start sending back data
+                std::this_thread::sleep_for(1s);
 
                 auto last_read = Clock::now();
                 std::array<char, 100> buffer;
@@ -65,6 +66,7 @@ namespace infrastructure {
                         continue;
                     }
                     last_read = now;
+                    buffer.fill({});
 
                     asyncReadWithTimeout(port, buffer);
 
@@ -87,7 +89,7 @@ namespace infrastructure {
         auto done_future = done_promise.get_future();
 
         auto self(shared_from_this());
-        net::async_read(port, net::buffer(buffer, size),
+        port.async_read_some(net::buffer(buffer, size),
             [this, self, p = std::move(done_promise)](const error_code& ec, std::size_t bytes_written) mutable {
                 if (!ec) {
                     p.set_value(true);
