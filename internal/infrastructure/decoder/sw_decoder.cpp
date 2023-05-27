@@ -105,37 +105,43 @@ namespace infrastructure {
 
     void SwDecoder::run() {
 
-        struct jpeg_decompress_struct cinfo;
-        struct jpeg_error_mgr jerr;
-        cinfo.err = jpeg_std_error(&jerr);
-        jerr.error_exit = [](j_common_ptr cinfo){throw cinfo->err;};
+        while(!_work_stop) {
 
-        try {
-            jpeg_create_decompress(&cinfo);
+            struct jpeg_decompress_struct cinfo;
+            struct jpeg_error_mgr jerr;
+            cinfo.err = jpeg_std_error(&jerr);
+            jerr.error_exit = [](j_common_ptr cinfo) { throw cinfo->err; };
 
-            while(!_work_stop) {
-                std::shared_ptr<SizedBuffer> buffer;
-                {
-                    std::unique_lock<std::mutex> lock(_work_mutex);
-                    _work_cv.wait(lock, [this]() {
-                        return !_work_queue.empty() || _work_stop;
-                    });
-                    if (_work_stop) {
-                        return;
-                    } else if (_work_queue.empty()) {
-                        continue;
+            try {
+                jpeg_create_decompress(&cinfo);
+
+                while (!_work_stop) {
+                    std::shared_ptr<SizedBuffer> buffer;
+                    {
+                        std::unique_lock<std::mutex> lock(_work_mutex);
+                        _work_cv.wait(lock, [this]() {
+                            return !_work_queue.empty() || _work_stop;
+                        });
+                        if (_work_stop) {
+                            return;
+                        } else if (_work_queue.empty()) {
+                            continue;
+                        }
+                        buffer = std::move(_work_queue.front());
+                        _work_queue.pop();
                     }
-                    buffer = std::move(_work_queue.front());
-                    _work_queue.pop();
+                    decodeBuffer(cinfo, std::move(buffer));
                 }
-                decodeBuffer(cinfo, std::move(buffer));
+
+                jpeg_destroy_decompress(&cinfo);
+
+            } catch (struct jpeg_error_mgr *err) {
+                jpeg_destroy_decompress(&cinfo);
+                char pszErr[1024];
+                (cinfo.err->format_message)((j_common_ptr) &cinfo, pszErr);
+                std::cout << "SwDecoder::run encountered an error: " << pszErr << std::endl;
             }
-            jpeg_destroy_decompress(&cinfo);
-        } catch (struct jpeg_error_mgr *err) {
-            jpeg_destroy_decompress( &cinfo );
-            char pszErr[1024];
-            (cinfo.err->format_message)((j_common_ptr)&cinfo, pszErr);
-            std::cout << "SwDecoder::run encountered an error: " << pszErr << std::endl;
+
         }
 
 
