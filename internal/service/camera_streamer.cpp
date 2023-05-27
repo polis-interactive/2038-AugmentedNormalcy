@@ -13,9 +13,9 @@ namespace service {
     }
 
     void CameraStreamer::initialize(const service::CameraStreamerConfig &config) {
-        _tcp_context = infrastructure::TcpContext::Create(config);
+        _asio_context = AsioContext::Create(config);
         auto self(shared_from_this());
-        _tcp_client = infrastructure::TcpClient::Create(config, _tcp_context->GetContext(), self);
+        _tcp_client = infrastructure::TcpClient::Create(config, _asio_context->GetContext(), self);
         _encoder = infrastructure::Encoder::Create(
             config,
             [this, self](std::shared_ptr<SizedBuffer> &&buffer) {

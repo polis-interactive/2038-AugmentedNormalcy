@@ -17,15 +17,26 @@ namespace service {
     }
 
     void HeadsetStreamer::initialize(const service::HeadsetStreamerConfig &config) {
-        _tcp_context = infrastructure::TcpContext::Create(config);
+        _asio_context = AsioContext::Create(config);
         auto self(shared_from_this());
-        _tcp_client = infrastructure::TcpClient::Create(config, _tcp_context->GetContext(), std::move(self));
+        _tcp_client = infrastructure::TcpClient::Create(config, _asio_context->GetContext(), std::move(self));
         _graphics = infrastructure::Graphics::Create(config);
         self = shared_from_this();
         _decoder = infrastructure::Decoder::Create(
             config,
             [this, self](std::shared_ptr<DecoderBuffer> &&buffer) {
                 _graphics->PostImage(std::move(buffer));
+            }
+        );
+        _gpio = infrastructure::Gpio::Create(
+            config,
+            [this, self]() {
+
+            }
+        );
+        _bms = infrastructure::Bms::Create(
+            config, _asio_context->GetContext(), [this, self](const BmsMessage message) {
+
             }
         );
     }

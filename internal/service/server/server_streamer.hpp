@@ -7,7 +7,7 @@
 
 #include "connection_manager.hpp"
 
-#include "infrastructure/tcp/tcp_context.hpp"
+#include "utils/asio_context.hpp"
 
 
 namespace service {
@@ -26,16 +26,16 @@ namespace service {
     };
 
     struct ServerStreamerConfig :
-            public infrastructure::TcpContextConfig,
+            public AsioContextConfig,
             public infrastructure::TcpServerConfig
     {
         ServerStreamerConfig(
-            int tcp_pool_size, int tcp_server_port, int tcp_server_timeout_on_read,
+            int asio_pool_size, int tcp_server_port, int tcp_server_timeout_on_read,
             int camera_buffer_count, int headset_buffer_count, int buffer_size,
             ClientAssignmentStrategy assign_strategy, CameraSwitchingStrategy switch_strategy,
             int switch_automatic_timeout
         ):
-                _tcp_pool_size(tcp_pool_size),
+                _asio_pool_size(asio_pool_size),
                 _tcp_server_port(tcp_server_port),
                 _tcp_server_timeout_on_read(tcp_server_timeout_on_read),
                 _camera_buffer_count(camera_buffer_count),
@@ -46,8 +46,8 @@ namespace service {
                 _switch_automatic_timeout(switch_automatic_timeout)
         {}
 
-        [[nodiscard]] int get_tcp_pool_size() const override {
-            return _tcp_pool_size;
+        [[nodiscard]] int get_asio_pool_size() const override {
+            return _asio_pool_size;
         };
 
         [[nodiscard]] int get_tcp_server_port() const override {
@@ -57,7 +57,7 @@ namespace service {
             return _camera_buffer_count;
         }
 
-        [[nodiscard]] virtual int get_tcp_headset_session_buffer_count() const override {
+        [[nodiscard]] int get_tcp_headset_session_buffer_count() const override {
             return _headset_buffer_count;
         };
 
@@ -78,7 +78,7 @@ namespace service {
             return _switch_automatic_timeout;
         }
     private:
-        const int _tcp_pool_size;
+        const int _asio_pool_size;
         const int _tcp_server_port;
         const int _tcp_server_timeout_on_read;
         const int _camera_buffer_count;
@@ -102,7 +102,7 @@ namespace service {
         void Stop();
         void Unset() {
             _tcp_server.reset();
-            _tcp_context.reset();
+            _asio_context.reset();
         }
         // tcp server
         [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(const tcp::endpoint &endpoint) override;
@@ -133,7 +133,7 @@ namespace service {
 
         ServerStreamerConfig _conf;
         std::atomic_bool _is_started = false;
-        std::shared_ptr<infrastructure::TcpContext> _tcp_context = nullptr;
+        std::shared_ptr<AsioContext> _asio_context = nullptr;
         std::shared_ptr<infrastructure::TcpServer> _tcp_server = nullptr;
 
         ConnectionManager _connection_manager;

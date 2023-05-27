@@ -62,9 +62,9 @@ namespace service {
 
     void ServerStreamer::initialize() {
         assignStrategies();
-        _tcp_context = infrastructure::TcpContext::Create(_conf);
+        _asio_context = AsioContext::Create(_conf);
         auto self(shared_from_this());
-        _tcp_server = infrastructure::TcpServer::Create(_conf, _tcp_context->GetContext(), self);
+        _tcp_server = infrastructure::TcpServer::Create(_conf, _asio_context->GetContext(), self);
     }
 
     void ServerStreamer::Start() {
@@ -77,7 +77,7 @@ namespace service {
             _work_thread = std::make_unique<std::thread>(_camera_switching_strategy);
         }
         /* startup server */
-        _tcp_context->Start();
+        _asio_context->Start();
         _tcp_server->Start();
         _is_started = true;
     }
@@ -165,7 +165,8 @@ namespace service {
         const auto automatic_timeout = _conf.get_server_camera_switching_automatic_timeout();
         auto last_timer = Clock::now();
         while(!_work_stop) {
-            const auto duration = std::chrono::duration_cast<std::chrono::seconds>(Clock::now() - last_timer);
+            const auto now = Clock::now();
+            const auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - last_timer);
             if (duration.count() < automatic_timeout) {
                 std::this_thread::sleep_for(1s);
                 continue;
@@ -176,7 +177,7 @@ namespace service {
             } else {
                 std::cout << "ServerStreamer::CameraSwitchingAutomaticTimer Failed to rotate connections" << std::endl;
             }
-            last_timer = Clock::now();
+            last_timer = now;
         }
     }
 
@@ -229,7 +230,7 @@ namespace service {
         }
         /* stop server */
         _tcp_server->Stop();
-        _tcp_context->Stop();
+        _asio_context->Stop();
         _is_started = false;
     }
 }

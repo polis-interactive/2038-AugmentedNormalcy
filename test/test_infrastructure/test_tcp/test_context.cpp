@@ -8,16 +8,16 @@
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
-#include "infrastructure/tcp/tcp_context.hpp"
+#include "utils/asio_context.hpp"
 
 struct TestContextConfig:
-    infrastructure::TcpContextConfig
+    AsioContextConfig
 {
     explicit TestContextConfig(int pool_size):
         _pool_size(pool_size)
     {}
     const int _pool_size;
-    [[nodiscard]] int get_tcp_pool_size() const override {
+    [[nodiscard]] int get_asio_pool_size() const override {
         return _pool_size;
     };
 };
@@ -28,7 +28,7 @@ TEST_CASE("INFRASTRUCTURE_TCP_CONTEXT-Start-and-stop") {
     std::chrono::time_point< std::chrono::high_resolution_clock> t1, t2, t3, t4;
     {
         t1 = Clock::now();
-        auto ctx = infrastructure::TcpContext::Create(conf);
+        auto ctx = AsioContext::Create(conf);
         t2 = Clock::now();
         ctx->Start();
         t3 = Clock::now();

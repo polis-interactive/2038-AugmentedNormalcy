@@ -22,6 +22,18 @@ static infrastructure::GraphicsType to_graphics_type(const std::string& type) {
     throw std::runtime_error("Unknown graphics type: " + type);
 }
 
+static infrastructure::GpioType to_gpio_type(const std::string &type) {
+    if (type == "PIGPIO") return infrastructure::GpioType::PIGPIO;
+    else if (type == "NONE") return infrastructure::GpioType::NONE;
+    throw std::runtime_error("Unknown gpio type: " + type);
+}
+
+static infrastructure::BmsType to_bms_type(const std::string &type) {
+    if (type == "SERIAL") return infrastructure::BmsType::SERIAL;
+    else if (type == "NONE") return infrastructure::BmsType::NONE;
+    throw std::runtime_error("Unknown bms type: " + type);
+}
+
 int main(int argc, char* argv[]) {
 
     application::RemoveSuccessFile();
@@ -40,7 +52,9 @@ int main(int argc, char* argv[]) {
         config.value("tcpReadBuffers", 4),
         config.value("decoderBuffersDownstream", 4),
         to_decoder_type(config.value("decoderType", "SW")),
-        to_graphics_type(config.value("graphicsType", "GLFW"))
+        to_graphics_type(config.value("graphicsType", "GLFW")),
+        to_gpio_type(config.value("gpioType", "PIGPIO")),
+        to_bms_type(config.value("bmsType", "SERIAL"))
      );
     auto service = service::HeadsetStreamer::Create(headset_config);
     service->Start();
