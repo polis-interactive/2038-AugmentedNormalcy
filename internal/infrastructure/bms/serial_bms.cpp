@@ -24,93 +24,90 @@ namespace infrastructure {
             return;
         }
         _work_stop = false;
-        auto self(shared_from_this());
-        _work_thread = std::make_unique<std::thread>([this, self]() mutable { run(); });
+        startConnection(false);
     }
 
-    void SerialBms::run() {
-        bool has_run = false;
-        while (!_work_stop) {
-            if (has_run) {
-                // might want to make this timeout cleaner; waiting for 5s can be a bummer
-                std::this_thread::sleep_for(5s);
-            }
-            has_run = true;
-            try {
-                serial_port port(_strand);
-                error_code ec;
-                port.open("/dev/ttyAMA0", ec);
-                if (ec) {
-                    throw std::runtime_error("Unable to open serial port");
-                }
+    void SerialBms::startConnection(const bool is_initial_connection) {
+        auto self(shared_from_this());
+        net::post(_strand, [this, self, is_initial_connection]() mutable {
+            doStartConnection(is_initial_connection);
+        });
+    }
 
-                port.set_option(serial_port::baud_rate(9600));
-                port.set_option(serial_port::character_size(8));
-                port.set_option(serial_port::flow_control(serial_port::flow_control::none));
-                port.set_option(serial_port::parity(serial_port::parity::none));
-                port.set_option(serial_port::stop_bits(serial_port::stop_bits::one));
-
-                // wait to start sending back data
-                std::this_thread::sleep_for(1s);
-
-                auto last_read = Clock::now();
-                std::array<char, 100> buffer;
-
-                while (!_work_stop) {
-
-                    // poll every second in case we need to stop
-                    const auto now = Clock::now();
-                    const auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - last_read);
-                    if (duration.count() < _bms_polling_timeout) {
-                        std::this_thread::sleep_for(1s);
-                        continue;
-                    }
-                    last_read = now;
-                    buffer.fill({});
-
-                    asyncReadWithTimeout(port, buffer);
-
-                    std::string response(std::begin(buffer), std::end(buffer));
-                    // TODO: try harder to parse the message; fail three readings in a row before giving up
-                    const auto message = tryParseResponse(response);
-                    _post_callback(message);
-                }
-
-            } catch (std::exception &e) {
-                std::cerr << "SerialBms::run Error: " << e.what() << std::endl;
-            }
+    void SerialBms::doStartConnection(const bool is_initial_connection) {
+        if (!is_initial_connection) {
+            if (_work_stop) return;
+            std::this_thread::sleep_for(1s);
         }
+        if (_work_stop) return;
+        if (_port == nullptr || !_port->is_open()) {
+            _port = std::make_shared<serial_port>(_strand);
+
+            error_code ec;
+            _port->open("/dev/ttyAMA0", ec);
+            if (ec) {
+                std::cout << "SerialBms::doStartConnection unable to open serial port" << std::endl;
+                startConnection(true);
+            }
+
+            _port->set_option(serial_port::baud_rate(9600));
+            _port->set_option(serial_port::character_size(8));
+            _port->set_option(serial_port::flow_control(serial_port::flow_control::none));
+            _port->set_option(serial_port::parity(serial_port::parity::none));
+            _port->set_option(serial_port::stop_bits(serial_port::stop_bits::one));
+        }
+
+        _bms_read_buffer.fill({});
+        readPort(0);
     }
 
-    template<std::size_t size>
-    void SerialBms::asyncReadWithTimeout(serial_port &port, std::array<char, size> &buffer) {
-
-        std::promise<bool> done_promise;
-        auto done_future = done_promise.get_future();
-
+    void SerialBms::readPort(std::size_t last_bytes) {
+        // might add a read timer here
         auto self(shared_from_this());
-        port.async_read_some(net::buffer(buffer, size),
-            [this, self, p = std::move(done_promise)](const error_code& ec, std::size_t bytes_written) mutable {
+        _port->async_read_some(
+            net::buffer(_bms_read_buffer.data() + last_bytes, _bms_read_buffer.size() - last_bytes),
+            [this, self, last_bytes] (error_code ec, std::size_t bytes_read) mutable {
+                if (_work_stop) return;
+                auto total_bytes = last_bytes + bytes_read;
                 if (!ec) {
-                    p.set_value(true);
+                    if (total_bytes == _bms_read_buffer.size()) {
+                        parseAndSendResponse();
+                    } else {
+                        readPort(total_bytes);
+                    }
                 } else {
-                    p.set_value(false);
+                    std::cout << "SerialBms::readPort: error reading data: " << ec << "; reconnecting" << std::endl;
+                    disconnect();
                 }
             }
         );
-        auto status = done_future.wait_for(std::chrono::seconds(_bms_read_timeout));
-        if (status == std::future_status::ready) {
-            if (done_future.get()) {
-                return;
-            } else {
-                throw std::runtime_error("asyncReadWithTimeout had an error reading");
-            }
+    }
+
+    void SerialBms::parseAndSendResponse() {
+        std::string response(std::begin(_bms_read_buffer), std::end(_bms_read_buffer));
+        auto [success, bms_message] = tryParseResponse(response);
+        if (!success) {
+            disconnect();
         } else {
-            throw std::runtime_error("asyncReadWithTimeout did not return in time");
+            _post_callback(bms_message);
+            _bms_read_buffer.fill({});
+            readPort(0);
         }
     }
 
-    BmsMessage SerialBms::tryParseResponse(const std::string &input) {
+    void SerialBms::disconnect() {
+        if (_port != nullptr) {
+            if (_port->is_open()) {
+                _port->close();
+            }
+            _port = nullptr;
+        }
+        if (!_work_stop) {
+            startConnection(false);
+        }
+    }
+
+    std::pair<bool, BmsMessage> SerialBms::tryParseResponse(const std::string &input) {
         const static std::regex wrapping_pattern(R"(\$ (.*?) \$)");
         const static std::string version_clause = "SmartUPS V3.2P,";
         const static std::regex vin_pattern(R"(,Vin (NG|GOOD),)");
@@ -124,47 +121,53 @@ namespace infrastructure {
         std::smatch result;
         bool ret = std::regex_search(input, result, wrapping_pattern);
         if (!ret) {
-            throw std::runtime_error("tryParseResponse failed to parse the string" + input);
+            std::cout << "SerialBms::tryParseResponse failed to parse the string" << std::endl;
+            return { false, msg };
         }
         std::string inner_payload = result[1];
 
         // check that it's reporting the correct version
         if (inner_payload.find(version_clause) == std::string::npos) {
-            throw std::runtime_error("tryParseResponse couldn't find version clause in payload " + inner_payload);
+            std::cout << "SerialBms::tryParseResponse couldn't find version clause in payload" << std::endl;
+            return { false, msg };
         }
 
         // check if its plugged in or not
         ret = std::regex_search(inner_payload, result, vin_pattern);
         if (!ret) {
-            throw std::runtime_error("tryParseResponse failed to find vin in payload " + inner_payload);
+            std::cout << "SerialBms::tryParseResponse failed to find vin in payload" << std::endl;
+            return { false, msg };
         }
         msg.bms_is_plugged_in = result[1] == plugged_in_string;
 
         // check the battery level
         ret = std::regex_search(inner_payload, result, batcap_pattern);
         if (!ret) {
-            throw std::runtime_error("tryParseResponse failed to find batcap in payload " + inner_payload);
+            std::cout << "SerialBms::tryParseResponse failed to find batcap in payload" << std::endl;
+            return { false, msg };
         }
         msg.battery_level = std::stoi(result[1]);
         msg.bms_wants_shutdown = msg.battery_level <= _bms_shutdown_threshold;
 
-        return msg;
+        return { true, msg };
     }
 
     void SerialBms::Stop() {
         if (_work_stop) {
             return;
         }
-
-        if (_work_thread) {
-            if (_work_thread->joinable()) {
-                _work_stop = true;
-                _work_thread->join();
-            }
-            _work_thread.reset();
-        }
-        // just in case we skipped above
         _work_stop = true;
+        std::promise<void> done_promise;
+        auto done_future = done_promise.get_future();
+        auto self(shared_from_this());
+        net::post(
+            _strand,
+            [this, self, p = std::move(done_promise)]() mutable {
+                disconnect();
+                p.set_value();
+            }
+        );
+        done_future.wait();
     }
 
     SerialBms::~SerialBms() {
