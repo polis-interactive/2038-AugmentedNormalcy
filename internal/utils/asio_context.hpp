@@ -11,6 +11,8 @@
 #include <iostream>
 
 namespace net = boost::asio;
+using boost::asio::ip::tcp;
+using boost::system::error_code;
 
 struct AsioContextConfig {
     [[nodiscard]] virtual int get_asio_pool_size() const = 0;

@@ -12,6 +12,7 @@
 #include "infrastructure/decoder/decoder.hpp"
 #include "infrastructure/graphics/graphics.hpp"
 #include "infrastructure/gpio/gpio.hpp"
+#include "infrastructure/bms/bms.hpp"
 
 namespace service {
     struct HeadsetStreamerConfig:
@@ -19,7 +20,8 @@ namespace service {
         public infrastructure::TcpClientConfig,
         public infrastructure::DecoderConfig,
         public infrastructure::GraphicsConfig,
-        public infrastructure::GpioConfig
+        public infrastructure::GpioConfig,
+        public infrastructure::BmsConfig
     {
         HeadsetStreamerConfig(
                 std::string tcp_server_host, int tcp_server_port,
@@ -29,7 +31,8 @@ namespace service {
                 int tcp_read_buffers, int decoder_buffers_downstream,
                 infrastructure::DecoderType decoder_type,
                 infrastructure::GraphicsType graphics_type,
-                infrastructure::GpioType gpio_type
+                infrastructure::GpioType gpio_type,
+                infrastructure::BmsType bms_type
         ):
             _tcp_server_host(std::move(tcp_server_host)),
             _tcp_server_port(tcp_server_port),
@@ -40,7 +43,8 @@ namespace service {
             _decoder_buffers_downstream(decoder_buffers_downstream),
             _graphics_type(graphics_type),
             _image_width_height(std::move(image_width_height)),
-            _gpio_type(gpio_type)
+            _gpio_type(gpio_type),
+            _bms_type(bms_type)
         {}
         [[nodiscard]] int get_asio_pool_size() const override {
             return 3;
@@ -93,7 +97,18 @@ namespace service {
         [[nodiscard]] int get_button_polling_ms() const override {
             return 20;
         }
-
+        [[nodiscard]] infrastructure::BmsType get_bms_type() const override {
+            return _bms_type;
+        }
+        [[nodiscard]] int get_bms_polling_timeout() const override {
+            return 10;
+        };
+        [[nodiscard]] int get_bms_shutdown_threshold() const override {
+            return 3;
+        };
+        [[nodiscard]] int get_bms_read_timeout() const override {
+            return 3;
+        }
     private:
         const std::string _tcp_server_host;
         const int _tcp_server_port;
@@ -105,6 +120,7 @@ namespace service {
         const std::pair<int, int> _image_width_height;
         const infrastructure::GraphicsType _graphics_type;
         const infrastructure::GpioType _gpio_type;
+        const infrastructure::BmsType _bms_type;
     };
 
     class HeadsetStreamer:
@@ -123,12 +139,14 @@ namespace service {
             _asio_context->Start();
             _tcp_client->Start();
             _gpio->Start();
+            _bms->Start();
             _is_started = true;
         }
         void Stop() {
             if (!_is_started) {
                 return;
             }
+            _bms->Stop();
             _gpio->Stop();
             _tcp_client->Stop();
             _asio_context->Stop();
@@ -141,6 +159,8 @@ namespace service {
             _asio_context.reset();
             _graphics.reset();
             _decoder.reset();
+            _gpio.reset();
+            _bms.reset();
         }
         // camera isn't an option so no need to initialize it; don't need to hold state, just give whoever asks the
         // decoder; in the future, we'll make sure only one person can "have it at a time"
@@ -157,6 +177,7 @@ namespace service {
         std::shared_ptr<AsioContext> _asio_context = nullptr;
         std::shared_ptr<infrastructure::TcpClient> _tcp_client = nullptr;
         std::shared_ptr<infrastructure::Gpio> _gpio = nullptr;
+        std::shared_ptr<infrastructure::Bms> _bms = nullptr;
     };
 }
 

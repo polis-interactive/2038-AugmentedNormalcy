@@ -7,6 +7,7 @@
 
 #include <chrono>
 
+using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
 
 #endif //UTILS_CLOCK_HPP

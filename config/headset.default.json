@@ -9,5 +9,6 @@
   "decoderBuffersDownstream": 4,
   "decoderType": "SW",
   "graphicsType": "GLFW",
-  "gpioType": "PIGPIO"
+  "gpioType": "PIGPIO",
+  "bmsType": "SERIAL"
 }

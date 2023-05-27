@@ -9,5 +9,6 @@
   "decoderBuffersDownstream": 4,
   "decoderType": "NONE",
   "graphicsType": "NONE",
-  "gpioType": "NONE"
+  "gpioType": "NONE",
+  "bmsType": "SERIAL"
 }

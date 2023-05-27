@@ -2,8 +2,8 @@
 // Created by brucegoose on 3/18/23.
 //
 
-#ifndef UTILS_BUFFERS_BASE_HPP
-#define UTILS_BUFFERS_BASE_HPP
+#ifndef UTILS_BUFFERS_HPP
+#define UTILS_BUFFERS_HPP
 
 #include <memory>
 #include <functional>
@@ -107,4 +107,4 @@ private:
 using DecoderBufferCallback = std::function<void(std::shared_ptr<DecoderBuffer>&&)>;
 
 
-#endif //UTILS_BUFFERS_BASE_HPP
+#endif //UTILS_BUFFERS_HPP

@@ -7,4 +7,13 @@
 
 #include "bms.hpp"
 
+namespace infrastructure {
+    class NullBms: public Bms {
+    public:
+        NullBms(const BmsConfig &config, net::io_context &context, BmsMessageCallback &&post_callback);
+        void Start() override;
+        void Stop() override;
+    };
+}
+
 #endif //INFRASTRUCTURE_BMS_NULL_BMS_HPP

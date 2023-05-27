@@ -1,5 +1,5 @@
 
-# this needs to filter rpi / broose linux to compile on windows with fake camera
+# technically, anyone with asio can use bms_serial... but it'll only work on the pi
 
 if (
     FEATURE_BMS AND (
