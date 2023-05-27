@@ -52,7 +52,7 @@ namespace infrastructure {
 
             _port->set_option(serial_port::baud_rate(9600));
             _port->set_option(serial_port::character_size(8));
-            _port->set_option(serial_port::flow_control(serial_port::flow_control::none));
+            _port->set_option(serial_port::flow_control(serial_port::flow_control::hardware));
             _port->set_option(serial_port::parity(serial_port::parity::none));
             _port->set_option(serial_port::stop_bits(serial_port::stop_bits::one));
         }
@@ -69,7 +69,7 @@ namespace infrastructure {
             [this, self, last_bytes] (error_code ec, std::size_t bytes_read) mutable {
                 if (_work_stop) return;
                 auto total_bytes = last_bytes + bytes_read;
-                if (!ec || ec == boost::asio::error::eof) {
+                if (!ec) {
                     if (total_bytes == _bms_read_buffer.size()) {
                         parseAndSendResponse();
                     } else {
