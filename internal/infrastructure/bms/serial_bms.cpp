@@ -109,7 +109,7 @@ namespace infrastructure {
     }
 
     std::pair<bool, BmsMessage> SerialBms::tryParseResponse(const std::string &input) {
-        const static std::regex wrapping_pattern(R"(\$((.|\n|\r)*?)\$)");
+        const static std::regex wrapping_pattern(R"(\$ ((.|\n|\r)*?) \$)");
         const static std::string version_clause = "SmartUPS V3.2P";
         const static std::regex vin_pattern(R"(Vin\s*(NG|GOOD))");
         const static std::regex batcap_pattern(R"(BATCAP\s*(100|[1-9]?[0-9]))");
