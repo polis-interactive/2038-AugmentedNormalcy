@@ -8,7 +8,7 @@
 #include <stdint.h>
 
 struct BmsMessage {
-    uint8_t battery_level;
+    int battery_level;
     bool bms_is_plugged_in;
     bool bms_wants_shutdown;
 };

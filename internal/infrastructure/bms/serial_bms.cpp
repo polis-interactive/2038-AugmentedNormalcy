@@ -146,6 +146,7 @@ namespace infrastructure {
             std::cout << "SerialBms::tryParseResponse failed to find batcap in payload" << std::endl;
             return { false, msg };
         }
+        std::cout << result[1] << std::endl;
         msg.battery_level = std::stoi(result[1]);
         msg.bms_wants_shutdown = msg.battery_level <= _bms_shutdown_threshold;
 
