@@ -13,6 +13,9 @@ namespace infrastructure {
         _millis_debounce_timeout(config.get_button_debounce_ms()),
         _millis_polling_timeout(config.get_button_polling_ms())
     {
+        int cfg = gpioCfgGetInternals();
+        cfg |= PI_CFG_NOSIGHANDLER;  // (1<<10)
+        gpioCfgSetInternals(cfg);
         if (gpioInitialise() < 0) {
             throw std::runtime_error("Failed to startup gpio service");
         }
