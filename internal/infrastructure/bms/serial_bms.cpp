@@ -73,7 +73,8 @@ namespace infrastructure {
                     if (total_bytes == _bms_read_buffer.size()) {
                         parseAndSendResponse();
                     } else {
-                        std::this_thread::sleep_for(100ms);
+                        std::this_thread::sleep_for(500ms);
+                        std::cout << "Waiting after: " << total_bytes << std::endl;
                         readPort(total_bytes);
                     }
                 } else {
