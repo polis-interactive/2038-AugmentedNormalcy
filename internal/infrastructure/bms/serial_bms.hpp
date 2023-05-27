@@ -33,7 +33,7 @@ namespace infrastructure {
         std::shared_ptr<serial_port> _port;
 
         const int _bms_read_timeout;
-        std::array<char, 100> _bms_read_buffer;
+        std::array<char, 135> _bms_read_buffer;
     };
 }
 
