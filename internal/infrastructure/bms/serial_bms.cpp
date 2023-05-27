@@ -52,7 +52,7 @@ namespace infrastructure {
 
             _port->set_option(serial_port::baud_rate(9600));
             _port->set_option(serial_port::character_size(8));
-            _port->set_option(serial_port::flow_control(serial_port::flow_control::hardware));
+            _port->set_option(serial_port::flow_control(serial_port::flow_control::none));
             _port->set_option(serial_port::parity(serial_port::parity::none));
             _port->set_option(serial_port::stop_bits(serial_port::stop_bits::one));
         }
@@ -109,10 +109,10 @@ namespace infrastructure {
     }
 
     std::pair<bool, BmsMessage> SerialBms::tryParseResponse(const std::string &input) {
-        const static std::regex wrapping_pattern(R"(\$ (.*?) \$)");
+        const static std::regex wrapping_pattern(R"(\$((.|\n|\r)*?)\$)");
         const static std::string version_clause = "SmartUPS V3.2P";
         const static std::regex vin_pattern(R"(Vin\s*(NG|GOOD))");
-        const static std::regex batcap_pattern(R"(BATCAP\s*(100|[1-9]?[0-9]),)");
+        const static std::regex batcap_pattern(R"(BATCAP\s*(100|[1-9]?[0-9]))");
 
         const static std::string plugged_in_string = "GOOD";
 
