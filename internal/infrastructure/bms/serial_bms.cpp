@@ -90,6 +90,7 @@ namespace infrastructure {
             std::cout << "failed to parse this: " << response << std::endl;
             disconnect();
         } else {
+            std::cout << "successfully parsed this: " << response << std::endl;
             _post_callback(bms_message);
             _bms_read_buffer.fill({});
             readPort(0);
