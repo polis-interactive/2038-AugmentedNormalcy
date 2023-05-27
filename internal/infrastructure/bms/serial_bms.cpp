@@ -45,6 +45,7 @@ namespace infrastructure {
                 port.set_option(serial_port::stop_bits(serial_port::stop_bits::one));
 
                 auto last_read = Clock::now();
+                std::array<char, 100> buffer;
 
                 while (!_work_stop) {
 
@@ -56,11 +57,11 @@ namespace infrastructure {
                         continue;
                     }
                     last_read = now;
+                    auto out = net::buffer(buffer);
 
-                    net::streambuf buffer;
                     asyncReadWithTimeout(port, buffer);
 
-                    std::string response = net::buffer_cast<const char*>(buffer.data());
+                    std::string response(std::begin(buffer), std::end(buffer));
                     // TODO: try harder to parse the message; fail three readings in a row before giving up
                     const auto message = tryParseResponse(response);
                     _post_callback(message);
@@ -72,13 +73,14 @@ namespace infrastructure {
         }
     }
 
-    void SerialBms::asyncReadWithTimeout(serial_port &port, net::streambuf &buffer) {
+    template<std::size_t size>
+    void SerialBms::asyncReadWithTimeout(serial_port &port, std::array<char, size> &buffer) {
 
         std::promise<bool> done_promise;
         auto done_future = done_promise.get_future();
 
         auto self(shared_from_this());
-        net::async_read_until(port, buffer, "\n",
+        net::async_read(port, net::buffer(buffer),
             [this, self, p = std::move(done_promise)](const error_code& ec, std::size_t bytes_written) mutable {
                 if (!ec) {
                     p.set_value(true);
@@ -101,7 +103,7 @@ namespace infrastructure {
 
     BmsMessage SerialBms::tryParseResponse(const std::string &input) {
         const static std::regex wrapping_pattern(R"(\$ (.*?) \$)");
-        const static std::string version_clause = "SmartUPS V3.20,";
+        const static std::string version_clause = "SmartUPS V3.2P,";
         const static std::regex vin_pattern(R"(,Vin (NG|GOOD),)");
         const static std::regex batcap_pattern(R"(BATCAP (100|[1-9]?[0-9]),)");
 

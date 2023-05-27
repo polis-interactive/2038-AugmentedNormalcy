@@ -107,7 +107,7 @@ namespace service {
             return 3;
         };
         [[nodiscard]] int get_bms_read_timeout() const override {
-            return 3;
+            return 5;
         }
     private:
         const std::string _tcp_server_host;

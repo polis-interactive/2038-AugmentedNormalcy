@@ -23,7 +23,9 @@ namespace infrastructure {
         void run();
         BmsMessage tryParseResponse(const std::string &input);
         void startTimer();
-        void asyncReadWithTimeout(serial_port &port, net::streambuf &buffer);
+
+        template<std::size_t size>
+        void asyncReadWithTimeout(serial_port &port, std::array<char, size> &buffer);
 
         std::unique_ptr<std::thread> _work_thread;
         std::atomic<bool> _work_stop = { true };
