@@ -2,7 +2,7 @@
 # technically, anyone with asio can use bms_serial... but it'll only work on the pi
 
 if (
-    FEATURE_BMS AND NOT (
+    FEATURE_BMS AND (
         (AN_PLATFORM STREQUAL RPI_HEADSET) OR
         (AN_PLATFORM STREQUAL RPI_HEADSET_CC)
     )
