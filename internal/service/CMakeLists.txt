@@ -16,7 +16,7 @@ if (NOT AN_PLATFORM_TYPE STREQUAL RPI)
 endif()
 
 if (FEATURE_DISPLAY)
-    set(SOURCES ${SOURCES} headset_streamer.cpp)
+    set(SOURCES ${SOURCES} headset/headset_streamer.cpp)
     set(TARGET_LIBS ${TARGET_LIBS} decoder graphics websocket gpio bms)
 endif()
 

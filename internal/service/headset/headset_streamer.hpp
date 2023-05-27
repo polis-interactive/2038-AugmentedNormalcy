@@ -15,6 +15,8 @@
 #include "infrastructure/gpio/gpio.hpp"
 #include "infrastructure/bms/bms.hpp"
 
+#include "domain/headset_state.hpp"
+
 namespace service {
     struct HeadsetStreamerConfig:
         public AsioContextConfig,
@@ -191,20 +193,23 @@ namespace service {
             _gpio.reset();
             _bms.reset();
         }
-        // camera isn't an option so no need to initialize it; don't need to hold state, just give whoever asks the
-        // decoder; in the future, we'll make sure only one person can "have it at a time"
+        // camera isn't an option so no need to initialize
         void CreateCameraClientConnection() override {};
         void DestroyCameraClientConnection() override {};
-        void CreateHeadsetClientConnection() override {};
+
+        void CreateHeadsetClientConnection() override;
         void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) override;
-        void DestroyHeadsetClientConnection() override {};
+        void DestroyHeadsetClientConnection() override;
 
         void CreateWebsocketClientConnection() override {};
         [[nodiscard]] bool PostWebsocketServerMessage(nlohmann::json &&message) override;
         void DestroyWebsocketClientConnection() override {};
-
     private:
         void initialize(const HeadsetStreamerConfig &config);
+        void handleStateChange(const domain::HeadsetStates state);
+        void handleStateChangeConnecting();
+        void handleStateChangePluggedIn();
+        void handleStateChangeDying();
         std::atomic_bool _is_started = false;
         std::shared_ptr<AsioContext> _asio_context = nullptr;
         std::shared_ptr<infrastructure::TcpClient> _tcp_client = nullptr;
@@ -213,6 +218,7 @@ namespace service {
         std::shared_ptr<infrastructure::Decoder> _decoder = nullptr;
         std::shared_ptr<infrastructure::Gpio> _gpio = nullptr;
         std::shared_ptr<infrastructure::Bms> _bms = nullptr;
+        domain::HeadsetState _state;
     };
 }
 

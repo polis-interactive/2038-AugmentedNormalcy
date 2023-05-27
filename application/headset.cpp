@@ -5,7 +5,7 @@
 #include "config.hpp"
 #include "runtime.hpp"
 
-#include "service/headset_streamer.hpp"
+#include "service/headset/headset_streamer.hpp"
 
 #include <chrono>
 using namespace std::literals;
