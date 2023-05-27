@@ -121,7 +121,7 @@ namespace infrastructure {
 
         // make sure we have a good packet
         std::smatch result;
-        if (std::count(input.begin(), input.end(), '$') >= 2) {
+        if (std::count(input.begin(), input.end(), '$') < 2) {
             std::cout << "SerialBms::tryParseResponse failed to parse the string" << std::endl;
             return { false, msg };
         }
