@@ -31,15 +31,12 @@ namespace service {
         _gpio = infrastructure::Gpio::Create(
             config,
             [this, self]() {
-                std::cout << "Button pushed!" << std::endl;
+
             }
         );
         _bms = infrastructure::Bms::Create(
             config, _asio_context->GetContext(), [this, self](const BmsMessage message) {
-                std::cout << "BMS Reports: " << std::endl;
-                std::cout << "Battery level (out of 100) " << message.battery_level << std::endl;
-                std::cout << "Battery is plugged in? " << message.bms_is_plugged_in << std::endl;
-                std::cout << "BMS wants shutdown? " << message.bms_wants_shutdown << std::endl;
+
             }
         );
     }
