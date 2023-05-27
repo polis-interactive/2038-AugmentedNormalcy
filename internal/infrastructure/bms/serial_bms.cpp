@@ -125,16 +125,15 @@ namespace infrastructure {
             std::cout << "SerialBms::tryParseResponse failed to parse the string" << std::endl;
             return { false, msg };
         }
-        std::string inner_payload = result[1];
 
         // check that it's reporting the correct version
-        if (inner_payload.find(version_clause) == std::string::npos) {
+        if (input.find(version_clause) == std::string::npos) {
             std::cout << "SerialBms::tryParseResponse couldn't find version clause in payload" << std::endl;
             return { false, msg };
         }
 
         // check if its plugged in or not
-        ret = std::regex_search(inner_payload, result, vin_pattern);
+        ret = std::regex_search(input, result, vin_pattern);
         if (!ret) {
             std::cout << "SerialBms::tryParseResponse failed to find vin in payload" << std::endl;
             return { false, msg };
@@ -142,7 +141,7 @@ namespace infrastructure {
         msg.bms_is_plugged_in = result[1] == plugged_in_string;
 
         // check the battery level
-        ret = std::regex_search(inner_payload, result, batcap_pattern);
+        ret = std::regex_search(input, result, batcap_pattern);
         if (!ret) {
             std::cout << "SerialBms::tryParseResponse failed to find batcap in payload" << std::endl;
             return { false, msg };
