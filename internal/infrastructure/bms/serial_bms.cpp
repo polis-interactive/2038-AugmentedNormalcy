@@ -37,12 +37,20 @@ namespace infrastructure {
             }
             has_run = true;
             try {
-                serial_port port(_strand, "/dev/ttyAMA0");
+                serial_port port(_strand);
+                error_code ec;
+                port.open("/dev/ttyAMA0", ec);
+                if (ec) {
+                    throw std::runtime_error("Unable to open serial port");
+                }
+
                 port.set_option(serial_port::baud_rate(9600));
                 port.set_option(serial_port::character_size(8));
                 port.set_option(serial_port::flow_control(serial_port::flow_control::none));
                 port.set_option(serial_port::parity(serial_port::parity::none));
                 port.set_option(serial_port::stop_bits(serial_port::stop_bits::one));
+
+
 
                 auto last_read = Clock::now();
                 std::array<char, 100> buffer;
@@ -57,7 +65,6 @@ namespace infrastructure {
                         continue;
                     }
                     last_read = now;
-                    auto out = net::buffer(buffer);
 
                     asyncReadWithTimeout(port, buffer);
 
@@ -80,7 +87,7 @@ namespace infrastructure {
         auto done_future = done_promise.get_future();
 
         auto self(shared_from_this());
-        net::async_read(port, net::buffer(buffer),
+        net::async_read(port, net::buffer(buffer, size),
             [this, self, p = std::move(done_promise)](const error_code& ec, std::size_t bytes_written) mutable {
                 if (!ec) {
                     p.set_value(true);
