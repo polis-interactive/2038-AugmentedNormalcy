@@ -69,7 +69,7 @@ namespace infrastructure {
             [this, self, last_bytes] (error_code ec, std::size_t bytes_read) mutable {
                 if (_work_stop) return;
                 auto total_bytes = last_bytes + bytes_read;
-                if (!ec) {
+                if (!ec || ec == boost::asio::error::eof) {
                     if (total_bytes == _bms_read_buffer.size()) {
                         parseAndSendResponse();
                     } else {
@@ -87,6 +87,7 @@ namespace infrastructure {
         std::string response(std::begin(_bms_read_buffer), std::end(_bms_read_buffer));
         auto [success, bms_message] = tryParseResponse(response);
         if (!success) {
+            std::cout << "failed to parse this: " << response << std::endl;
             disconnect();
         } else {
             _post_callback(bms_message);
