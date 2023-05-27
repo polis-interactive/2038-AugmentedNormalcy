@@ -69,7 +69,7 @@ namespace infrastructure {
             [this, self, last_bytes] (error_code ec, std::size_t bytes_read) mutable {
                 if (_work_stop) return;
                 auto total_bytes = last_bytes + bytes_read;
-                if (!ec || ec == boost::asio::error::eof) {
+                if (!ec) {
                     if (total_bytes == _bms_read_buffer.size()) {
                         parseAndSendResponse();
                     } else {
