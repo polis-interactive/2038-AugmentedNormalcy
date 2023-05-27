@@ -64,7 +64,8 @@ namespace infrastructure {
     void SerialBms::readPort(std::size_t last_bytes) {
         // might add a read timer here
         auto self(shared_from_this());
-        _port->async_read_some(
+        net::async_read(
+            *_port,
             net::buffer(_bms_read_buffer.data() + last_bytes, _bms_read_buffer.size() - last_bytes),
             [this, self, last_bytes] (error_code ec, std::size_t bytes_read) mutable {
                 if (_work_stop) return;
@@ -73,6 +74,7 @@ namespace infrastructure {
                     if (total_bytes == _bms_read_buffer.size()) {
                         parseAndSendResponse();
                     } else {
+                        std::cout << "uhoh, need to read more" << std::endl;
                         readPort(total_bytes);
                     }
                 } else {
