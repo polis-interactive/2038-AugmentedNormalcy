@@ -5,6 +5,9 @@
 #ifndef INFRASTRUCTURE_GPIO_PIGPIO_GPIO_HPP
 #define INFRASTRUCTURE_GPIO_PIGPIO_GPIO_HPP
 
+#include <thread>
+#include <atomic>
+
 #include "gpio.hpp"
 #include "pigpio.h"
 
@@ -19,11 +22,13 @@ namespace infrastructure {
         void Stop() override;
         ~PiGpio();
     private:
-        void handleButtonPush(int gpio, int level);
+        void run();
         const int _button_gpio_pin;
+        const std::chrono::milliseconds _millis_polling_timeout;
         const std::chrono::milliseconds _millis_debounce_timeout;
-        std::chrono::time_point<Clock> _last_button_press;
-
+        bool _last_button_is_pushed = false;
+        std::unique_ptr<std::thread> _work_thread;
+        std::atomic<bool> _work_stop = { true };
     };
 
 }

@@ -6,20 +6,12 @@
 #include "pigpio_gpio.hpp"
 
 
-std::function<void(int, int)> gpioAlertHandler = nullptr;
-
-void globalGpioAlertHandler(int gpio, int level, uint32_t tick) {
-    if (gpioAlertHandler != nullptr) { // make sure it's assigned
-        gpioAlertHandler(gpio, level);
-    }
-}
-
 namespace infrastructure {
     PiGpio::PiGpio(const infrastructure::GpioConfig &config, std::function<void()> &&button_push_callback):
         Gpio(config, std::move(button_push_callback)),
         _button_gpio_pin(config.get_button_pin()),
         _millis_debounce_timeout(config.get_button_debounce_ms()),
-        _last_button_press(Clock::now())
+        _millis_polling_timeout(config.get_button_polling_ms())
     {
         if (gpioInitialise() < 0) {
             throw std::runtime_error("Failed to startup gpio service");
@@ -34,38 +26,52 @@ namespace infrastructure {
     }
 
     void PiGpio::Start() {
+        if (!_work_stop) {
+            return;
+        }
+        _work_stop = false;
         auto self(shared_from_this());
-        gpioAlertHandler = [this, self](int gpio, int level) {
-            handleButtonPush(gpio, level);
-        };
-        gpioSetAlertFunc(_button_gpio_pin, globalGpioAlertHandler);
+        _work_thread = std::make_unique<std::thread>([this, self]() mutable { run(); });
     }
 
-    void PiGpio::handleButtonPush(int gpio, int level) {
-        if (gpio != _button_gpio_pin) {
-            return;
+    void PiGpio::run() {
+        while (!_work_stop) {
+            const bool button_is_pushed = gpioRead(_button_gpio_pin) == 0;
+            if (button_is_pushed != _last_button_is_pushed) {
+                // button changed state
+                if (button_is_pushed) {
+                    // button got pushed; post an event
+                    _post_button_push_callback();
+                }
+                std::this_thread::sleep_for(_millis_debounce_timeout);
+            } else {
+                // no state change; regular polling timeout
+                std::this_thread::sleep_for(_millis_polling_timeout);
+            }
+            // set the state to w.e the last one we read
+            _last_button_is_pushed = button_is_pushed;
         }
-        const auto now = Clock::now();
-        const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(now - _last_button_press);
-        if (duration < _millis_debounce_timeout) {
-            // button debounced; ignore
-            return;
-        }
-        // button push on low level
-        if (level == 0) {
-            _post_button_push_callback();
-        }
-        _last_button_press = now;
+
     }
 
     void PiGpio::Stop() {
-        gpioSetAlertFunc(_button_gpio_pin, nullptr);
-        gpioAlertHandler = nullptr;
+        if (_work_stop) {
+            return;
+        }
+
+        if (_work_thread) {
+            if (_work_thread->joinable()) {
+                _work_stop = true;
+                _work_thread->join();
+            }
+            _work_thread.reset();
+        }
+        // just in case we skipped above
+        _work_stop = true;
     }
 
     PiGpio::~PiGpio() {
-        gpioSetAlertFunc(_button_gpio_pin, nullptr);
-        gpioAlertHandler = nullptr;
+        Stop();
         gpioTerminate();
     }
 }

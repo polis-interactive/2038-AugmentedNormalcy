@@ -88,8 +88,11 @@ namespace service {
             return 17;
         };
         [[nodiscard]] int get_button_debounce_ms() const override {
-            return 55;
+            return 75;
         };
+        [[nodiscard]] int get_button_polling_ms() const override {
+            return 20;
+        }
 
     private:
         const std::string _tcp_server_host;

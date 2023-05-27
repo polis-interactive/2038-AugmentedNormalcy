@@ -20,6 +20,7 @@ namespace infrastructure {
         [[nodiscard]] virtual GpioType get_gpio_type() const = 0;
         [[nodiscard]] virtual int get_button_pin() const = 0;
         [[nodiscard]] virtual int get_button_debounce_ms() const = 0;
+        [[nodiscard]] virtual int get_button_polling_ms() const = 0;
     };
 
     class Gpio {
