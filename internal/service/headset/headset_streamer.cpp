@@ -44,7 +44,10 @@ namespace service {
         );
         _bms = infrastructure::Bms::Create(
             config, _asio_context->GetContext(), [this, self](const BmsMessage message) {
-
+                const auto [state_change, state] = _state.PostBmsMessage(message);
+                if (state_change) {
+                    handleStateChange(state);
+                }
             }
         );
     }
@@ -59,6 +62,13 @@ namespace service {
 
     void HeadsetStreamer::CreateHeadsetClientConnection() {
         const auto [state_change, state] = _state.PostTcpConnection(true);
+        if (state_change) {
+            handleStateChange(state);
+        }
+    }
+
+    void HeadsetStreamer::DestroyHeadsetClientConnection() {
+        const auto [state_change, state] = _state.PostTcpConnection(false);
         if (state_change) {
             handleStateChange(state);
         }
