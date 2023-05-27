@@ -46,6 +46,8 @@ namespace service {
             config, _asio_context->GetContext(), [this, self](const BmsMessage message) {
                 const auto [state_change, state] = _state.PostBmsMessage(message);
                 if (state_change) {
+                    std::cout << "is plugged in?" << message.bms_is_plugged_in << std::endl;
+                    std::cout << "New state: " << (int) state << std::endl;
                     handleStateChange(state);
                 }
             }
