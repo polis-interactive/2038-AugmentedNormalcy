@@ -133,7 +133,7 @@ namespace infrastructure {
         }
 
         // check if its plugged in or not
-        ret = std::regex_search(input, result, vin_pattern);
+        bool ret = std::regex_search(input, result, vin_pattern);
         if (!ret) {
             std::cout << "SerialBms::tryParseResponse failed to find vin in payload" << std::endl;
             return { false, msg };
