@@ -31,9 +31,9 @@ namespace infrastructure {
         }
         _work_stop = false;
 
-        // auto self(shared_from_this());
-        // _work_thread = std::make_unique<std::thread>([this, self]() mutable { run(); });
-        startConnection(true);
+        auto self(shared_from_this());
+        _work_thread = std::make_unique<std::thread>([this, self]() mutable { run(); });
+        // startConnection(true);
     }
 
     void SerialBms::run() {
@@ -319,6 +319,7 @@ namespace infrastructure {
         if (_work_stop) {
             return;
         }
+        /*
         _work_stop = true;
         std::promise<void> done_promise;
         auto done_future = done_promise.get_future();
@@ -331,8 +332,8 @@ namespace infrastructure {
                 }
         );
         done_future.wait();
+         */
 
-        /*
         if (_work_thread) {
             if (_work_thread->joinable()) {
                 _work_stop = true;
@@ -343,7 +344,6 @@ namespace infrastructure {
 
         // just in case we skipped above
         _work_stop = true;
-         */
     }
 
     SerialBms::~SerialBms() {
