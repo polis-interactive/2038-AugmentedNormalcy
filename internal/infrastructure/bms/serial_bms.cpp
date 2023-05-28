@@ -31,7 +31,7 @@ namespace infrastructure {
         }
         _work_stop = false;
 
-        auto self(shared_from_this());
+        // auto self(shared_from_this());
         // _work_thread = std::make_unique<std::thread>([this, self]() mutable { run(); });
         startConnection(true);
     }
@@ -171,6 +171,7 @@ namespace infrastructure {
     }
 
     void SerialBms::doStartConnection(const bool is_initial_connection) {
+        std::cout << "SerialBms::doStartConnection connecting" << std::endl;
         if (!is_initial_connection) {
             if (_work_stop) return;
             std::this_thread::sleep_for(1s);
@@ -196,6 +197,8 @@ namespace infrastructure {
     }
 
     void SerialBms::waitReadPort() {
+
+        std::cout << "SerialBms::waitReadPort waiting to read" << std::endl;
         if (_work_stop) return;
 
         int fd = _port->native_handle();
