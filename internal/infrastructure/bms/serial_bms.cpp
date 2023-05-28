@@ -69,7 +69,7 @@ namespace infrastructure {
 
     bool SerialBms::setupConnection() {
         std::cout << "SerialBms::setupConnection Opening file" << std::endl;
-        _port_fd = open("/dev/ttyAMA0", O_RDWR | O_NONBLOCK | O_NOCTTY);
+        _port_fd = open("/dev/ttyAMA0", O_RDWR);
         if (_port_fd < 0) {
             std::cout << "SerialBms::setupConnection failed to open /dev/ttyAMA0" << std::endl;
             return false;
@@ -82,22 +82,29 @@ namespace infrastructure {
             return false;
         }
 
-        cfmakeraw(&tty);
+        tty.c_cflag &= ~PARENB; // Clear parity bit, disabling parity (most common)
+        tty.c_cflag &= ~CSTOPB; // Clear stop field, only one stop bit used in communication (most common)
+        tty.c_cflag &= ~CSIZE; // Clear all bits that set the data size
+        tty.c_cflag |= CS8; // 8 bits per byte (most common)
+        tty.c_cflag &= ~CRTSCTS; // Disable RTS/CTS hardware flow control (most common)
+        tty.c_cflag |= CREAD | CLOCAL; // Turn on READ & ignore ctrl lines (CLOCAL = 1)
 
-        // 8 bits per bytes
-        tty.c_cflag &= ~CSIZE;
-        tty.c_cflag |= CS8;
+        tty.c_lflag &= ~ICANON;
+        tty.c_lflag &= ~ECHO; // Disable echo
+        tty.c_lflag &= ~ECHOE; // Disable erasure
+        tty.c_lflag &= ~ECHONL; // Disable new-line echo
+        tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
+        tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
+        tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any special handling of received bytes
 
-        // disable flow control
-        tty.c_iflag &= ~(IXOFF | IXON);
-        tty.c_cflag &= ~CRTSCTS;
+        tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
+        tty.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
+        // tty.c_oflag &= ~OXTABS; // Prevent conversion of tabs to spaces (NOT PRESENT ON LINUX)
+        // tty.c_oflag &= ~ONOEOT; // Prevent removal of C-d chars (0x004) in output (NOT PRESENT ON LINUX)
 
-        // ignore parity
-        tty.c_iflag |= IGNPAR;
-        tty.c_cflag &= ~(PARENB | PARODD);
+        tty.c_cc[VTIME] = 10;    // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
+        tty.c_cc[VMIN] = 0;
 
-        // one stop bit
-        tty.c_cflag &= ~CSTOPB;
 
         std::cout << "SerialBms::setupConnection setting speed" << std::endl;
         bool success = cfsetspeed(&tty, B9600); // set speed
@@ -118,36 +125,37 @@ namespace infrastructure {
 
     void SerialBms::readAndReport() {
         while (!_work_stop) {
+            auto start = Clock::now();
             std::cout << "SerialBms::readAndReport running" << std::endl;
-            int bytes_available = 0;
-            if (ioctl(_port_fd, FIONREAD, &bytes_available) == -1) {
-                std::cout << "SerialBms::readAndReport failed to query the port" << std::endl;
+
+            std::size_t total_bytes_read = 0;
+            if (total_bytes_read < _bms_read_buffer.size()) {
+                auto bytes_read = read(
+                      _port_fd, _bms_read_buffer.data() + total_bytes_read,
+                      sizeof(_bms_read_buffer) - total_bytes_read
+                );
+                if (bytes_read < 0) {
+                    std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
+                    return;
+                }
+                total_bytes_read += bytes_read;
+            }
+
+            std::string response(std::begin(_bms_read_buffer), std::end(_bms_read_buffer));
+            auto [success, bms_message] = tryParseResponse(response);
+
+            if (!success) {
+                std::cout << "SerialBms::readAndReport: failed to parse this: " << response << std::endl;
                 return;
-            }
-            if (bytes_available > _bms_read_buffer.size()) {
-
-                std::cout << "SerialBms::readAndReport trying to read bytes with avail: " << bytes_available << std::endl;
-                if (!doReadBytes()) {
-                    return;
-                }
-
-                std::cout << "SerialBms::readAndReport readbytes!" << std::endl;
-
-                std::string response(std::begin(_bms_read_buffer), std::end(_bms_read_buffer));
-                auto [success, bms_message] = tryParseResponse(response);
-
-                if (!success) {
-                    std::cout << "SerialBms::readAndReport: failed to parse this: " << response << std::endl;
-                    return;
-                } else {
-                    std::cout << "SerialBms::readAndReport: Parsed successfully!" << std::endl;
-                    _post_callback(bms_message);
-                }
-
             } else {
-                std::cout << "SerialBms::readAndReport not enough bytes to read: " << bytes_available << std::endl;
+                std::cout << "SerialBms::readAndReport: Parsed successfully!" << std::endl;
+                _post_callback(bms_message);
             }
-            std::this_thread::sleep_for(1s);
+
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - start);
+            if (duration < 1s) {
+                std::this_thread::sleep_for(1s - duration);
+            }
         }
     }
 
