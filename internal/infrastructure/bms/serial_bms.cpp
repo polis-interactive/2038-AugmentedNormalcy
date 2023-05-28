@@ -74,8 +74,6 @@ namespace infrastructure {
             return false;
         }
 
-        cfmakeraw(&tty);
-
         tty.c_cflag &= ~PARENB; // Clear parity bit, disabling parity (most common)
         tty.c_cflag &= ~CSTOPB; // Clear stop field, only one stop bit used in communication (most common)
         tty.c_cflag &= ~CSIZE; // Clear all bits that set the data size
