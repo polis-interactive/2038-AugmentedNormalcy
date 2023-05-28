@@ -122,6 +122,7 @@ namespace infrastructure {
             std::memset(_bms_read_buffer.data(), 0, _bms_read_buffer.size());
 
             std::size_t total_bytes_read = 0;
+            std::cout << _bms_read_buffer.size() << std::endl;
             if (total_bytes_read < _bms_read_buffer.size()) {
                 auto bytes_read = read(
                       _port_fd, _bms_read_buffer.data() + total_bytes_read,
@@ -134,7 +135,7 @@ namespace infrastructure {
                 total_bytes_read += bytes_read;
             }
 
-            std::string response(std::begin(_bms_read_buffer), std::end(_bms_read_buffer));
+            std::string response(_bms_read_buffer.begin(), _bms_read_buffer.begin() + _bms_read_buffer.size());
             std::cout << response << std::endl;
             auto [success, bms_message] = tryParseResponse(response);
 
