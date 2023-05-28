@@ -147,10 +147,12 @@ namespace infrastructure {
                     continue;
                 }
 
+                std::cout << "SerialBms::readAndReport preread" << std::endl;
                 auto bytes_read = read(
                         _port_fd, _bms_read_buffer.data() + total_bytes_read,
                         _bms_read_buffer.size() - total_bytes_read - 1
                 );
+                std::cout << "SerialBms::readAndReport postread" << std::endl;
                 if (bytes_read < 0) {
                     std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
                     return;
