@@ -169,7 +169,7 @@ namespace service {
             _tcp_client->Start();
             _websocket_client->Start();
             _gpio->Start();
-            // _bms->Start();
+            _bms->Start();
             _is_started = true;
         }
         void Stop() {
@@ -177,7 +177,7 @@ namespace service {
                 return;
             }
             _state.PostState(domain::HeadsetStates::CLOSING);
-            // _bms->Stop();
+            _bms->Stop();
             _gpio->Stop();
             _websocket_client->Stop();
             _tcp_client->Stop();
