@@ -46,6 +46,9 @@ namespace service {
         );
         _bms = infrastructure::Bms::Create(
             config, _asio_context->GetContext(), [this, self](const BmsMessage message) {
+                std::cout << "BMS IS PLUGGED IN? " << message.bms_is_plugged_in << std::endl;
+                std::cout << "BMS WANTS SHUTDOWN? " << message.bms_wants_shutdown << std::endl;
+                std::cout << "lEVEL? " << message.battery_level << std::endl;
                 const auto [state_change, state] = _state.PostBmsMessage(message);
                 if (state_change) {
                     std::cout << "is plugged in?" << message.bms_is_plugged_in << std::endl;

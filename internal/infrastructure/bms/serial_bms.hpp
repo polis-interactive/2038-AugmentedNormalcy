@@ -20,18 +20,10 @@ namespace infrastructure {
         void Stop() override;
         ~SerialBms();
     private:
-        void startConnection(const bool is_initial_connection);
-        void doStartConnection(const bool is_initial_connection);
-        void waitReadPort();
-        void readPort(std::size_t last_bytes);
-        void parseAndSendResponse();
-        std::pair<bool, BmsMessage> tryParseResponse(const std::string &input);
-        void disconnect();
-
         void run();
         bool setupConnection();
         void readAndReport();
-        bool doReadBytes();
+        std::pair<bool, BmsMessage> tryParseResponse(const std::string &input);
 
         std::atomic<bool> _work_stop = { true };
         std::unique_ptr<std::thread> _work_thread;

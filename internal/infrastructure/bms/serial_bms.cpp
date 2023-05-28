@@ -33,7 +33,6 @@ namespace infrastructure {
 
         auto self(shared_from_this());
         _work_thread = std::make_unique<std::thread>([this, self]() mutable { run(); });
-        // startConnection(true);
     }
 
     void SerialBms::run() {
@@ -58,13 +57,6 @@ namespace infrastructure {
                 _port_fd = -1;
             }
         }
-    }
-
-    void SerialBms::startConnection(const bool is_initial_connection) {
-        auto self(shared_from_this());
-        net::post(_strand, [this, self, is_initial_connection]() mutable {
-            doStartConnection(is_initial_connection);
-        });
     }
 
     bool SerialBms::setupConnection() {
@@ -124,9 +116,9 @@ namespace infrastructure {
     }
 
     void SerialBms::readAndReport() {
+        std::cout << "SerialBms::readAndReport running" << std::endl;
         while (!_work_stop) {
             auto start = Clock::now();
-            std::cout << "SerialBms::readAndReport running" << std::endl;
 
             std::size_t total_bytes_read = 0;
             if (total_bytes_read < _bms_read_buffer.size()) {
@@ -145,10 +137,8 @@ namespace infrastructure {
             auto [success, bms_message] = tryParseResponse(response);
 
             if (!success) {
-                std::cout << "SerialBms::readAndReport: failed to parse this: " << response << std::endl;
                 return;
             } else {
-                std::cout << "SerialBms::readAndReport: Parsed successfully!" << std::endl;
                 _post_callback(bms_message);
             }
 
@@ -157,128 +147,8 @@ namespace infrastructure {
                 std::this_thread::sleep_for(1s - duration);
             }
         }
-    }
 
-    bool SerialBms::doReadBytes() {
-        std::cout << "SerialBms::doReadBytes reading bytes" << std::endl;
-        std::size_t bytes_read = 0;
-        while(true) {
-            auto just_read = read(_port_fd, _bms_read_buffer.data() + bytes_read, sizeof(_bms_read_buffer) - bytes_read);
-            if (just_read < 0) {
-                std::cout << "SerialBms::doReadBytes: failed to read" << std::endl;
-                return false;
-            }
-            bytes_read += just_read;
-            if (bytes_read < _bms_read_buffer.size()) {
-                std::cout << "SerialBms::doReadBytes: haven't read enough bytes: only " << bytes_read << std::endl;
-                std::this_thread::sleep_for(250ms);
-            } else {
-                return true;
-            }
-        }
-    }
-
-    void SerialBms::doStartConnection(const bool is_initial_connection) {
-        std::cout << "SerialBms::doStartConnection connecting" << std::endl;
-        if (!is_initial_connection) {
-            if (_work_stop) return;
-            std::this_thread::sleep_for(1s);
-        }
-        if (_work_stop) return;
-
-        _port = std::make_shared<serial_port>(_strand);
-
-        error_code ec;
-        _port->open("/dev/ttyAMA0", ec);
-        if (ec) {
-            std::cout << "SerialBms::doStartConnection unable to open serial port" << std::endl;
-            startConnection(true);
-        }
-
-        _port->set_option(serial_port::baud_rate(9600));
-        _port->set_option(serial_port::character_size(8));
-        _port->set_option(serial_port::flow_control(serial_port::flow_control::none));
-        _port->set_option(serial_port::parity(serial_port::parity::none));
-        _port->set_option(serial_port::stop_bits(serial_port::stop_bits::one));
-
-        waitReadPort();
-    }
-
-    void SerialBms::waitReadPort() {
-
-        if (_work_stop) return;
-
-        int fd = _port->native_handle();
-        int bytes_available;
-        ioctl(fd, FIONREAD, &bytes_available);
-        if (bytes_available >= _bms_read_buffer.size()) {
-            _bms_read_buffer.fill({});
-            readPort(0);
-            return;
-        }
-
-        _timer.expires_from_now(boost::posix_time::milliseconds(100));
-        auto self(shared_from_this());
-        _timer.async_wait([this, self](const error_code& ec) {
-            if (!ec) {
-                waitReadPort();
-            } else {
-                std::cout << "SerialBms::waitReadPort: error waiting for timer?" << std::endl;
-                disconnect();
-            }
-        });
-
-    }
-
-
-
-    void SerialBms::readPort(std::size_t last_bytes) {
-        // might add a read timer here
-        auto self(shared_from_this());
-        net::async_read(
-            *_port,
-            net::buffer(_bms_read_buffer.data() + last_bytes, _bms_read_buffer.size() - last_bytes),
-            [this, self, last_bytes] (error_code ec, std::size_t bytes_read) mutable {
-                if (_work_stop) return;
-                auto total_bytes = last_bytes + bytes_read;
-                if (!ec) {
-                    if (total_bytes == _bms_read_buffer.size()) {
-                        parseAndSendResponse();
-                    } else {
-                        std::this_thread::sleep_for(500ms);
-                        std::cout << "Only read n bytes:" << total_bytes << std::endl;
-                        readPort(total_bytes);
-                    }
-                } else {
-                    std::cout << "SerialBms::readPort: error reading data: " << ec << "; reconnecting" << std::endl;
-                    disconnect();
-                }
-            }
-        );
-    }
-
-    void SerialBms::parseAndSendResponse() {
-        std::string response(std::begin(_bms_read_buffer), std::end(_bms_read_buffer));
-        auto [success, bms_message] = tryParseResponse(response);
-        if (!success) {
-            std::cout << "failed to parse this: " << response << std::endl;
-            disconnect();
-        } else {
-            _post_callback(bms_message);
-            waitReadPort();
-        }
-    }
-
-    void SerialBms::disconnect() {
-        if (_port != nullptr) {
-            if (_port->is_open()) {
-                _port->close();
-            }
-            _port = nullptr;
-        }
-        if (!_work_stop) {
-            startConnection(false);
-        }
+        std::cout << "SerialBms::readAndReport stopping" << std::endl;
     }
 
     std::pair<bool, BmsMessage> SerialBms::tryParseResponse(const std::string &input) {
@@ -327,20 +197,6 @@ namespace infrastructure {
         if (_work_stop) {
             return;
         }
-        /*
-        _work_stop = true;
-        std::promise<void> done_promise;
-        auto done_future = done_promise.get_future();
-        auto self(shared_from_this());
-        net::post(
-                _strand,
-                [this, self, p = std::move(done_promise)]() mutable {
-                    disconnect();
-                    p.set_value();
-                }
-        );
-        done_future.wait();
-         */
 
         if (_work_thread) {
             if (_work_thread->joinable()) {
