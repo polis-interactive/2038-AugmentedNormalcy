@@ -22,6 +22,7 @@ namespace infrastructure {
     private:
         void startConnection(const bool is_initial_connection);
         void doStartConnection(const bool is_initial_connection);
+        void waitReadPort();
         void readPort(std::size_t last_bytes);
         void parseAndSendResponse();
         std::pair<bool, BmsMessage> tryParseResponse(const std::string &input);
@@ -34,6 +35,7 @@ namespace infrastructure {
 
         const int _bms_read_timeout;
         std::array<char, 100> _bms_read_buffer;
+        net::deadline_timer _timer;
     };
 }
 

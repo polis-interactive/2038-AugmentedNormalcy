@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <regex>
+#include <sys/ioctl.h>
 
 #include "serial_bms.hpp"
 
@@ -16,7 +17,8 @@ namespace infrastructure {
     ):
         Bms(config, context, std::move(post_callback)),
         _strand(net::make_strand(context)),
-        _bms_read_timeout(config.get_bms_read_timeout())
+        _bms_read_timeout(config.get_bms_read_timeout()),
+        _timer(_strand)
     {}
 
     void SerialBms::Start() {
@@ -56,10 +58,35 @@ namespace infrastructure {
             _port->set_option(serial_port::parity(serial_port::parity::none));
             _port->set_option(serial_port::stop_bits(serial_port::stop_bits::one));
         }
-
-        _bms_read_buffer.fill({});
-        readPort(0);
+        waitReadPort();
     }
+
+    void SerialBms::waitReadPort() {
+        if (_work_stop) return;
+
+        int fd = _port->native_handle();
+        int bytes_available;
+        ioctl(fd, FIONREAD, &bytes_available);
+        if (bytes_available >= _bms_read_buffer.size()) {
+            _bms_read_buffer.fill({});
+            readPort(0);
+            return;
+        }
+
+        _timer.expires_from_now(boost::posix_time::milliseconds(500));
+        auto self(shared_from_this());
+        _timer.async_wait([this, self](const error_code& ec) {
+            if (!ec) {
+                waitReadPort();
+            } else {
+                std::cout << "SerialBms::waitReadPort: error waiting for timer?" << std::endl;
+                disconnect();
+            }
+        });
+
+    }
+
+
 
     void SerialBms::readPort(std::size_t last_bytes) {
         // might add a read timer here
@@ -73,8 +100,7 @@ namespace infrastructure {
                     if (total_bytes == _bms_read_buffer.size()) {
                         parseAndSendResponse();
                     } else {
-                        std::this_thread::sleep_for(1s);
-                        std::cout << "Waiting after: " << total_bytes << std::endl;
+                        std::this_thread::sleep_for(500ms);
                         readPort(total_bytes);
                     }
                 } else {
@@ -93,8 +119,7 @@ namespace infrastructure {
             disconnect();
         } else {
             _post_callback(bms_message);
-            _bms_read_buffer.fill({});
-            readPort(0);
+            waitReadPort();
         }
     }
 
