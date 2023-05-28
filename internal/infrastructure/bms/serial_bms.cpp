@@ -120,51 +120,57 @@ namespace infrastructure {
     }
 
     void SerialBms::readAndReport() {
+
         std::cout << "SerialBms::readAndReport running" << std::endl;
+
+
         while (!_work_stop) {
 
-            int bytes_available = 0;
-            if (ioctl(_port_fd, FIONREAD, &bytes_available) == -1) {
-                std::cerr << "SerialBms::readAndReport ioctl failed: " << strerror(errno) << std::endl;
-                return;
-            }
-
-            if (bytes_available < _bms_read_buffer.size()) {
-                std::cout << "Not enough bytes" << bytes_available << std::endl;
-                std::this_thread::sleep_for(500ms);
-                continue;
-            } else {
-                std::cout << "ENOUGH BYTES :D " << bytes_available << std::endl;
-            }
-
-            std::size_t total_bytes_read = 0;
+            int total_bytes_read = 0;
             std::memset(_bms_read_buffer.data(), 0, _bms_read_buffer.size());
 
-            while (total_bytes_read < _bms_read_buffer.size()) {
+            while (!_work_stop) {
+
+                fd_set readfs; /* file descriptor set */
+                FD_ZERO(&readfs);
+                FD_SET(_port_fd, &readfs);
+
+                struct timeval Timeout;
+                Timeout.tv_usec = 0;  /* microseconds */
+                Timeout.tv_sec = 1;  /* seconds */
+                int ready_descriptors = select(_port_fd+1, &readfs, NULL, NULL, &Timeout);
+                if(ready_descriptors < 0) {
+                    std::cout << "SerialBms::readAndReport select failed; leaving" << std::endl;
+                    return;
+                } else if(ready_descriptors == 0) {
+                    continue;
+                }
+
                 auto bytes_read = read(
-                      _port_fd, _bms_read_buffer.data() + total_bytes_read,
-                      _bms_read_buffer.size() - total_bytes_read
+                        _port_fd, _bms_read_buffer.data() + total_bytes_read,
+                        _bms_read_buffer.size() - total_bytes_read - 1
                 );
                 if (bytes_read < 0) {
                     std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
                     return;
-                } else if (bytes_read == 0) {
-                    std::cout << "SerialBms::readAndReport eof; leaving" << std::endl;
-                    return;
                 }
                 total_bytes_read += bytes_read;
+                if (total_bytes_read < _bms_read_buffer.size() - 1) {
+                    continue;
+                }
+
+                std::string response(_bms_read_buffer.begin(), _bms_read_buffer.begin() + _bms_read_buffer.size());
+                std::cout << response << std::endl;
+                auto [success, bms_message] = tryParseResponse(response);
+
+                if (!success) {
+                    return;
+                } else {
+                    _post_callback(bms_message);
+                }
+
             }
 
-            std::string response(_bms_read_buffer.begin(), _bms_read_buffer.begin() + _bms_read_buffer.size());
-            std::cout << response << std::endl;
-            auto [success, bms_message] = tryParseResponse(response);
-
-            if (!success) {
-                return;
-            } else {
-                _post_callback(bms_message);
-            }
-            std::this_thread::sleep_for(1s);
         }
 
         std::cout << "SerialBms::readAndReport stopping" << std::endl;
