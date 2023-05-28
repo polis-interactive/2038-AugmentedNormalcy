@@ -38,13 +38,7 @@ namespace infrastructure {
 
     void SerialBms::run() {
         std::cout << "SerialBms::run running" << std::endl;
-        bool has_run = false;
         while (!_work_stop) {
-            if (has_run) {
-                std::this_thread::sleep_for(1s);
-            }
-            has_run = true;
-
             bool success = setupConnection();
 
             std::cout << "SerialBms::run successfully connected" << std::endl;
@@ -62,7 +56,7 @@ namespace infrastructure {
 
     bool SerialBms::setupConnection() {
         std::cout << "SerialBms::setupConnection Opening file" << std::endl;
-        _port_fd = open("/dev/ttyAMA0", O_RDWR|O_NDELAY|O_NOCTTY);
+        _port_fd = open("/dev/ttyAMA0", O_RDWR|O_NOCTTY);
         if (_port_fd < 0) {
             std::cout << "SerialBms::setupConnection failed to open /dev/ttyAMA0" << std::endl;
             return false;
@@ -128,33 +122,6 @@ namespace infrastructure {
 
     void SerialBms::readAndReport() {
 
-        struct termios termios;
-        if(tcgetattr(_port_fd, &termios) != 0) {
-            std::cout << "tcgetattr failed: " << strerror(errno) << std::endl;
-            // Handle error.
-        }
-
-        // Check for framing errors, parity errors, etc.
-        if(termios.c_iflag & (BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON)) {
-            std::cout << "input mode flags error\n" << std::endl;
-            // Handle error.
-        }
-
-        if(termios.c_oflag & OPOST) {
-            std::cout << "output mode flags error\n" << std::endl;
-            // Handle error.
-        }
-
-        if(termios.c_cflag & (CSIZE | PARENB | CS8)) {
-            std::cout << "control mode flags error\n" << std::endl;
-            // Handle error.
-        }
-
-        if(termios.c_lflag & (ECHO | ECHONL | ICANON | ISIG | IEXTEN)) {
-            std::cout << "local mode flags error\n" << std::endl;
-            // Handle error.
-        }
-
         std::cout << "SerialBms::readAndReport running" << std::endl;
 
         static char breaker = '\n';
@@ -190,10 +157,8 @@ namespace infrastructure {
                     std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
                     return;
                 } else if (bytes_read == 0) {
-                    std::cout << "SerialBms::readAndReport read 0; throttling and trying again" << std::endl;
-
-
-                    std::this_thread::sleep_for(500ms);
+                    std::cout << "SerialBms::readAndReport read EOF; leaving" << std::endl;
+                    return;
                 }
                 total_bytes_read += bytes_read;
                 if (total_bytes_read < _bms_read_buffer.size() - 1) {
