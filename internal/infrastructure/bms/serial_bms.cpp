@@ -119,13 +119,13 @@ namespace infrastructure {
         std::cout << "SerialBms::readAndReport running" << std::endl;
         while (!_work_stop) {
             auto start = Clock::now();
-            _bms_read_buffer.fill({});
+            std::memset(_bms_read_buffer.data(), 0, _bms_read_buffer.size());
 
             std::size_t total_bytes_read = 0;
             if (total_bytes_read < _bms_read_buffer.size()) {
                 auto bytes_read = read(
                       _port_fd, _bms_read_buffer.data() + total_bytes_read,
-                      sizeof(_bms_read_buffer) - total_bytes_read
+                      _bms_read_buffer.size() - total_bytes_read
                 );
                 if (bytes_read < 0) {
                     std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
@@ -139,6 +139,7 @@ namespace infrastructure {
             auto [success, bms_message] = tryParseResponse(response);
 
             if (!success) {
+                std::cout << "this should be 100 bytes... " << total_bytes_read << std::endl;
                 return;
             } else {
                 _post_callback(bms_message);
