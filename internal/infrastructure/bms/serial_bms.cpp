@@ -73,7 +73,7 @@ namespace infrastructure {
             return;
         }
 
-        _timer.expires_from_now(boost::posix_time::milliseconds(500));
+        _timer.expires_from_now(boost::posix_time::milliseconds(100));
         auto self(shared_from_this());
         _timer.async_wait([this, self](const error_code& ec) {
             if (!ec) {
@@ -91,7 +91,8 @@ namespace infrastructure {
     void SerialBms::readPort(std::size_t last_bytes) {
         // might add a read timer here
         auto self(shared_from_this());
-        _port->async_read_some(
+        net::async_read(
+            *_port,
             net::buffer(_bms_read_buffer.data() + last_bytes, _bms_read_buffer.size() - last_bytes),
             [this, self, last_bytes] (error_code ec, std::size_t bytes_read) mutable {
                 if (_work_stop) return;
@@ -101,6 +102,7 @@ namespace infrastructure {
                         parseAndSendResponse();
                     } else {
                         std::this_thread::sleep_for(500ms);
+                        std::cout << "Only read n bytes:" << total_bytes << std::endl;
                         readPort(total_bytes);
                     }
                 } else {
