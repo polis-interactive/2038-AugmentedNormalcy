@@ -162,6 +162,7 @@ namespace service {
             if (_is_started) {
                 return;
             }
+            _state.PostState(domain::HeadsetStates::CONNECTING);
             _graphics->Start();
             _decoder->Start();
             _asio_context->Start();
@@ -175,6 +176,7 @@ namespace service {
             if (!_is_started) {
                 return;
             }
+            _state.PostState(domain::HeadsetStates::CLOSING);
             _bms->Stop();
             _gpio->Stop();
             _websocket_client->Stop();

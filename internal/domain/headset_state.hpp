@@ -15,15 +15,23 @@ namespace domain {
         RUNNING,
         PLUGGED_IN,
         DYING,
+        CLOSING,
     };
 
     typedef std::pair<bool, HeadsetStates> StateTransition;
 
     class HeadsetState {
     public:
+        void PostState(HeadsetStates state) {
+            std::unique_lock lk(_state_mutex);
+            _state = state;
+        }
          [[nodiscard]] StateTransition PostBmsMessage(const BmsMessage &msg) {
             std::unique_lock lk(_state_mutex);
-            const auto last_state = _state;
+            if (_state == HeadsetStates::CLOSING) {
+                return { false, _state };
+            }
+             const auto last_state = _state;
             if (msg.bms_is_plugged_in) {
                 // bms is now plugged in
                 _state = HeadsetStates::PLUGGED_IN;
@@ -40,6 +48,9 @@ namespace domain {
         }
         [[nodiscard]] StateTransition PostTcpConnection(bool is_connected) {
             std::unique_lock lk(_state_mutex);
+            if (_state == HeadsetStates::CLOSING) {
+                return { false, _state };
+            }
             const auto last_state = _state;
             if (!is_connected) {
                 // we are no longer connected; check if we should do anything
