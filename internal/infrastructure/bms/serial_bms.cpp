@@ -61,16 +61,10 @@ namespace infrastructure {
 
     bool SerialBms::setupConnection() {
         std::cout << "SerialBms::setupConnection Opening file" << std::endl;
-        _port_fd = open("/dev/ttyAMA0", O_RDWR | O_NONBLOCK | O_NOCTTY);
+        _port_fd = open("/dev/ttyAMA0", O_RDWR);
         if (_port_fd < 0) {
             std::cout << "SerialBms::setupConnection failed to open /dev/ttyAMA0" << std::endl;
             return false;
-        }
-
-        int s = fcntl(_port_fd, F_GETFL);
-        if (s >= 0) s = fcntl(_port_fd, F_SETFL, s | O_NONBLOCK);
-        if (s < 0) {
-            std::cout << "SerialBms::setupConnection failed to set _port_fd to nonblocking" << std::endl;
         }
 
         struct termios tty;
