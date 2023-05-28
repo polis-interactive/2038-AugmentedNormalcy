@@ -28,7 +28,16 @@ namespace infrastructure {
         std::pair<bool, BmsMessage> tryParseResponse(const std::string &input);
         void disconnect();
 
+        void run();
+        bool setupConnection();
+        void readAndReport();
+        bool doReadBytes();
+
         std::atomic<bool> _work_stop = { true };
+        std::unique_ptr<std::thread> _work_thread;
+        int _port_fd = -1;
+
+
         net::strand<net::io_context::executor_type> _strand;
 
         std::shared_ptr<serial_port> _port;

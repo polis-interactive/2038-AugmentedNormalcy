@@ -4,6 +4,10 @@
 
 #include <iostream>
 #include <regex>
+
+#include <termios.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
 
 #include "serial_bms.hpp"
@@ -26,7 +30,30 @@ namespace infrastructure {
             return;
         }
         _work_stop = false;
-        startConnection(false);
+
+        auto self(shared_from_this());
+        _work_thread = std::make_unique<std::thread>([this, self]() mutable { run(); });
+    }
+
+    void SerialBms::run() {
+        bool has_run = false;
+        while (!_work_stop) {
+            if (has_run) {
+                std::this_thread::sleep_for(1s);
+            }
+            has_run = true;
+
+            bool success = setupConnection();
+
+            if (success) {
+                readAndReport();
+            }
+
+            if (_port_fd >= 0) {
+                close(_port_fd);
+                _port_fd = -1;
+            }
+        }
     }
 
     void SerialBms::startConnection(const bool is_initial_connection) {
@@ -34,6 +61,84 @@ namespace infrastructure {
         net::post(_strand, [this, self, is_initial_connection]() mutable {
             doStartConnection(is_initial_connection);
         });
+    }
+
+    bool SerialBms::setupConnection() {
+        _port_fd = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY | O_SYNC);
+        if (_port_fd < 0) {
+            std::cout << "SerialBms::setupConnection failed to open /dev/ttyAMA0" << std::endl;
+            return false;
+        }
+
+        struct termios tty;
+        memset(&tty, 0, sizeof tty);
+        cfmakeraw(&tty);
+
+        bool success = cfsetospeed(&tty, B9600); // set output speed
+        if (success != 0) {
+            std::cout << "SerialBms::setupConnection failed to set output speed" << std::endl;
+            return false;
+        }
+        success = cfsetispeed(&tty, B9600); // set input speed
+        if (success != 0) {
+            std::cout << "SerialBms::setupConnection failed to set input speed" << std::endl;
+            return false;
+        }
+
+        // Set other terminal attributes
+        tty.c_cflag &= ~PARENB; // clear parity bit, disabling parity (most common)
+        tty.c_cflag &= ~CSTOPB; // Stop bits = 1 (most common)
+        tty.c_cflag &= ~CSIZE; // clear all bits that set the data size
+        tty.c_cflag |= CS8; // 8 bits per byte (most common)
+        tty.c_cflag &= ~CRTSCTS; // disable hardware flow control
+
+        success = tcsetattr(_port_fd, TCSANOW, &tty);
+        if (success != 0) {
+            std::cout << "SerialBms::setupConnection failed to set serial parameters" << std::endl;
+            return false;
+        }
+
+        return true;
+    }
+
+    void SerialBms::readAndReport() {
+        while (!_work_stop) {
+            int bytes_available;
+            if (ioctl(_port_fd, FIONREAD, &bytes_available) == -1) {
+                std::cout << "SerialBms::readAndReport failed to query the port" << std::endl;
+                return;
+            }
+            if (bytes_available > _bms_read_buffer.size()) {
+                if (!doReadBytes()) {
+                    return;
+                }
+
+                std::string response(std::begin(_bms_read_buffer), std::end(_bms_read_buffer));
+                auto [success, bms_message] = tryParseResponse(response);
+
+                if (!success) {
+                    std::cout << "failed to parse this: " << response << std::endl;
+                    return;
+                } else {
+                    _post_callback(bms_message);
+                }
+
+            }
+            std::this_thread::sleep_for(250ms);
+        }
+    }
+
+    bool SerialBms::doReadBytes() {
+        std::size_t bytes_read = 0;
+        while(bytes_read < _bms_read_buffer.size()) {
+            auto just_read = read(_port_fd, _bms_read_buffer.data() + bytes_read, _bms_read_buffer.size() - bytes_read);
+            if (just_read < 0) {
+                std::cout << "SerialBms::doReadBytes: failed to read" << std::endl;
+                return false;
+            }
+            bytes_read += bytes_read;
+        }
+        return true;
     }
 
     void SerialBms::doStartConnection(const bool is_initial_connection) {
@@ -183,18 +288,17 @@ namespace infrastructure {
         if (_work_stop) {
             return;
         }
-        _work_stop = true;
-        std::promise<void> done_promise;
-        auto done_future = done_promise.get_future();
-        auto self(shared_from_this());
-        net::post(
-            _strand,
-            [this, self, p = std::move(done_promise)]() mutable {
-                disconnect();
-                p.set_value();
+
+        if (_work_thread) {
+            if (_work_thread->joinable()) {
+                _work_stop = true;
+                _work_thread->join();
             }
-        );
-        done_future.wait();
+            _work_thread.reset();
+        }
+
+        // just in case we skipped above
+        _work_stop = true;
     }
 
     SerialBms::~SerialBms() {
