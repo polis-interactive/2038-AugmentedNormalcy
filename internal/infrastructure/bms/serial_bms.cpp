@@ -128,36 +128,38 @@ namespace infrastructure {
 
     void SerialBms::readAndReport() {
         while (!_work_stop) {
+            auto start = Clock::now();
             std::cout << "SerialBms::readAndReport running" << std::endl;
-            int bytes_available = 0;
-            if (ioctl(_port_fd, FIONREAD, &bytes_available) == -1) {
-                std::cout << "SerialBms::readAndReport failed to query the port" << std::endl;
+
+            std::size_t total_bytes_read = 0;
+            if (total_bytes_read < _bms_read_buffer.size()) {
+                auto bytes_read = read(
+                        _port_fd, _bms_read_buffer.data() + total_bytes_read,
+                        sizeof(_bms_read_buffer) - total_bytes_read
+                );
+                if (bytes_read == 0) {
+                    std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
+                    return;
+                }
+                total_bytes_read += bytes_read;
+            }
+
+            std::string response(std::begin(_bms_read_buffer), std::end(_bms_read_buffer));
+            auto [success, bms_message] = tryParseResponse(response);
+
+            if (!success) {
+                std::cout << "SerialBms::readAndReport: failed to parse this: " << response << std::endl;
                 return;
-            }
-            if (bytes_available > _bms_read_buffer.size()) {
-
-                std::cout << "SerialBms::readAndReport trying to read bytes" << std::endl;
-                if (!doReadBytes()) {
-                    return;
-                }
-
-                std::cout << "SerialBms::readAndReport readbytes!" << std::endl;
-
-                std::string response(std::begin(_bms_read_buffer), std::end(_bms_read_buffer));
-                auto [success, bms_message] = tryParseResponse(response);
-
-                if (!success) {
-                    std::cout << "SerialBms::readAndReport: failed to parse this: " << response << std::endl;
-                    return;
-                } else {
-                    std::cout << "SerialBms::readAndReport: Parsed successfully!" << std::endl;
-                    _post_callback(bms_message);
-                }
-
             } else {
-                std::cout << "SerialBms::readAndReport not enough bytes to read: " << bytes_available << std::endl;
+                std::cout << "SerialBms::readAndReport: Parsed successfully!" << std::endl;
+                _post_callback(bms_message);
             }
-            std::this_thread::sleep_for(1s);
+
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - start);
+            if (duration < 1s) {
+                std::this_thread::sleep_for(1s - duration);
+            }
+
         }
     }
 
