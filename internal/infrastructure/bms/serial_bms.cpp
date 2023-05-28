@@ -81,17 +81,23 @@ namespace infrastructure {
         }
 
         cfmakeraw(&tty);
-        tty.c_iflag |= IGNPAR;
-        tty.c_cflag |= CREAD | CLOCAL;
+
+        tty.c_cflag &= ~PARENB; // Clear parity bit, disabling parity (most common)
+        tty.c_cflag &= ~CSTOPB; // Clear stop field, only one stop bit used in communication (most common)
+        tty.c_cflag &= ~CSIZE; // Clear all bits that set the data size
+        tty.c_cflag |= CS8; // 8 bits per byte (most common)
 
         // disable flow control
         tty.c_iflag &= ~(IXOFF | IXON);
-        tty.c_cflag &= ~CRTSCTS;
+        tty.c_cflag &= ~CRTSCTS; // Disable RTS/CTS hardware flow control (most common)
 
         tty.c_lflag &= ~ECHO; // Disable echo
         tty.c_lflag &= ~ECHOE; // Disable erasure
         tty.c_lflag &= ~ECHONL; // Disable new-line echo
         tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
+
+        tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
+        tty.c_oflag |= ~ONLCR; // conversion of newline to carriage return/line feed
 
 
         std::cout << "SerialBms::setupConnection setting speed" << std::endl;
