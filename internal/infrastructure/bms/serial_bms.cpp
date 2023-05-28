@@ -160,7 +160,7 @@ namespace infrastructure {
                 std::cout << "SerialBms::doReadBytes: failed to read" << std::endl;
                 return false;
             }
-            bytes_read += bytes_read;
+            bytes_read += just_read;
             if (bytes_read < _bms_read_buffer.size()) {
                 std::cout << "SerialBms::doReadBytes: haven't read enough bytes: only " << bytes_read << std::endl;
                 std::this_thread::sleep_for(250ms);
