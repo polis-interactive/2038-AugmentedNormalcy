@@ -32,7 +32,8 @@ namespace infrastructure {
         _work_stop = false;
 
         auto self(shared_from_this());
-        _work_thread = std::make_unique<std::thread>([this, self]() mutable { run(); });
+        // _work_thread = std::make_unique<std::thread>([this, self]() mutable { run(); });
+        startConnection(true);
     }
 
     void SerialBms::run() {
@@ -83,12 +84,20 @@ namespace infrastructure {
 
         cfmakeraw(&tty);
 
+        // 8 bits per bytes
+        tty.c_cflag &= ~CSIZE;
+        tty.c_cflag |= CS8;
+
         // disable flow control
         tty.c_iflag &= ~(IXOFF | IXON);
         tty.c_cflag &= ~CRTSCTS;
 
+        // ignore parity
         tty.c_iflag |= IGNPAR;
-        tty.c_cflag |= CREAD | CLOCAL;
+        tty.c_cflag &= ~(PARENB | PARODD);
+
+        // one stop bit
+        tty.c_cflag &= ~CSTOPB;
 
         std::cout << "SerialBms::setupConnection setting speed" << std::endl;
         bool success = cfsetspeed(&tty, B9600); // set speed
@@ -167,22 +176,22 @@ namespace infrastructure {
             std::this_thread::sleep_for(1s);
         }
         if (_work_stop) return;
-        if (_port == nullptr || !_port->is_open()) {
-            _port = std::make_shared<serial_port>(_strand);
 
-            error_code ec;
-            _port->open("/dev/ttyAMA0", ec);
-            if (ec) {
-                std::cout << "SerialBms::doStartConnection unable to open serial port" << std::endl;
-                startConnection(true);
-            }
+        _port = std::make_shared<serial_port>(_strand);
 
-            _port->set_option(serial_port::baud_rate(9600));
-            _port->set_option(serial_port::character_size(8));
-            _port->set_option(serial_port::flow_control(serial_port::flow_control::none));
-            _port->set_option(serial_port::parity(serial_port::parity::none));
-            _port->set_option(serial_port::stop_bits(serial_port::stop_bits::one));
+        error_code ec;
+        _port->open("/dev/ttyAMA0", ec);
+        if (ec) {
+            std::cout << "SerialBms::doStartConnection unable to open serial port" << std::endl;
+            startConnection(true);
         }
+
+        _port->set_option(serial_port::baud_rate(9600));
+        _port->set_option(serial_port::character_size(8));
+        _port->set_option(serial_port::flow_control(serial_port::flow_control::none));
+        _port->set_option(serial_port::parity(serial_port::parity::none));
+        _port->set_option(serial_port::stop_bits(serial_port::stop_bits::one));
+
         waitReadPort();
     }
 
@@ -308,7 +317,20 @@ namespace infrastructure {
         if (_work_stop) {
             return;
         }
+        _work_stop = true;
+        std::promise<void> done_promise;
+        auto done_future = done_promise.get_future();
+        auto self(shared_from_this());
+        net::post(
+                _strand,
+                [this, self, p = std::move(done_promise)]() mutable {
+                    disconnect();
+                    p.set_value();
+                }
+        );
+        done_future.wait();
 
+        /*
         if (_work_thread) {
             if (_work_thread->joinable()) {
                 _work_stop = true;
@@ -319,6 +341,7 @@ namespace infrastructure {
 
         // just in case we skipped above
         _work_stop = true;
+         */
     }
 
     SerialBms::~SerialBms() {
