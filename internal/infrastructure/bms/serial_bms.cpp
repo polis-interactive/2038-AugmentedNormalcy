@@ -83,6 +83,10 @@ namespace infrastructure {
 
         cfmakeraw(&tty);
 
+        // disable flow control
+        tty.c_iflag &= ~(IXOFF | IXON);
+        tty.c_cflag &= ~CRTSCTS;
+
         tty.c_iflag |= IGNPAR;
         tty.c_cflag |= CREAD | CLOCAL;
 
