@@ -157,7 +157,7 @@ namespace infrastructure {
                     return;
                 }
                 total_bytes_read += bytes_read;
-                if (total_bytes_read < (_bms_read_buffer.size() - 5)) {
+                if (total_bytes_read < 100) {
                     continue;
                 }
 
