@@ -157,7 +157,35 @@ namespace infrastructure {
                     return;
                 } else if (bytes_read == 0) {
                     std::cout << "SerialBms::readAndReport read 0; throttling and trying again" << std::endl;
-                    write(_port_fd, &breaker, 1);
+
+                    struct termios termios;
+                    if(tcgetattr(_port_fd, &termios) != 0) {
+                        std::cout << "tcgetattr failed" << std::endl;
+                        // Handle error.
+                    }
+
+                    // Check for framing errors, parity errors, etc.
+                    if(termios.c_iflag & (BRKINT | PARMRK | ISTRIP | INLCR | IGNCR | ICRNL | IXON)) {
+                        std::cout << "input mode flags error\n" << std::endl;
+                        // Handle error.
+                    }
+
+                    if(termios.c_oflag & OPOST) {
+                        std::cout << "output mode flags error\n" << std::endl;
+                        // Handle error.
+                    }
+
+                    if(termios.c_cflag & (CSIZE | PARENB | CS8)) {
+                        std::cout << "control mode flags error\n" << std::endl;
+                        // Handle error.
+                    }
+
+                    if(termios.c_lflag & (ECHO | ECHONL | ICANON | ISIG | IEXTEN)) {
+                        std::cout << "local mode flags error\n" << std::endl;
+                        // Handle error.
+                    }
+
+
                     std::this_thread::sleep_for(500ms);
                 }
                 total_bytes_read += bytes_read;
