@@ -123,6 +123,7 @@ namespace infrastructure {
 
         std::cout << "SerialBms::readAndReport running" << std::endl;
 
+        static char breaker = '\n';
 
         while (!_work_stop) {
 
@@ -147,18 +148,16 @@ namespace infrastructure {
                     continue;
                 }
 
-                std::cout << "SerialBms::readAndReport preread" << std::endl;
                 auto bytes_read = read(
                         _port_fd, _bms_read_buffer.data() + total_bytes_read,
                         _bms_read_buffer.size() - total_bytes_read - 1
                 );
-                std::cout << "SerialBms::readAndReport postread" << std::endl;
                 if (bytes_read < 0) {
                     std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
                     return;
                 } else if (bytes_read == 0) {
                     std::cout << "SerialBms::readAndReport read 0; throttling and trying again" << std::endl;
-                    tcsendbreak(_port_fd, 0);
+                    write(_port_fd, &breaker, 1);
                     std::this_thread::sleep_for(500ms);
                 }
                 total_bytes_read += bytes_read;
