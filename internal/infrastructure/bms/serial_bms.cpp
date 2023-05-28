@@ -157,7 +157,8 @@ namespace infrastructure {
                     std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
                     return;
                 } else if (bytes_read == 0) {
-                    std::cout << "SerialBms::readAndReport read EOF; leaving" << std::endl;
+                    std::cout << "SerialBms::readAndReport read EOF while trying to read: " <<
+                        _bms_read_buffer.size() - total_bytes_read - 1 << "leaving" << std::endl;
                     return;
                 }
                 total_bytes_read += bytes_read;
