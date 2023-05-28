@@ -123,7 +123,7 @@ namespace infrastructure {
 
             std::size_t total_bytes_read = 0;
             std::cout << _bms_read_buffer.size() << std::endl;
-            if (total_bytes_read < _bms_read_buffer.size()) {
+            while (total_bytes_read < _bms_read_buffer.size()) {
                 auto bytes_read = read(
                       _port_fd, _bms_read_buffer.data() + total_bytes_read,
                       _bms_read_buffer.size() - total_bytes_read
