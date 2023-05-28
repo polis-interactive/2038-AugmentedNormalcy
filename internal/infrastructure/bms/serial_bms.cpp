@@ -75,22 +75,9 @@ namespace infrastructure {
         }
 
         struct termios tty;
-        memset(&tty, 0, sizeof tty);
-
         std::cout << "SerialBms::setupConnection making connection object" << std::endl;
-        cfmakeraw(&tty);
-
-        std::cout << "SerialBms::setupConnection setting output speed" << std::endl;
-        bool success = cfsetospeed(&tty, B9600); // set output speed
-        if (success != 0) {
-            std::cout << "SerialBms::setupConnection failed to set output speed" << std::endl;
-            return false;
-        }
-
-        std::cout << "SerialBms::setupConnection setting input speed" << std::endl;
-        success = cfsetispeed(&tty, B9600); // set input speed
-        if (success != 0) {
-            std::cout << "SerialBms::setupConnection failed to set input speed" << std::endl;
+        if(tcgetattr(_port_fd, &tty) != 0) {
+            std::cout << "SerialBms::setupConnection failed to get tty setup" << std::endl;
             return false;
         }
 
@@ -101,10 +88,36 @@ namespace infrastructure {
         tty.c_cflag |= CS8; // 8 bits per byte (most common)
         tty.c_cflag &= ~CRTSCTS; // disable hardware flow control
 
+        tty.c_lflag &= ~ICANON; // disable cannonical mode
+        tty.c_lflag &= ~ECHO; // Disable echo
+        tty.c_lflag &= ~ECHOE; // Disable erasure
+        tty.c_lflag &= ~ECHONL; // Disable new-line echo
+        tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
+
+        tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
+        tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any special handling of received bytes
+
+        tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
+        tty.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
+
         std::cout << "SerialBms::setupConnection setting terminal attrs" << std::endl;
-        success = tcsetattr(_port_fd, TCSANOW, &tty);
+        bool success = tcsetattr(_port_fd, TCSANOW, &tty);
         if (success != 0) {
             std::cout << "SerialBms::setupConnection failed to set serial parameters" << std::endl;
+            return false;
+        }
+
+        std::cout << "SerialBms::setupConnection setting output speed" << std::endl;
+        success = cfsetospeed(&tty, B9600); // set output speed
+        if (success != 0) {
+            std::cout << "SerialBms::setupConnection failed to set output speed" << std::endl;
+            return false;
+        }
+
+        std::cout << "SerialBms::setupConnection setting input speed" << std::endl;
+        success = cfsetispeed(&tty, B9600); // set input speed
+        if (success != 0) {
+            std::cout << "SerialBms::setupConnection failed to set input speed" << std::endl;
             return false;
         }
 
@@ -145,7 +158,7 @@ namespace infrastructure {
         std::cout << "SerialBms::doReadBytes reading bytes" << std::endl;
         std::size_t bytes_read = 0;
         while(true) {
-            auto just_read = read(_port_fd, _bms_read_buffer.data() + bytes_read, _bms_read_buffer.size() - bytes_read);
+            auto just_read = read(_port_fd, _bms_read_buffer.data() + bytes_read, sizeof(_bms_read_buffer) - bytes_read);
             if (just_read < 0) {
                 std::cout << "SerialBms::doReadBytes: failed to read" << std::endl;
                 return false;
