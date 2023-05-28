@@ -113,6 +113,7 @@ namespace infrastructure {
             }
 
             if (bytes_available < _bms_read_buffer.size()) {
+                std::cout << "Not enough bytes" << std::endl;
                 std::this_thread::sleep_for(250ms);
                 continue;
             }
