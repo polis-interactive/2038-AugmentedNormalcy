@@ -36,6 +36,7 @@ namespace infrastructure {
     }
 
     void SerialBms::run() {
+        std::cout << "SerialBms::run running" << std::endl;
         bool has_run = false;
         while (!_work_stop) {
             if (has_run) {
@@ -66,6 +67,7 @@ namespace infrastructure {
     }
 
     bool SerialBms::setupConnection() {
+        std::cout << "SerialBms::setupConnection Opening file" << std::endl;
         _port_fd = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY | O_SYNC);
         if (_port_fd < 0) {
             std::cout << "SerialBms::setupConnection failed to open /dev/ttyAMA0" << std::endl;
@@ -74,13 +76,18 @@ namespace infrastructure {
 
         struct termios tty;
         memset(&tty, 0, sizeof tty);
+
+        std::cout << "SerialBms::setupConnection making connection object" << std::endl;
         cfmakeraw(&tty);
 
+        std::cout << "SerialBms::setupConnection setting output speed" << std::endl;
         bool success = cfsetospeed(&tty, B9600); // set output speed
         if (success != 0) {
             std::cout << "SerialBms::setupConnection failed to set output speed" << std::endl;
             return false;
         }
+
+        std::cout << "SerialBms::setupConnection setting input speed" << std::endl;
         success = cfsetispeed(&tty, B9600); // set input speed
         if (success != 0) {
             std::cout << "SerialBms::setupConnection failed to set input speed" << std::endl;
@@ -94,6 +101,7 @@ namespace infrastructure {
         tty.c_cflag |= CS8; // 8 bits per byte (most common)
         tty.c_cflag &= ~CRTSCTS; // disable hardware flow control
 
+        std::cout << "SerialBms::setupConnection setting terminal attrs" << std::endl;
         success = tcsetattr(_port_fd, TCSANOW, &tty);
         if (success != 0) {
             std::cout << "SerialBms::setupConnection failed to set serial parameters" << std::endl;
