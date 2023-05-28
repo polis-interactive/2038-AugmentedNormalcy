@@ -133,17 +133,22 @@ namespace infrastructure {
                 return;
             }
             if (bytes_available > _bms_read_buffer.size()) {
+
+                std::cout << "SerialBms::readAndReport trying to read bytes" << std::endl;
                 if (!doReadBytes()) {
                     return;
                 }
+
+                std::cout << "SerialBms::readAndReport readbytes!" << std::endl;
 
                 std::string response(std::begin(_bms_read_buffer), std::end(_bms_read_buffer));
                 auto [success, bms_message] = tryParseResponse(response);
 
                 if (!success) {
-                    std::cout << "failed to parse this: " << response << std::endl;
+                    std::cout << "SerialBms::readAndReport: failed to parse this: " << response << std::endl;
                     return;
                 } else {
+                    std::cout << "SerialBms::readAndReport: Parsed successfully!" << std::endl;
                     _post_callback(bms_message);
                 }
 
