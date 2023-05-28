@@ -113,9 +113,11 @@ namespace infrastructure {
             }
 
             if (bytes_available < _bms_read_buffer.size()) {
-                std::cout << "Not enough bytes" << std::endl;
-                std::this_thread::sleep_for(250ms);
+                std::cout << "Not enough bytes" << bytes_available << std::endl;
+                std::this_thread::sleep_for(1s);
                 continue;
+            } else {
+                std::cout << "ENOUGH BYTES :D " << bytes_available << std::endl;
             }
 
             std::size_t total_bytes_read = 0;
@@ -145,6 +147,7 @@ namespace infrastructure {
             } else {
                 _post_callback(bms_message);
             }
+            std::this_thread::sleep_for(1s);
         }
 
         std::cout << "SerialBms::readAndReport stopping" << std::endl;
