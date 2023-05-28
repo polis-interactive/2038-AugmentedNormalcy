@@ -119,6 +119,7 @@ namespace infrastructure {
         std::cout << "SerialBms::readAndReport running" << std::endl;
         while (!_work_stop) {
             auto start = Clock::now();
+            _bms_read_buffer.fill({});
 
             std::size_t total_bytes_read = 0;
             if (total_bytes_read < _bms_read_buffer.size()) {
