@@ -81,26 +81,11 @@ namespace infrastructure {
             return false;
         }
 
-        tty.c_cflag |= (CLOCAL | CREAD);
-        tty.c_cflag &= ~CSIZE;
-        tty.c_cflag |= CS8;         /* 8-bit characters */
-        tty.c_cflag &= ~PARENB;     /* no parity bit */
-        tty.c_cflag &= ~CSTOPB;     /* only need 1 stop bit */
-
-        tty.c_iflag |= ICRNL;       /* CR is a line terminator */
-        tty.c_iflag |= IGNPAR;      // Ignore parity errors
-
-        // no flow control
-        tty.c_cflag &= ~CRTSCTS;
-        tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-
-        // canonical input & output
-        tty.c_lflag |= ICANON;
-        tty.c_lflag &= ~(ECHO | ECHOE | ISIG);
-        tty.c_oflag |= OPOST;
-
-        tty.c_cc[VTIME] = 10;    // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
-        tty.c_cc[VMIN] = 0;
+        tty.c_cflag &= ~PARENB; // clear parity bit, disabling parity (most common)
+        tty.c_cflag &= ~CSTOPB; // Stop bits = 1 (most common)
+        tty.c_cflag &= ~CSIZE; // clear all bits that set the data size
+        tty.c_cflag |= CS8; // 8 bits per byte (most common)
+        tty.c_cflag &= ~CRTSCTS; // disable hardware flow control
 
         std::cout << "SerialBms::setupConnection setting output speed" << std::endl;
         bool success = cfsetospeed(&tty, B9600); // set output speed
@@ -133,7 +118,6 @@ namespace infrastructure {
 
             std::size_t total_bytes_read = 0;
             if (total_bytes_read < _bms_read_buffer.size()) {
-                std::cout << sizeof(_bms_read_buffer) - total_bytes_read << std::endl;
                 auto bytes_read = read(
                         _port_fd, _bms_read_buffer.data() + total_bytes_read,
                         sizeof(_bms_read_buffer) - total_bytes_read
