@@ -156,6 +156,10 @@ namespace infrastructure {
                 if (bytes_read < 0) {
                     std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
                     return;
+                } else if (bytes_read == 0) {
+                    std::cout << "SerialBms::readAndReport read 0; throttling and trying again" << std::endl;
+                    tcsendbreak(_port_fd, 0);
+                    std::this_thread::sleep_for(500ms);
                 }
                 total_bytes_read += bytes_read;
                 if (total_bytes_read < _bms_read_buffer.size() - 1) {
