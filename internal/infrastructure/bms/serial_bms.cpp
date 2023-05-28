@@ -120,7 +120,7 @@ namespace infrastructure {
         while (!_work_stop) {
 
             int bytes_available;
-            if (!ioctl(_port_fd, FIONREAD, &bytes_available)) {
+            if (ioctl(_port_fd, FIONREAD, &bytes_available) != 0) {
                 std::cout << "SerialBms::readAndReport failed to check bytes available; leaving" << std::endl;
                 return;
             }
