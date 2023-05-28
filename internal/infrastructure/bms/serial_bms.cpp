@@ -88,18 +88,6 @@ namespace infrastructure {
         tty.c_cflag |= CS8; // 8 bits per byte (most common)
         tty.c_cflag &= ~CRTSCTS; // disable hardware flow control
 
-        tty.c_lflag &= ~ICANON; // disable cannonical mode
-        tty.c_lflag &= ~ECHO; // Disable echo
-        tty.c_lflag &= ~ECHOE; // Disable erasure
-        tty.c_lflag &= ~ECHONL; // Disable new-line echo
-        tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
-
-        tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
-        tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any special handling of received bytes
-
-        tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
-        tty.c_oflag &= ~ONLCR; // Prevent conversion of newline to carriage return/line feed
-
         std::cout << "SerialBms::setupConnection setting terminal attrs" << std::endl;
         bool success = tcsetattr(_port_fd, TCSANOW, &tty);
         if (success != 0) {
