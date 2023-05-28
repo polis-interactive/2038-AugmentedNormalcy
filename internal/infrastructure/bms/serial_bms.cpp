@@ -45,6 +45,8 @@ namespace infrastructure {
 
             bool success = setupConnection();
 
+            std::cout << "SerialBms::run successfully connected" << std::endl;
+
             if (success) {
                 readAndReport();
             }
@@ -103,6 +105,7 @@ namespace infrastructure {
 
     void SerialBms::readAndReport() {
         while (!_work_stop) {
+            std::cout << "SerialBms::readAndReport running" << std::endl;
             int bytes_available;
             if (ioctl(_port_fd, FIONREAD, &bytes_available) == -1) {
                 std::cout << "SerialBms::readAndReport failed to query the port" << std::endl;
@@ -123,22 +126,29 @@ namespace infrastructure {
                     _post_callback(bms_message);
                 }
 
+            } else {
+                std::cout << "SerialBms::readAndReport not enough bytes to read: " << bytes_available << std::endl;
             }
-            std::this_thread::sleep_for(250ms);
+            std::this_thread::sleep_for(1s);
         }
     }
 
     bool SerialBms::doReadBytes() {
+        std::cout << "SerialBms::doReadBytes reading bytes" << std::endl;
         std::size_t bytes_read = 0;
-        while(bytes_read < _bms_read_buffer.size()) {
+        while(true) {
             auto just_read = read(_port_fd, _bms_read_buffer.data() + bytes_read, _bms_read_buffer.size() - bytes_read);
             if (just_read < 0) {
                 std::cout << "SerialBms::doReadBytes: failed to read" << std::endl;
                 return false;
             }
             bytes_read += bytes_read;
+            if (bytes_read < _bms_read_buffer.size()) {
+                std::cout << "SerialBms::doReadBytes: haven't read enough bytes: only " << bytes_read << std::endl;
+            } else {
+                return true;
+            }
         }
-        return true;
     }
 
     void SerialBms::doStartConnection(const bool is_initial_connection) {
