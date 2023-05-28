@@ -103,9 +103,16 @@ namespace infrastructure {
 
 
         std::cout << "SerialBms::setupConnection setting speed" << std::endl;
-        bool success = cfsetspeed(&tty, B9600); // set speed
+
+        bool success = cfsetispeed(&tty, B9600);
         if (success != 0) {
             std::cout << "SerialBms::setupConnection failed to set output speed" << std::endl;
+            return false;
+        }
+
+        success = cfsetispeed(&tty, B9600);
+        if (success != 0) {
+            std::cout << "SerialBms::setupConnection failed to set input speed" << std::endl;
             return false;
         }
 
