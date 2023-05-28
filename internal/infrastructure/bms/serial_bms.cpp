@@ -160,7 +160,7 @@ namespace infrastructure {
 
                     struct termios termios;
                     if(tcgetattr(_port_fd, &termios) != 0) {
-                        std::cout << "tcgetattr failed" << std::endl;
+                        std::cout << "tcgetattr failed: " << strerror(errno) << std::endl;
                         // Handle error.
                     }
 
