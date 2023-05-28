@@ -68,7 +68,7 @@ namespace infrastructure {
 
     bool SerialBms::setupConnection() {
         std::cout << "SerialBms::setupConnection Opening file" << std::endl;
-        _port_fd = open("/dev/ttyAMA0", O_RDWR);
+        _port_fd = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY);
         if (_port_fd < 0) {
             std::cout << "SerialBms::setupConnection failed to open /dev/ttyAMA0" << std::endl;
             return false;
