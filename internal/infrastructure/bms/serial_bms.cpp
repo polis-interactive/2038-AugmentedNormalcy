@@ -84,6 +84,11 @@ namespace infrastructure {
         tty.c_iflag |= IGNPAR;
         tty.c_cflag |= CREAD | CLOCAL;
 
+        // disable flow control
+        tty.c_iflag &= ~(IXOFF | IXON);
+        tty.c_cflag &= ~CRTSCTS;
+
+
 
         std::cout << "SerialBms::setupConnection setting speed" << std::endl;
         bool success = cfsetspeed(&tty, B9600); // set speed
