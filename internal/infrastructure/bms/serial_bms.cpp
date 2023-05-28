@@ -68,7 +68,7 @@ namespace infrastructure {
 
     bool SerialBms::setupConnection() {
         std::cout << "SerialBms::setupConnection Opening file" << std::endl;
-        _port_fd = open("/dev/ttyAMA0", O_RDWR);
+        _port_fd = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY);
         if (_port_fd < 0) {
             std::cout << "SerialBms::setupConnection failed to open /dev/ttyAMA0" << std::endl;
             return false;
@@ -86,6 +86,17 @@ namespace infrastructure {
         tty.c_cflag &= ~CSIZE; // clear all bits that set the data size
         tty.c_cflag |= CS8; // 8 bits per byte (most common)
         tty.c_cflag &= ~CRTSCTS; // disable hardware flow control
+
+        tty.c_lflag &= ~ECHO; // Disable echo
+        tty.c_lflag &= ~ECHOE; // Disable erasure
+        tty.c_lflag &= ~ECHONL; // Disable new-line echo
+        tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
+
+        tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
+        tty.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any special handling of received bytes
+
+        tty.c_cc[VTIME] = 10;    // Wait for up to 1s (10 deciseconds), returning as soon as any data is received.
+        tty.c_cc[VMIN] = 0;
 
         std::cout << "SerialBms::setupConnection setting output speed" << std::endl;
         bool success = cfsetospeed(&tty, B9600); // set output speed
