@@ -162,7 +162,7 @@ namespace infrastructure {
                     return;
                 }
                 total_bytes_read += bytes_read;
-                if (total_bytes_read < _bms_read_buffer.size() - 1) {
+                if (total_bytes_read < (_bms_read_buffer.size() - 10)) {
                     continue;
                 }
 
