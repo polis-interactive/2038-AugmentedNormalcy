@@ -131,6 +131,9 @@ namespace infrastructure {
                 if (bytes_read < 0) {
                     std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
                     return;
+                } else if (bytes_read == 0) {
+                    std::cout << "SerialBms::readAndReport eof; leaving" << std::endl;
+                    return;
                 }
                 total_bytes_read += bytes_read;
             }
@@ -140,7 +143,6 @@ namespace infrastructure {
             auto [success, bms_message] = tryParseResponse(response);
 
             if (!success) {
-                std::cout << "this should be 100 bytes... " << total_bytes_read << std::endl;
                 return;
             } else {
                 _post_callback(bms_message);
