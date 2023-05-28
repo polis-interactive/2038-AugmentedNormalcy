@@ -41,10 +41,12 @@ namespace infrastructure {
         while (!_work_stop) {
             bool success = setupConnection();
 
-            std::cout << "SerialBms::run successfully connected" << std::endl;
 
             if (success) {
+                std::cout << "SerialBms::run successfully connected" << std::endl;
                 readAndReport();
+            } else {
+                std::cout << "SerialBms::run failed to connect" << std::endl;
             }
 
             if (_port_fd >= 0) {
@@ -55,7 +57,6 @@ namespace infrastructure {
     }
 
     bool SerialBms::setupConnection() {
-        std::cout << "SerialBms::setupConnection Opening file" << std::endl;
         _port_fd = open("/dev/ttyAMA0", O_RDWR|O_NOCTTY);
         if (_port_fd < 0) {
             std::cout << "SerialBms::setupConnection failed to open /dev/ttyAMA0" << std::endl;
@@ -68,7 +69,6 @@ namespace infrastructure {
         }
 
         struct termios tty;
-        std::cout << "SerialBms::setupConnection making connection object" << std::endl;
         if(tcgetattr(_port_fd, &tty) != 0) {
             std::cout << "SerialBms::setupConnection failed to get tty setup" << std::endl;
             return false;
@@ -96,8 +96,6 @@ namespace infrastructure {
         tty.c_cflag |= CRTSCTS; // enable hardware flow controll
 
 
-        std::cout << "SerialBms::setupConnection setting speed" << std::endl;
-
         bool success = cfsetispeed(&tty, B9600);
         if (success != 0) {
             std::cout << "SerialBms::setupConnection failed to set output speed" << std::endl;
@@ -110,7 +108,6 @@ namespace infrastructure {
             return false;
         }
 
-        std::cout << "SerialBms::setupConnection setting terminal attrs" << std::endl;
         success = tcsetattr(_port_fd, TCSANOW, &tty);
         if (success != 0) {
             std::cout << "SerialBms::setupConnection failed to set serial parameters" << std::endl;
@@ -145,24 +142,22 @@ namespace infrastructure {
                     std::cout << "SerialBms::readAndReport select failed; leaving" << std::endl;
                     return;
                 } else if(ready_descriptors == 0) {
-                    std::cout << "SerialBms::readAndReport not ready" << std::endl;
                     continue;
                 }
 
                 auto bytes_read = read(
                         _port_fd, _bms_read_buffer.data() + total_bytes_read,
-                        _bms_read_buffer.size() - total_bytes_read - 1
+                        _bms_read_buffer.size() - total_bytes_read
                 );
                 if (bytes_read < 0) {
                     std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
                     return;
                 } else if (bytes_read == 0) {
-                    std::cout << "SerialBms::readAndReport read EOF while trying to read: " <<
-                        _bms_read_buffer.size() - total_bytes_read - 1 << "leaving" << std::endl;
+                    std::cout << "SerialBms::readAndReport read EOF while trying to read; leaving" << std::endl;
                     return;
                 }
                 total_bytes_read += bytes_read;
-                if (total_bytes_read < (_bms_read_buffer.size() - 10)) {
+                if (total_bytes_read < (_bms_read_buffer.size() - 5)) {
                     continue;
                 }
 
@@ -175,6 +170,7 @@ namespace infrastructure {
                     return;
                 } else {
                     _post_callback(bms_message);
+                    std::this_thread::sleep_for(500ms);
                     break;
                 }
 
