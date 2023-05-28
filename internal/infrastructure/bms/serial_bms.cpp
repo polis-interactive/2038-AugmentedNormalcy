@@ -166,7 +166,7 @@ namespace infrastructure {
                     continue;
                 }
 
-                std::string response(_bms_read_buffer.begin(), _bms_read_buffer.begin() + _bms_read_buffer.size());
+                std::string response(_bms_read_buffer.begin(), _bms_read_buffer.begin() + total_bytes_read);
                 std::cout << response << std::endl;
                 auto [success, bms_message] = tryParseResponse(response);
 
