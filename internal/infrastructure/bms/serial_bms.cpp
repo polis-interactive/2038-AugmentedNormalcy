@@ -122,6 +122,7 @@ namespace infrastructure {
         std::cout << "SerialBms::readAndReport running" << std::endl;
 
         static char breaker = '\n';
+        std::this_thread::sleep_for(100ms);
 
         while (!_work_stop) {
 
