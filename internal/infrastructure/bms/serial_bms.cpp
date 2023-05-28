@@ -143,6 +143,7 @@ namespace infrastructure {
                     std::cout << "SerialBms::readAndReport select failed; leaving" << std::endl;
                     return;
                 } else if(ready_descriptors == 0) {
+                    std::cout << "SerialBms::readAndReport not ready" << std::endl;
                     continue;
                 }
 
