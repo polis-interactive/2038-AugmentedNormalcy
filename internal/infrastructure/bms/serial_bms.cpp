@@ -157,7 +157,7 @@ namespace infrastructure {
                     return;
                 }
                 total_bytes_read += bytes_read;
-                if (total_bytes_read < 100) {
+                if (total_bytes_read < (_bms_read_buffer.size() - 5)) {
                     continue;
                 }
 
@@ -170,7 +170,7 @@ namespace infrastructure {
                     return;
                 } else {
                     _post_callback(bms_message);
-                    std::this_thread::sleep_for(500ms);
+                    std::this_thread::sleep_for(100ms);
                     break;
                 }
 
