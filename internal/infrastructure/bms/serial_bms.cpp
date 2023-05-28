@@ -164,9 +164,11 @@ namespace infrastructure {
                 auto [success, bms_message] = tryParseResponse(response);
 
                 if (!success) {
+                    std::cout << "SerialBms::readAndReport parse string; leaving" << std::endl;
                     return;
                 } else {
                     _post_callback(bms_message);
+                    break;
                 }
 
             }
