@@ -62,7 +62,7 @@ namespace infrastructure {
 
     bool SerialBms::setupConnection() {
         std::cout << "SerialBms::setupConnection Opening file" << std::endl;
-        _port_fd = open("/dev/ttyAMA0", O_RDWR);
+        _port_fd = open("/dev/ttyAMA0", O_RDWR|O_NDELAY|O_NOCTTY);
         if (_port_fd < 0) {
             std::cout << "SerialBms::setupConnection failed to open /dev/ttyAMA0" << std::endl;
             return false;
@@ -85,6 +85,18 @@ namespace infrastructure {
         tty.c_cflag &= ~CSTOPB; // Clear stop field, only one stop bit used in communication (most common)
         tty.c_cflag &= ~CSIZE; // Clear all bits that set the data size
         tty.c_cflag |= CS8; // 8 bits per byte (most common)
+
+
+        // raw, no echo
+        tty.c_iflag &= ~(IGNBRK | IGNCR | INLCR | ICRNL | IUCLC |
+                         IXANY | IXON | IXOFF | INPCK | ISTRIP);
+        tty.c_iflag |= (BRKINT | IGNPAR);
+        tty.c_oflag &= ~OPOST;
+        tty.c_lflag &= ~(XCASE|ECHONL|NOFLSH);
+        tty.c_lflag &= ~(ICANON | ISIG | ECHO);
+        tty.c_cflag |= CREAD;
+        tty.c_cc[VTIME] = 5;
+        tty.c_cc[VMIN] = 1;
 
         tty.c_iflag &= ~(IXOFF | IXON); // disable software flow control
         tty.c_cflag |= CRTSCTS; // enable hardware flow controll
@@ -119,7 +131,6 @@ namespace infrastructure {
 
             if (bytes_available < _bms_read_buffer.size()) {
                 std::cout << "Not enough bytes" << bytes_available << std::endl;
-                tcsendbreak(_port_fd, 0);
                 std::this_thread::sleep_for(500ms);
                 continue;
             } else {
