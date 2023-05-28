@@ -134,6 +134,8 @@ namespace infrastructure {
                 } else if (bytes_read == 0) {
                     std::cout << "SerialBms::readAndReport eof; leaving" << std::endl;
                     return;
+                } else {
+                    std::cout << "READ THIS MANY BYTES" << total_bytes_read << std::endl;
                 }
                 total_bytes_read += bytes_read;
             }
