@@ -88,6 +88,10 @@ namespace infrastructure {
         tty.c_iflag &= ~(IXOFF | IXON);
         tty.c_cflag &= ~CRTSCTS;
 
+        tty.c_lflag &= ~ECHO; // Disable echo
+        tty.c_lflag &= ~ECHOE; // Disable erasure
+        tty.c_lflag &= ~ECHONL; // Disable new-line echo
+        tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
 
 
         std::cout << "SerialBms::setupConnection setting speed" << std::endl;
