@@ -118,11 +118,21 @@ namespace infrastructure {
     void SerialBms::readAndReport() {
         std::cout << "SerialBms::readAndReport running" << std::endl;
         while (!_work_stop) {
-            auto start = Clock::now();
-            std::memset(_bms_read_buffer.data(), 0, _bms_read_buffer.size());
+
+            int bytes_available;
+            if (!ioctl(_port_fd, FIONREAD, &bytes_available)) {
+                std::cout << "SerialBms::readAndReport failed to check bytes available; leaving" << std::endl;
+                return;
+            }
+
+            if (bytes_available < _bms_read_buffer.size()) {
+                std::this_thread::sleep_for(250ms);
+                continue;
+            }
 
             std::size_t total_bytes_read = 0;
-            std::cout << _bms_read_buffer.size() << std::endl;
+            std::memset(_bms_read_buffer.data(), 0, _bms_read_buffer.size());
+
             while (total_bytes_read < _bms_read_buffer.size()) {
                 auto bytes_read = read(
                       _port_fd, _bms_read_buffer.data() + total_bytes_read,
@@ -134,8 +144,6 @@ namespace infrastructure {
                 } else if (bytes_read == 0) {
                     std::cout << "SerialBms::readAndReport eof; leaving" << std::endl;
                     return;
-                } else {
-                    std::cout << "READ THIS MANY BYTES" << total_bytes_read << std::endl;
                 }
                 total_bytes_read += bytes_read;
             }
@@ -148,11 +156,6 @@ namespace infrastructure {
                 return;
             } else {
                 _post_callback(bms_message);
-            }
-
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - start);
-            if (duration < 1s) {
-                std::this_thread::sleep_for(1s - duration);
             }
         }
 
