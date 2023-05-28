@@ -198,7 +198,6 @@ namespace infrastructure {
 
     void SerialBms::waitReadPort() {
 
-        std::cout << "SerialBms::waitReadPort waiting to read" << std::endl;
         if (_work_stop) return;
 
         int fd = _port->native_handle();
