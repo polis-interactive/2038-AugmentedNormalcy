@@ -146,8 +146,8 @@ namespace infrastructure {
                 }
 
                 auto bytes_read = read(
-                        _port_fd, _bms_read_buffer.data() + total_bytes_read,
-                        _bms_read_buffer.size() - total_bytes_read
+                    _port_fd, _bms_read_buffer.data() + total_bytes_read,
+                    _bms_read_buffer.size() - total_bytes_read
                 );
                 if (bytes_read < 0) {
                     std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
