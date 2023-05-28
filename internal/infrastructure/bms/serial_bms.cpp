@@ -119,9 +119,9 @@ namespace infrastructure {
         std::cout << "SerialBms::readAndReport running" << std::endl;
         while (!_work_stop) {
 
-            int bytes_available;
-            if (ioctl(_port_fd, FIONREAD, &bytes_available) != 0) {
-                std::cout << "SerialBms::readAndReport failed to check bytes available; leaving" << std::endl;
+            int bytes_available = 0;
+            if (ioctl(_port_fd, FIONREAD, &bytes_available) == -1) {
+                std::cerr << "SerialBms::readAndReport ioctl failed: " << strerror(errno) << std::endl;
                 return;
             }
 
