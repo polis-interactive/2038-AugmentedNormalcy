@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/file.h>
 
 #include "serial_bms.hpp"
 
@@ -67,6 +68,11 @@ namespace infrastructure {
             return false;
         }
 
+        if(flock(_port_fd, LOCK_EX | LOCK_NB) == -1) {
+            std::cout << "SerialBms::setupConnection failed to lock serial connection /dev/ttyAMA0" << std::endl;
+            return false;
+        }
+
         struct termios tty;
         std::cout << "SerialBms::setupConnection making connection object" << std::endl;
         if(tcgetattr(_port_fd, &tty) != 0) {
@@ -74,22 +80,14 @@ namespace infrastructure {
             return false;
         }
 
+        // 8n1
         tty.c_cflag &= ~PARENB; // Clear parity bit, disabling parity (most common)
         tty.c_cflag &= ~CSTOPB; // Clear stop field, only one stop bit used in communication (most common)
         tty.c_cflag &= ~CSIZE; // Clear all bits that set the data size
         tty.c_cflag |= CS8; // 8 bits per byte (most common)
 
-        // disable flow control
-        tty.c_iflag &= ~(IXOFF | IXON);
-        tty.c_cflag &= ~CRTSCTS; // Disable RTS/CTS hardware flow control (most common)
-
-        tty.c_lflag &= ~ECHO; // Disable echo
-        tty.c_lflag &= ~ECHOE; // Disable erasure
-        tty.c_lflag &= ~ECHONL; // Disable new-line echo
-        tty.c_lflag &= ~ISIG; // Disable interpretation of INTR, QUIT and SUSP
-
-        tty.c_oflag &= ~OPOST; // Prevent special interpretation of output bytes (e.g. newline chars)
-        tty.c_oflag |= ~ONLCR; // conversion of newline to carriage return/line feed
+        tty.c_iflag &= ~(IXOFF | IXON); // disable software flow control
+        tty.c_cflag |= CRTSCTS; // enable hardware flow controll
 
 
         std::cout << "SerialBms::setupConnection setting speed" << std::endl;
