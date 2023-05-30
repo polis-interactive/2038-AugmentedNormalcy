@@ -12,18 +12,8 @@
 #include "utils/buffers.hpp"
 #include "tcp_utils.hpp"
 
-using boost::asio::ip::tcp;
-using boost::system::error_code;
-
-typedef boost::asio::ip::address_v4 tcp_addr;
 
 namespace infrastructure {
-
-    enum class TcpConnectionType {
-        CAMERA_CONNECTION,
-        HEADSET_CONNECTION,
-        UNKNOWN_CONNECTION
-    };
 
     class TcpSession {
     public:
@@ -40,7 +30,7 @@ namespace infrastructure {
     class TcpServerManager {
     public:
         // tcp server
-        [[nodiscard]] virtual TcpConnectionType GetConnectionType(const tcp::endpoint &endpoint) = 0;
+        [[nodiscard]] virtual ConnectionType GetConnectionType(const tcp::endpoint &endpoint) = 0;
         // camera session
         [[nodiscard]]  virtual unsigned long CreateCameraServerConnection(
             std::shared_ptr<TcpSession> &&session
@@ -84,10 +74,12 @@ namespace infrastructure {
         void startTimer();
         void readHeader(std::size_t last_bytes);
         void readBody();
+        void doClose();
         tcp::socket _socket;
         const tcp_addr _addr;
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
         std::shared_ptr<TcpServerManager> &_manager;
+        std::atomic<bool> _is_live;
         unsigned long _session_id= 0;
         boost::asio::deadline_timer _read_timer;
         const int _read_timeout;
@@ -123,6 +115,7 @@ namespace infrastructure {
         void startTimer();
         void writeHeader(std::size_t last_bytes);
         void writeBody();
+        void doClose();
         tcp::socket _socket;
         const tcp_addr _addr;
         // TODO: realistically, this should be an underprivileged version of TcpServerManager, but w.e
@@ -162,6 +155,7 @@ namespace infrastructure {
         );
         void Start();
         void Stop();
+        ~TcpServer();
     private:
         void acceptConnections();
         std::atomic<bool> _is_stopped = { true };

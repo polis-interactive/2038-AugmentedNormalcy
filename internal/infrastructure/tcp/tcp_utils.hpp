@@ -8,7 +8,6 @@
 #include "utils/buffers.hpp"
 #include <iostream>
 #include <thread>
-#include <boost/asio.hpp>
 #include <memory>
 
 #ifdef __GNUC__
@@ -29,7 +28,6 @@ const auto rolling_less_than = [](const uint16_t &a, const uint16_t &b) {
     );
 };
 
-typedef net::detail::socket_option::boolean<SOL_SOCKET, SO_REUSEPORT> reuse_port;
 
 namespace infrastructure {
 

@@ -5,9 +5,11 @@
 #ifndef AUGMENTEDNORMALCY_SERVICE_SERVER_STREAMER_HPP
 #define AUGMENTEDNORMALCY_SERVICE_SERVER_STREAMER_HPP
 
+
 #include "connection_manager.hpp"
 
 #include "utils/asio_context.hpp"
+#include "infrastructure/tcp/tcp_server.hpp"
 
 
 namespace service {
@@ -105,7 +107,7 @@ namespace service {
             _asio_context.reset();
         }
         // tcp server
-        [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(const tcp::endpoint &endpoint) override;
+        [[nodiscard]] ConnectionType GetConnectionType(const tcp::endpoint &endpoint) override;
 
         // camera session
         [[nodiscard]]  unsigned long CreateCameraServerConnection(
@@ -126,10 +128,10 @@ namespace service {
         void assignStrategies();
         void initialize();
 
-        [[nodiscard]] infrastructure::TcpConnectionType ConnectionAssignCameraThenHeadset(const tcp::endpoint &endpoint);
-        [[nodiscard]] infrastructure::TcpConnectionType ConnectionAssignEndpointPort(const tcp::endpoint &endpoint);
-        [[nodiscard]] infrastructure::TcpConnectionType ConnectionAssignIpBounds(const tcp::endpoint &endpoint);
-        std::function<infrastructure::TcpConnectionType(const tcp::endpoint &)> _connection_assignment_strategy;
+        [[nodiscard]] ConnectionType ConnectionAssignCameraThenHeadset(const tcp::endpoint &endpoint);
+        [[nodiscard]] ConnectionType ConnectionAssignEndpointPort(const tcp::endpoint &endpoint);
+        [[nodiscard]] ConnectionType ConnectionAssignIpBounds(const tcp::endpoint &endpoint);
+        std::function<ConnectionType(const tcp::endpoint &)> _connection_assignment_strategy;
 
         ServerStreamerConfig _conf;
         std::atomic_bool _is_started = false;

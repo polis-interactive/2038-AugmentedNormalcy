@@ -44,7 +44,7 @@ namespace infrastructure {
             std::promise<void> done_promise;
             auto done_future = done_promise.get_future();
             auto self(shared_from_this());
-            boost::asio::post(
+            net::post(
                 _read_timer.get_executor(),
                 [this, self, p = std::move(done_promise)]() mutable {
                     error_code ec;
@@ -214,7 +214,7 @@ namespace infrastructure {
         _socket->async_receive(
             net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
             [this, self, last_bytes] (error_code ec, std::size_t bytes_written) mutable {
-                if (ec ==  boost::asio::error::operation_aborted) {
+                if (ec == net::error::operation_aborted) {
                     std::cout << "TcpClient: readHeader aborted" << std::endl;
                     return;
                 }
@@ -253,7 +253,7 @@ namespace infrastructure {
         _socket->async_receive(
             net::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, self] (error_code ec, std::size_t bytes_written) mutable {
-                if (ec ==  boost::asio::error::operation_aborted) {
+                if (ec ==  net::error::operation_aborted) {
                     std::cout << "TcpClient: readBody aborted" << std::endl;
                     return;
                 }

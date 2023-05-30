@@ -1,0 +1,8 @@
+//
+// Created by brucegoose on 5/29/23.
+//
+
+#ifndef SERVICE_WEBSOCKET_UTILS_HPP
+#define SERVICE_WEBSOCKET_UTILS_HPP
+
+#endif //SERVICE_WEBSOCKET_UTILS_HPP

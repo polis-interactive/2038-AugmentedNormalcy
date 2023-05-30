@@ -2,9 +2,11 @@
 // Created by brucegoose on 4/8/23.
 //
 
+#include <functional>
+
+
 #include "server_streamer.hpp"
 
-#include <functional>
 
 typedef std::chrono::high_resolution_clock Clock;
 using namespace std::literals;
@@ -82,41 +84,41 @@ namespace service {
         _is_started = true;
     }
 
-    infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignCameraThenHeadset(const tcp::endpoint &endpoint) {
+    ConnectionType ServerStreamer::ConnectionAssignCameraThenHeadset(const tcp::endpoint &endpoint) {
         const auto connection_counts = _connection_manager.GetConnectionCounts();
         if (connection_counts.first == 0 && connection_counts.second == 0) {
-            return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
+            return ConnectionType::CAMERA_CONNECTION;
         } else if (connection_counts.second == 0) {
-            return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
+            return ConnectionType::HEADSET_CONNECTION;
         } else {
-            return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
+            return ConnectionType::UNKNOWN_CONNECTION;
         }
     }
 
-    infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignIpBounds(const tcp::endpoint &endpoint) {
+    ConnectionType ServerStreamer::ConnectionAssignIpBounds(const tcp::endpoint &endpoint) {
         static const tcp_addr min_headset_address = ip_bound("69.4.20.100");
         static const tcp_addr min_camera_address = ip_bound("69.4.20.200");
         const auto &addr = endpoint.address().to_v4();
         if (addr >= min_camera_address) {
-            return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
+            return ConnectionType::CAMERA_CONNECTION;
         } else if (addr >= min_headset_address) {
-            return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
+            return ConnectionType::HEADSET_CONNECTION;
         }
-        return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
+        return ConnectionType::UNKNOWN_CONNECTION;
     }
 
-    infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignEndpointPort(const tcp::endpoint &endpoint) {
+    ConnectionType ServerStreamer::ConnectionAssignEndpointPort(const tcp::endpoint &endpoint) {
         const auto &port = endpoint.port();
         if (port == 11111) {
-            return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
+            return ConnectionType::CAMERA_CONNECTION;
         } else if (port == 22222) {
-            return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
+            return ConnectionType::HEADSET_CONNECTION;
         } else {
-            return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
+            return ConnectionType::UNKNOWN_CONNECTION;
         }
     }
 
-    infrastructure::TcpConnectionType ServerStreamer::GetConnectionType(const tcp::endpoint &endpoint) {
+    ConnectionType ServerStreamer::GetConnectionType(const tcp::endpoint &endpoint) {
         return _connection_assignment_strategy(endpoint);
     }
 

@@ -381,6 +381,7 @@ namespace service {
             std::unique_lock lk1(_reader_mutex, std::defer_lock);
             std::unique_lock lk2(_writer_mutex, std::defer_lock);
             std::unique_lock lk3(_connection_mutex, std::defer_lock);
+            std::lock(lk1, lk2, lk3);
             _reader_connections.clear();
             _writer_connections.clear();
             removed_readers.reserve(_reader_sessions.size());

@@ -5,14 +5,41 @@
 #ifndef UTILS_ASIO_CONTEXT_HPP
 #define UTILS_ASIO_CONTEXT_HPP
 
+#include "utils/buffers.hpp"
+#include "utils/asio_context.hpp"
+#include <queue>
 #include <memory>
 #include <boost/asio.hpp>
+#include <boost/beast.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/beast/websocket.hpp>
 #include <thread>
 #include <iostream>
 
 namespace net = boost::asio;
 using boost::asio::ip::tcp;
 using boost::system::error_code;
+
+namespace beast = boost::beast;
+namespace http = beast::http;
+namespace websocket = beast::websocket;
+
+using boost::system::error_code;
+typedef boost::asio::ip::address_v4 tcp_addr;
+
+typedef net::detail::socket_option::boolean<SOL_SOCKET, SO_REUSEPORT> reuse_port;
+
+
+enum class ConnectionType {
+    CAMERA_CONNECTION,
+    HEADSET_CONNECTION,
+    UNKNOWN_CONNECTION
+};
+
+inline void failOut(error_code ec, char const* what) {
+    std::cerr << what << ": " << ec.message() << "\n";
+    throw std::runtime_error(ec.message());
+}
 
 struct AsioContextConfig {
     [[nodiscard]] virtual int get_asio_pool_size() const = 0;

@@ -32,6 +32,7 @@ else()
     endif()
 
     message("Using host: ${AN_PLATFORM}")
+    message("Using platform: ${AN_PLATFORM_TYPE}")
     message("Using platform number: ${AN_PLATFORM_NUM}")
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPLATFORM_BROOSE_WINDOWS_LAPTOP=1")
