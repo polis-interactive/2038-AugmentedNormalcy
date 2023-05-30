@@ -5,6 +5,8 @@
   "cameraBuffersCount": 8,
   "headsetBuffersCount": 5,
   "cameraBufferSize": 1990656,
+  "websocketPort": 8008,
+  "websocketTimeout": 2,
   "serverClientAssignmentStrategy": "IP_BOUNDS",
   "serverCameraSwitchingStrategy": "AUTOMATIC_TIMER",
   "serverCameraSwitchingAutomaticTimeout": 15

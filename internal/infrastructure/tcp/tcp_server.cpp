@@ -84,10 +84,14 @@ namespace infrastructure {
     }
 
     TcpServer::~TcpServer() {
+        std::cout << "TcpServer Deconstructing" << std::endl;
         Stop();
     }
 
     void TcpServer::acceptConnections() {
+
+        if(_is_stopped) return;
+
         std::cout << "TcpServer: starting to accept connections" << std::endl;
 
         auto self(shared_from_this());

@@ -2,14 +2,15 @@
 // Created by brucegoose on 4/8/23.
 //
 
-#ifndef AUGMENTEDNORMALCY_SERVICE_SERVER_STREAMER_HPP
-#define AUGMENTEDNORMALCY_SERVICE_SERVER_STREAMER_HPP
+#ifndef SERVICE_SERVER_STREAMER_HPP
+#define SERVICE_SERVER_STREAMER_HPP
 
 
 #include "connection_manager.hpp"
 
 #include "utils/asio_context.hpp"
 #include "infrastructure/tcp/tcp_server.hpp"
+#include "infrastructure/websocket/websocket_server.hpp"
 
 
 namespace service {
@@ -24,16 +25,19 @@ namespace service {
         MANUAL_ENTRY,
         AUTOMATIC_TIMER,
         HEADSET_CONTROLLED,
+        LOCATION_BASED,
         NONE
     };
 
     struct ServerStreamerConfig :
             public AsioContextConfig,
-            public infrastructure::TcpServerConfig
+            public infrastructure::TcpServerConfig,
+            public infrastructure::WebsocketServerConfig
     {
         ServerStreamerConfig(
             int asio_pool_size, int tcp_server_port, int tcp_server_timeout_on_read,
             int camera_buffer_count, int headset_buffer_count, int buffer_size,
+            int websocket_server_port, int websocket_server_timeout,
             ClientAssignmentStrategy assign_strategy, CameraSwitchingStrategy switch_strategy,
             int switch_automatic_timeout
         ):
@@ -43,6 +47,8 @@ namespace service {
                 _camera_buffer_count(camera_buffer_count),
                 _headset_buffer_count(headset_buffer_count),
                 _buffer_size(buffer_size),
+                _websocket_server_port(websocket_server_port),
+                _websocket_server_timeout(websocket_server_timeout),
                 _assign_strategy(assign_strategy),
                 _switch_strategy(switch_strategy),
                 _switch_automatic_timeout(switch_automatic_timeout)
@@ -70,6 +76,13 @@ namespace service {
         [[nodiscard]] int get_tcp_server_timeout() const override {
             return _tcp_server_timeout_on_read;
         }
+
+        [[nodiscard]] int get_websocket_server_port() const override {
+            return _websocket_server_port;
+        };
+        [[nodiscard]] int get_websocket_server_timeout() const override {
+            return _websocket_server_timeout;
+        };
         [[nodiscard]] ClientAssignmentStrategy get_server_client_assignment_strategy() const {
             return _assign_strategy;
         }
@@ -86,6 +99,8 @@ namespace service {
         const int _camera_buffer_count;
         const int _headset_buffer_count;
         const int _buffer_size;
+        const int _websocket_server_port;
+        const int _websocket_server_timeout;
         const ClientAssignmentStrategy _assign_strategy;
         const CameraSwitchingStrategy _switch_strategy;
         const int _switch_automatic_timeout;
@@ -95,7 +110,8 @@ namespace service {
 
     class ServerStreamer:
         public std::enable_shared_from_this<ServerStreamer>,
-        public infrastructure::TcpServerManager
+        public infrastructure::TcpServerManager,
+        public infrastructure::WebsocketServerManager
     {
     public:
         static std::shared_ptr<ServerStreamer> Create(const ServerStreamerConfig &config);
@@ -103,10 +119,12 @@ namespace service {
         void Start();
         void Stop();
         void Unset() {
+            _websocket_server.reset();
             _tcp_server.reset();
             _asio_context.reset();
         }
-        // tcp server
+
+        // tcp / websocket server
         [[nodiscard]] ConnectionType GetConnectionType(const tcp::endpoint &endpoint) override;
 
         // camera session
@@ -124,6 +142,9 @@ namespace service {
             std::shared_ptr<infrastructure::WritableTcpSession> &&headset_session
         ) override;
 
+        // websocket session
+        [[nodiscard]] bool PostWebsocketMessage(const bool is_camera, const tcp_addr addr, nlohmann::json &&message);
+
     private:
         void assignStrategies();
         void initialize();
@@ -137,16 +158,17 @@ namespace service {
         std::atomic_bool _is_started = false;
         std::shared_ptr<AsioContext> _asio_context = nullptr;
         std::shared_ptr<infrastructure::TcpServer> _tcp_server = nullptr;
+        std::shared_ptr<infrastructure::WebsocketServer> _websocket_server = nullptr;
 
         ConnectionManager _connection_manager;
+        bool _allow_headset_switches = false;
 
         void CameraSwitchingManualEntry();
         void CameraSwitchingAutomaticTimer();
-        void CameraSwitchingHeadsetControlled();
         std::function<void(void)> _camera_switching_strategy = nullptr;
         std::unique_ptr<std::thread> _work_thread;
         std::atomic<bool> _work_stop = { true };
     };
 }
 
-#endif //AUGMENTEDNORMALCY_SERVICE_SERVER_STREAMER_HPP
+#endif //SERVICE_SERVER_STREAMER_HPP

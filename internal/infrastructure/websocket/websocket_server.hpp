@@ -19,14 +19,22 @@ namespace infrastructure {
     public:
         // tcp server
         [[nodiscard]] virtual ConnectionType GetConnectionType(const tcp::endpoint &endpoint) = 0;
-        virtual void PostWebsocketMessage(const tcp_addr addr, nlohmann::json &&message) = 0;
+        [[nodiscard]] virtual bool PostWebsocketMessage(
+            const bool is_camera, const tcp_addr addr, nlohmann::json &&message
+        ) = 0;
     };
+
+
+    class WebsocketSession;
+    typedef std::shared_ptr<WebsocketSession> WebsocketSessionPtr;
+    typedef std::function<void(WebsocketSessionPtr &&)> DestroyHandler;
 
     class WebsocketSession: public std::enable_shared_from_this<WebsocketSession> {
     public:
         WebsocketSession(
             const bool is_camera, tcp::socket &&socket, std::shared_ptr<WebsocketServerManager> &_manager,
-            const tcp_addr addr, const unsigned long session_number, const int op_timeout
+            DestroyHandler &&destroy_callback, const tcp_addr addr, const unsigned long session_number,
+            const int op_timeout
         );
         WebsocketSession() = delete;
         WebsocketSession (const WebsocketSession&) = delete;
@@ -36,16 +44,31 @@ namespace infrastructure {
         friend class WebsocketServer;
 
         void PostMessage(nlohmann::json &&message);
-        void Run();
+        void Start();
         void TryClose(bool internal_close);
 
-        const tcp_addr _addr;
         const bool _is_camera;
+        const tcp_addr _addr;
         const unsigned long _session_number;
     private:
+        void onStart();
+        void onAccept(beast::error_code ec);
+        void read();
+        void onRead(beast::error_code ec, std::size_t bytes_transferred);
+        void onWrite(std::shared_ptr<std::string> message, beast::error_code ec, std::size_t bytes_transferred);
+        void onClose(bool internal_close, beast::error_code ec);
+
+        const int _op_timeout;
+
+        DestroyHandler _destroy_callback;
         std::shared_ptr<WebsocketServerManager> &_manager;
+        websocket::stream<beast::tcp_stream> _ws;
+        beast::flat_buffer _read_buffer;
+        beast::flat_buffer _write_buffer;
+        std::atomic<bool> _is_live = { true };
     };
-    typedef std::shared_ptr<WebsocketSession> WebsocketSessionPtr;
+
+
 
     struct WebsocketServerConfig {
         [[nodiscard]] virtual int get_websocket_server_port() const = 0;
@@ -68,13 +91,11 @@ namespace infrastructure {
         void Start();
         void Stop();
         ~WebsocketServer();
-    protected:
-        friend class WebsocketSession;
-        void DestroySession(WebsocketSessionPtr &&session);
     private:
         void acceptConnections();
         void onAccept(beast::error_code ec, tcp::socket socket);
         void handleConnection(const bool is_camera, const tcp_addr &addr, tcp::socket &&socket);
+        void destroySession(WebsocketSessionPtr &&session);
         std::atomic<bool> _is_stopped = { true };
         net::io_context &_context;
         tcp::acceptor _acceptor;

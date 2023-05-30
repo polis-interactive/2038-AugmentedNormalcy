@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 set(SOURCES)
-set(TARGET_LIBS pthread tcp)
+set(TARGET_LIBS pthread tcp websocket)
 
 include_directories(${BOOST_INCLUDEDIR})
 

@@ -38,6 +38,8 @@ int main(int argc, char* argv[]) {
         config.value("cameraBuffersCount", 8),
         config.value("headsetBuffersCount", 5),
         config.value("cameraBufferSize", 1536 * 864 * 3 * 0.5),
+        config.value("websocketPort", 8008),
+        config.value("websocketTimeout", 2),
         to_client_assignment_strategy(config.value("serverClientAssignmentStrategy", "IP_BOUNDS")),
         to_camera_switching_strategy(config.value("serverCameraSwitchingStrategy", "AUTOMATIC_TIMER")),
         config.value("serverCameraSwitchingAutomaticTimeout", 45)
