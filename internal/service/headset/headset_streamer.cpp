@@ -8,13 +8,11 @@
 
 static void turnOnScreen() {
     std::string command = "uhubctl -l 1-1 -a 1";
-    std::cout << "HeadsetStreamer wants to turn on screen" << std::endl;
     std::system(command.c_str());
 }
 
 static void turnOffScreen() {
     std::string command = "uhubctl -l 1-1 -a 0";
-    std::cout << "HeadsetStreamer wants to turn OFF screen" << std::endl;
     std::system(command.c_str());
 }
 
@@ -100,13 +98,13 @@ namespace service {
 
     void HeadsetStreamer::handleStateChangeConnecting() {
         // here, we assume we were either plugged in; can universally apply though as we don't care how we got here
-        turnOnScreen();
+        // turnOnScreen();
         _tcp_client->Start();
         _decoder->Start();
     }
 
     void HeadsetStreamer::handleStateChangePluggedIn() {
-        turnOffScreen();
+        // turnOffScreen();
         _tcp_client->Stop();
         _decoder->Stop();
     }
