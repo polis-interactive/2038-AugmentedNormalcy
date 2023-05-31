@@ -26,7 +26,7 @@ namespace infrastructure {
     class WebsocketClientManager {
     public:
         virtual void CreateWebsocketClientConnection() = 0;
-        virtual bool PostWebsocketServerMessage(nlohmann::json &&message) = 0;
+        [[nodiscard]] virtual bool PostWebsocketServerMessage(nlohmann::json &&message) = 0;
         virtual void DestroyWebsocketClientConnection() = 0;
     };
     typedef std::shared_ptr<WebsocketClientManager> WebsocketClientManagerPtr;
@@ -47,7 +47,6 @@ namespace infrastructure {
             const WebsocketClientConfig &config, net::io_context &context,
             WebsocketClientManagerPtr &&manager
         );
-        ~WebsocketClient();
         void Start();
         void PostWebsocketClientMessage(nlohmann::json &&message);
         void Stop();
