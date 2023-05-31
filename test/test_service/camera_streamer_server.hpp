@@ -12,7 +12,7 @@
 #include "utils/buffers.hpp"
 
 struct TestServerConfig:
-        public infrastructure::TcpContextConfig,
+        public AsioContextConfig,
         public infrastructure::TcpServerConfig
 {
     explicit TestServerConfig(int pool_size, int tcp_server_port):
@@ -21,19 +21,19 @@ struct TestServerConfig:
     {}
     const int _pool_size;
     const int _tcp_server_port;
-    [[nodiscard]] int get_tcp_pool_size() const override {
+    [[nodiscard]] int get_asio_pool_size() const override {
         return _pool_size;
     };
     [[nodiscard]] int get_tcp_server_port() const override {
         return _tcp_server_port;
     };
-    [[nodiscard]] int get_tcp_server_timeout_on_read() const override {
+    [[nodiscard]] int get_tcp_server_timeout() const override {
         return 5;
     }
     [[nodiscard]] int get_tcp_camera_session_buffer_count() const override {
         return 4;
     };
-    [[nodiscard]] int get_tcp_camera_session_buffer_size() const override {
+    [[nodiscard]] int get_tcp_server_buffer_size() const override {
         return 1990656;
     };
 };
