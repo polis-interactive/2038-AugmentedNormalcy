@@ -64,7 +64,6 @@ namespace infrastructure {
         std::shared_ptr<WebsocketServerManager> &_manager;
         websocket::stream<beast::tcp_stream> _ws;
         beast::flat_buffer _read_buffer;
-        beast::flat_buffer _write_buffer;
         std::atomic<bool> _is_live = { true };
     };
 

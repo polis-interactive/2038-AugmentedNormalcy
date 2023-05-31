@@ -94,12 +94,11 @@ namespace infrastructure {
                 handleConnection(connection_type == ConnectionType::CAMERA_CONNECTION, addr, std::move(socket));
             }
 
+        } else {
+            std::cout << "WebsocketServer::onAccept received err " << ec << " while connecting" << std::endl;
         }
 
-        if (ec != net::error::operation_aborted) {
-            acceptConnections();
-        }
-
+        acceptConnections();
     }
 
     void WebsocketServer::handleConnection(const bool is_camera, const tcp_addr &addr, tcp::socket &&socket) {
@@ -259,8 +258,8 @@ namespace infrastructure {
             TryClose(true);
             return;
         } else if (bytes_transferred == 0) {
-            std::cout << "WebsocketSession::onRead received 0 bytes; bailing" << std::endl;
-            TryClose(true);
+            // probably a ping
+            read();
             return;
         }
 
@@ -311,6 +310,10 @@ namespace infrastructure {
     void WebsocketSession::TryClose(bool internal_close) {
         if (!_is_live) return;
         _is_live = false;
+        if (internal_close) {
+            auto self(shared_from_this());
+            _destroy_callback(std::move(self));
+        }
         _ws.async_close(
             websocket::close_code::normal,
             beast::bind_front_handler(&WebsocketSession::onClose, shared_from_this(), internal_close)
@@ -318,10 +321,6 @@ namespace infrastructure {
     }
 
     void WebsocketSession::onClose(bool internal_close, beast::error_code ec) {
-        if (internal_close) {
-            auto self(shared_from_this());
-            _destroy_callback(std::move(self));
-        }
         if (ec) {
             std::cout << "WebsocketSession::onClose failed to close gracefully" << std::endl;
         }
