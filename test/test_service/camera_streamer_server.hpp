@@ -33,6 +33,9 @@ struct TestServerConfig:
     [[nodiscard]] int get_tcp_camera_session_buffer_count() const override {
         return 4;
     };
+    [[nodiscard]] int get_tcp_headset_session_buffer_count() const override {
+        return 4;
+    }
     [[nodiscard]] int get_tcp_server_buffer_size() const override {
         return 1990656;
     };

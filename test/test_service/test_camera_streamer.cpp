@@ -145,7 +145,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-a-usable-frame") {
     std::vector<unsigned int> frame_sizes = { 814669 };
 #endif
     TestServerConfig srv_conf(3, 6969);
-    auto ctx = infrastructure::TcpContext::Create(srv_conf);
+    auto ctx = AsioContext::Create(srv_conf);
     ctx->Start();
     auto manager = std::make_shared<TcpCameraServerManager>(callback);
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
@@ -219,7 +219,7 @@ TEST_CASE("SERVICE_CAMERA-STREAMER_Transmit-10-seconds") {
 #endif
 
     TestServerConfig srv_conf(3, 6969);
-    auto ctx = infrastructure::TcpContext::Create(srv_conf);
+    auto ctx = AsioContext::Create(srv_conf);
     ctx->Start();
     auto manager = std::make_shared<TcpCameraServerManager>(callback);
     auto srv_manager = std::static_pointer_cast<infrastructure::TcpServerManager>(manager);
