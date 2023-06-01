@@ -28,10 +28,12 @@ namespace service {
 
     void HeadsetStreamer::initialize(const service::HeadsetStreamerConfig &config) {
         _asio_context = AsioContext::Create(config);
-        auto self(shared_from_this());
-        _tcp_client = infrastructure::TcpClient::Create(config, _asio_context->GetContext(), std::move(self));
+        _tcp_client = infrastructure::TcpClient::Create(config, _asio_context->GetContext(), shared_from_this());
+        _websocket_client = infrastructure::WebsocketClient::Create(
+            config, _asio_context->GetContext(), shared_from_this()
+        );
         _graphics = infrastructure::Graphics::Create(config);
-        self = shared_from_this();
+        auto self(shared_from_this());
         _decoder = infrastructure::Decoder::Create(
             config,
             [this, self](std::shared_ptr<DecoderBuffer> &&buffer) {
