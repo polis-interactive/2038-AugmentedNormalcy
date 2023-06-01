@@ -2,9 +2,11 @@
 // Created by brucegoose on 4/8/23.
 //
 
+#include <functional>
+
+
 #include "server_streamer.hpp"
 
-#include <functional>
 
 typedef std::chrono::high_resolution_clock Clock;
 using namespace std::literals;
@@ -53,8 +55,10 @@ namespace service {
             _camera_switching_strategy = [this, self]() mutable {
                 CameraSwitchingAutomaticTimer();
             };
-        } else if (switch_strategy == CameraSwitchingStrategy::HEADSET_CONTROLLED) {
-            throw std::runtime_error("Switch strategy headset_controlled is not yet implemented");
+        } else if (switch_strategy == CameraSwitchingStrategy::LOCATION_BASED) {
+            throw std::runtime_error("Switch strategy location_based is not yet implemented");
+        } else if (switch_strategy == CameraSwitchingStrategy::HEADSET_CONTROLLED){
+            _allow_headset_switches = true;
         } else if (switch_strategy != CameraSwitchingStrategy::NONE) {
             throw std::runtime_error("Unknown server camera switching strategy");
         }
@@ -65,6 +69,7 @@ namespace service {
         _asio_context = AsioContext::Create(_conf);
         auto self(shared_from_this());
         _tcp_server = infrastructure::TcpServer::Create(_conf, _asio_context->GetContext(), self);
+        _websocket_server = infrastructure::WebsocketServer::Create(_conf, _asio_context->GetContext(), self);
     }
 
     void ServerStreamer::Start() {
@@ -79,44 +84,45 @@ namespace service {
         /* startup server */
         _asio_context->Start();
         _tcp_server->Start();
+        _websocket_server->Start();
         _is_started = true;
     }
 
-    infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignCameraThenHeadset(const tcp::endpoint &endpoint) {
+    ConnectionType ServerStreamer::ConnectionAssignCameraThenHeadset(const tcp::endpoint &endpoint) {
         const auto connection_counts = _connection_manager.GetConnectionCounts();
         if (connection_counts.first == 0 && connection_counts.second == 0) {
-            return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
+            return ConnectionType::CAMERA_CONNECTION;
         } else if (connection_counts.second == 0) {
-            return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
+            return ConnectionType::HEADSET_CONNECTION;
         } else {
-            return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
+            return ConnectionType::UNKNOWN_CONNECTION;
         }
     }
 
-    infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignIpBounds(const tcp::endpoint &endpoint) {
+    ConnectionType ServerStreamer::ConnectionAssignIpBounds(const tcp::endpoint &endpoint) {
         static const tcp_addr min_headset_address = ip_bound("69.4.20.100");
         static const tcp_addr min_camera_address = ip_bound("69.4.20.200");
         const auto &addr = endpoint.address().to_v4();
         if (addr >= min_camera_address) {
-            return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
+            return ConnectionType::CAMERA_CONNECTION;
         } else if (addr >= min_headset_address) {
-            return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
+            return ConnectionType::HEADSET_CONNECTION;
         }
-        return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
+        return ConnectionType::UNKNOWN_CONNECTION;
     }
 
-    infrastructure::TcpConnectionType ServerStreamer::ConnectionAssignEndpointPort(const tcp::endpoint &endpoint) {
+    ConnectionType ServerStreamer::ConnectionAssignEndpointPort(const tcp::endpoint &endpoint) {
         const auto &port = endpoint.port();
-        if (port == 11111) {
-            return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
-        } else if (port == 22222) {
-            return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
+        if (port == 11111 || port == 33333) {
+            return ConnectionType::CAMERA_CONNECTION;
+        } else if (port == 22222 || port == 44444) {
+            return ConnectionType::HEADSET_CONNECTION;
         } else {
-            return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
+            return ConnectionType::UNKNOWN_CONNECTION;
         }
     }
 
-    infrastructure::TcpConnectionType ServerStreamer::GetConnectionType(const tcp::endpoint &endpoint) {
+    ConnectionType ServerStreamer::GetConnectionType(const tcp::endpoint &endpoint) {
         return _connection_assignment_strategy(endpoint);
     }
 
@@ -181,10 +187,6 @@ namespace service {
         }
     }
 
-    void ServerStreamer::CameraSwitchingHeadsetControlled() {
-        // todo: implement
-    }
-
     unsigned long ServerStreamer::CreateCameraServerConnection(
         std::shared_ptr<infrastructure::TcpSession> &&camera_session
     ) {
@@ -211,6 +213,11 @@ namespace service {
         return _connection_manager.RemoveWriterSession(std::move(headset_session));
     }
 
+    bool ServerStreamer::PostWebsocketMessage(const bool is_camera, const tcp_addr addr, nlohmann::json &&message) {
+        std::cout << "NEED TO HANDLE THE MESSAGE: " << message << std::endl;
+        return true;
+    }
+
     void ServerStreamer::Stop() {
         if (!_is_started) {
             return;
@@ -229,6 +236,7 @@ namespace service {
             _work_stop = true;
         }
         /* stop server */
+        _websocket_server->Stop();
         _tcp_server->Stop();
         _asio_context->Stop();
         _is_started = false;

@@ -7,6 +7,7 @@
 
 #include "infrastructure/tcp/tcp_server.hpp"
 
+
 struct TestServerConfig:
         public AsioContextConfig,
         public infrastructure::TcpServerConfig
@@ -41,8 +42,8 @@ struct TestServerConfig:
 
 class NoSessionManager: public infrastructure::TcpServerManager {
 public:
-    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(const tcp::endpoint &endpoint) override {
-        return infrastructure::TcpConnectionType::UNKNOWN_CONNECTION;
+    [[nodiscard]] ConnectionType GetConnectionType(const tcp::endpoint &endpoint) override {
+        return ConnectionType::UNKNOWN_CONNECTION;
     }
     /* dummy's for the rest */
     [[nodiscard]] unsigned long CreateCameraServerConnection(

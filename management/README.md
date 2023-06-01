@@ -25,3 +25,8 @@ tinyproxy -d -c management/tinyproxy.conf
 export http_proxy=http://69.4.20.10:8888
 export https_proxy=http://69.4.20.10:8888
 `
+
+# start openvpn
+`
+sudo systemctl enable openvpn-client@augmented-client.conf
+`

@@ -51,6 +51,8 @@ include_directories(${root_dir}/internal)
 include_directories(${third_party_dir}/nlohmann)
 
 add_subdirectory(${internal_dir}/infrastructure/tcp)
+add_subdirectory(${internal_dir}/infrastructure/websocket)
+
 if (FEATURE_CAMERA)
     add_subdirectory(${internal_dir}/infrastructure/camera)
 endif()

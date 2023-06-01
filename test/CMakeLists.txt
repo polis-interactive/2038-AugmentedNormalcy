@@ -12,9 +12,10 @@ set(
         main.cpp
         test_infrastructure/test_tcp/test_context.cpp
         test_infrastructure/test_tcp/test_communication.cpp
+        test_infrastructure/test_websocket/test_websocket.cpp
 )
 
-set(tests_link_libraries pthread tcp)
+set(tests_link_libraries pthread tcp websocket)
 
 if (LIBCAMERA_AVAILABLE)
     set(tests ${tests} test_infrastructure/test_camera/test_frame_capture.cpp)

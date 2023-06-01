@@ -8,6 +8,8 @@
 #include "infrastructure/tcp/tcp_client.hpp"
 #include "infrastructure/tcp/tcp_server.hpp"
 
+
+
 class TcpHeadsetClientServerManager:
         public infrastructure::TcpClientManager,
         public infrastructure::TcpServerManager
@@ -36,8 +38,8 @@ public:
     SizedBufferCallback on_receive;
 
     /* headset server */
-    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(const tcp::endpoint &endpoint) override {
-        return infrastructure::TcpConnectionType::HEADSET_CONNECTION;
+    [[nodiscard]] ConnectionType GetConnectionType(const tcp::endpoint &endpoint) override {
+        return ConnectionType::HEADSET_CONNECTION;
     }
     [[nodiscard]] unsigned long CreateHeadsetServerConnection(
         std::shared_ptr<infrastructure::WritableTcpSession> &&session

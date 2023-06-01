@@ -8,6 +8,8 @@
 #include "infrastructure/tcp/tcp_client.hpp"
 #include "infrastructure/tcp/tcp_server.hpp"
 
+
+
 class TcpCameraClientServerManager:
         public infrastructure::TcpClientManager,
         public infrastructure::TcpServerManager
@@ -32,8 +34,8 @@ public:
 
 
     /* camera server */
-    [[nodiscard]] infrastructure::TcpConnectionType GetConnectionType(const tcp::endpoint &endpoint) override {
-        return infrastructure::TcpConnectionType::CAMERA_CONNECTION;
+    [[nodiscard]] ConnectionType GetConnectionType(const tcp::endpoint &endpoint) override {
+        return ConnectionType::CAMERA_CONNECTION;
     }
     [[nodiscard]] unsigned long CreateCameraServerConnection(
         std::shared_ptr<infrastructure::TcpSession> &&session

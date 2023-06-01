@@ -4,16 +4,15 @@
 
 #include "tcp_server.hpp"
 
+
 #include <utility>
 
 namespace infrastructure {
 
-    void failOut(error_code ec, char const* what) {
-        std::cerr << what << ": " << ec.message() << "\n";
-        throw std::runtime_error(ec.message());
-    }
-
-    TcpServer::TcpServer(const TcpServerConfig &config, net::io_context &context, std::shared_ptr<TcpServerManager> manager):
+    TcpServer::TcpServer(
+        const TcpServerConfig &config, net::io_context &context,
+        std::shared_ptr<TcpServerManager> manager
+    ):
             _context(context),
             _endpoint(tcp::v4(), config.get_tcp_server_port()),
             _acceptor(net::make_strand(context)),
@@ -65,62 +64,70 @@ namespace infrastructure {
             _is_stopped = false;
             acceptConnections();
         }
-
     }
 
     void TcpServer::Stop() {
         if (!_is_stopped) {
             _is_stopped = true;
+            std::promise<void> done_promise;
+            auto done_future = done_promise.get_future();
             auto self(shared_from_this());
             net::post(
                 _acceptor.get_executor(),
-                [this, self]() {
+                [this, self, p = std::move(done_promise)]() mutable {
                     _acceptor.cancel();
+                    p.set_value();
                 }
             );
+            done_future.wait();
         }
     }
 
-    void TcpServer::acceptConnections() {
-        std::cout << "TcpServer: starting to accept connections" << std::endl;
+    TcpServer::~TcpServer() {
+        std::cout << "TcpServer Deconstructing" << std::endl;
+        Stop();
+    }
 
-        // make sure each session is created with a new strand
-        auto socket_ptr = std::make_shared<tcp::socket>(net::make_strand(_context));
+    void TcpServer::acceptConnections() {
+
+        if(_is_stopped) return;
+
+        std::cout << "TcpServer: starting to accept connections" << std::endl;
 
         auto self(shared_from_this());
         _acceptor.async_accept(
-            *socket_ptr,
-            [this, self, socket_ptr](error_code ec) {
+            net::make_strand(_context),
+            [this, self](error_code ec, tcp::socket socket) {
                 std::cout << "TcpServer: attempting connection" << std::endl;
                 if (_is_stopped) {
                     return;
                 }
                 if (!ec) {
-                    socket_ptr->set_option(tcp::no_delay(true));
+                    socket.set_option(tcp::no_delay(true));
                     net::socket_base::keep_alive option(true);
-                    socket_ptr->set_option(option);
-                    socket_ptr->set_option(reuse_port(true));
-                    socket_ptr->set_option(tcp::socket::reuse_address(true));
-                    const auto remote = socket_ptr->remote_endpoint();
+                    socket.set_option(option);
+                    socket.set_option(reuse_port(true));
+                    socket.set_option(tcp::socket::reuse_address(true));
+                    const auto remote = socket.remote_endpoint();
                     auto connection_type = _manager->GetConnectionType(remote);
                     const auto addr = remote.address().to_v4();
-                    if (connection_type == TcpConnectionType::CAMERA_CONNECTION) {
+                    if (connection_type == ConnectionType::CAMERA_CONNECTION) {
                         std::shared_ptr<TcpCameraSession>(
                             new TcpCameraSession(
-                                    std::move(*socket_ptr), _manager, addr, _read_write_timeout,
+                                    std::move(socket), _manager, addr, _read_write_timeout,
                                     _tcp_camera_session_buffer_count, _tcp_session_buffer_size
                             )
                         )->Run();
-                    } else if (connection_type == TcpConnectionType::HEADSET_CONNECTION) {
+                    } else if (connection_type == ConnectionType::HEADSET_CONNECTION) {
                         std::shared_ptr<TcpHeadsetSession>(
                             new TcpHeadsetSession(
-                                    std::move(*socket_ptr), _manager, addr, _read_write_timeout,
+                                    std::move(socket), _manager, addr, _read_write_timeout,
                                     _tcp_headset_session_buffer_count, _tcp_session_buffer_size
                             )
                         )->ConnectAndWait();
                     } else {
                         std::cout << "TcpServer: Unknown connection, abort" << std::endl;
-                        socket_ptr->shutdown(tcp::socket::shutdown_both, ec);
+                        socket.shutdown(tcp::socket::shutdown_both, ec);
                     }
                 }
                 if (ec != net::error::operation_aborted) {
@@ -238,8 +245,25 @@ namespace infrastructure {
     }
 
     void TcpCameraSession::TryClose(bool internal_close) {
+        if (!_is_live) return;
+        _is_live = false;
+        if (internal_close) {
+            doClose();
+            auto self(shared_from_this());
+            _manager->DestroyCameraServerConnection(std::move(self));
+        } else {
+            auto self(shared_from_this());
+            net::post(
+                _socket.get_executor(),
+                [this, self]() {
+                    doClose();
+                }
+            );
+        }
+    }
 
-        // this might should be done async in a strand
+    void TcpCameraSession::doClose() {
+
         if (_socket.is_open()) {
             error_code ec;
             _socket.shutdown(tcp::socket::shutdown_both, ec);
@@ -249,10 +273,7 @@ namespace infrastructure {
         if (_receive_buffer_pool) {
             _receive_buffer_pool.reset();
         }
-        if (internal_close) {
-            auto self(shared_from_this());
-            _manager->DestroyCameraServerConnection(std::move(self));
-        }
+
     }
 
     TcpCameraSession::~TcpCameraSession() {
@@ -395,8 +416,24 @@ namespace infrastructure {
 
 
     void TcpHeadsetSession::TryClose(const bool internal_close) {
+        if (!_is_live) return;
         _is_live = false;
-        // this might should be done async in a strand
+        if (internal_close) {
+            doClose();
+            auto self(shared_from_this());
+            _manager->DestroyHeadsetServerConnection(std::move(self));
+        } else {
+            auto self(shared_from_this());
+            net::post(
+                _socket.get_executor(),
+                [this, self]() {
+                    doClose();
+                }
+            );
+        }
+    }
+
+    void TcpHeadsetSession::doClose() {
         if (_socket.is_open()) {
             error_code ec;
             _socket.shutdown(tcp::socket::shutdown_both, ec);
@@ -406,10 +443,6 @@ namespace infrastructure {
             while(!_message_queue.empty()) {
                 _message_queue.pop();
             }
-        }
-        if (internal_close) {
-            auto self(shared_from_this());
-            _manager->DestroyHeadsetServerConnection(std::move(self));
         }
     }
 

@@ -44,7 +44,7 @@ namespace infrastructure {
             std::promise<void> done_promise;
             auto done_future = done_promise.get_future();
             auto self(shared_from_this());
-            boost::asio::post(
+            net::post(
                 _read_timer.get_executor(),
                 [this, self, p = std::move(done_promise)]() mutable {
                     error_code ec;
@@ -65,9 +65,7 @@ namespace infrastructure {
         if (_is_stopped) return;
         if (_socket == nullptr) {
             if (_use_fixed_port) {
-                auto endpoint = _is_camera
-                                ? tcp::endpoint(tcp::v4(), 11111)
-                                : tcp::endpoint(tcp::v4(), 22222);
+                auto endpoint = tcp::endpoint(tcp::v4(), _is_camera ? 33333 : 22222);
                 _socket = std::make_shared<tcp::socket>(_read_timer.get_executor(), endpoint);
             } else {
                 _socket = std::make_shared<tcp::socket>(_read_timer.get_executor());
@@ -214,7 +212,7 @@ namespace infrastructure {
         _socket->async_receive(
             net::buffer(_header.Data() + last_bytes, _header.Size() - last_bytes),
             [this, self, last_bytes] (error_code ec, std::size_t bytes_written) mutable {
-                if (ec ==  boost::asio::error::operation_aborted) {
+                if (ec == net::error::operation_aborted) {
                     std::cout << "TcpClient: readHeader aborted" << std::endl;
                     return;
                 }
@@ -253,7 +251,7 @@ namespace infrastructure {
         _socket->async_receive(
             net::buffer((uint8_t *) _receive_buffer->GetMemory() + _header.BytesWritten(), _header.DataLength()),
             [this, self] (error_code ec, std::size_t bytes_written) mutable {
-                if (ec ==  boost::asio::error::operation_aborted) {
+                if (ec ==  net::error::operation_aborted) {
                     std::cout << "TcpClient: readBody aborted" << std::endl;
                     return;
                 }

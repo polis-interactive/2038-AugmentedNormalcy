@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 set(SOURCES)
-set(TARGET_LIBS pthread tcp)
+set(TARGET_LIBS pthread tcp websocket)
 
 include_directories(${BOOST_INCLUDEDIR})
 
@@ -17,7 +17,7 @@ endif()
 
 if (FEATURE_DISPLAY)
     set(SOURCES ${SOURCES} headset_streamer.cpp)
-    set(TARGET_LIBS ${TARGET_LIBS} decoder graphics gpio bms)
+    set(TARGET_LIBS ${TARGET_LIBS} decoder graphics websocket gpio bms)
 endif()
 
 add_library(service STATIC ${SOURCES})
