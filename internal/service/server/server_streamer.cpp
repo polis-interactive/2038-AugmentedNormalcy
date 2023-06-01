@@ -4,6 +4,7 @@
 
 #include <functional>
 
+#include "domain/headset_domain.hpp"
 
 #include "server_streamer.hpp"
 
@@ -214,8 +215,24 @@ namespace service {
     }
 
     bool ServerStreamer::PostWebsocketMessage(const bool is_camera, const tcp_addr addr, nlohmann::json &&message) {
-        std::cout << "NEED TO HANDLE THE MESSAGE: " << message << std::endl;
-        return true;
+        auto domain_message = domain::DomainMessage::TryParseMessage(std::move(message));
+        if (domain_message == nullptr) {
+            return false;
+        }
+        switch (const auto message_type = domain_message->GetMessageType(); message_type) {
+            case domain::DomainMessage::RotateCamera:
+                if (is_camera) {
+                    std::cout << "ServerStreamer::PostWebsocketMessage only headsets can call RotateCamera"
+                        << std::endl;
+                    return false;
+                }
+                _connection_manager.RotateWriterConnection(addr);
+                return true;
+            default:
+                std::cout << "ServerStreamer::PostWebsocketMessage unhandled domain message type: "
+                    << message_type << std::endl;
+                return false;
+        }
     }
 
     void ServerStreamer::Stop() {

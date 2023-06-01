@@ -1,6 +1,6 @@
 
 set(SOURCES bms.cpp null_bms.cpp)
-set(TARGET_LIBS pthread)
+set(TARGET_LIBS pthread domain)
 
 if (BMS_SERIAL_AVAILABLE)
     set(SOURCES ${SOURCES} serial_bms.cpp)

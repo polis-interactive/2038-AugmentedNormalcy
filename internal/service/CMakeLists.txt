@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 set(SOURCES)
-set(TARGET_LIBS pthread tcp websocket)
+set(TARGET_LIBS pthread tcp websocket domain)
 
 include_directories(${BOOST_INCLUDEDIR})
 
@@ -16,7 +16,7 @@ if (NOT AN_PLATFORM_TYPE STREQUAL RPI)
 endif()
 
 if (FEATURE_DISPLAY)
-    set(SOURCES ${SOURCES} headset_streamer.cpp)
+    set(SOURCES ${SOURCES} headset/headset_streamer.cpp)
     set(TARGET_LIBS ${TARGET_LIBS} decoder graphics websocket gpio bms)
 endif()
 

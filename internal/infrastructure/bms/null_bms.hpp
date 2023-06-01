@@ -10,7 +10,7 @@
 namespace infrastructure {
     class NullBms: public Bms {
     public:
-        NullBms(const BmsConfig &config, net::io_context &context, BmsMessageCallback &&post_callback);
+        NullBms(const BmsConfig &config, net::io_context &context, domain::BmsMessageCallback &&post_callback);
         void Start() override;
         void Stop() override;
     };

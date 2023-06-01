@@ -13,7 +13,8 @@
 namespace infrastructure {
 
     std::shared_ptr<Bms> Bms::Create(
-        const infrastructure::BmsConfig &config, net::io_context &context, BmsMessageCallback &&post_callback
+        const infrastructure::BmsConfig &config, net::io_context &context,
+        domain::BmsMessageCallback &&post_callback
     ) {
         switch(config.get_bms_type()) {
 #ifdef _BMS_SERIAL_
@@ -27,7 +28,10 @@ namespace infrastructure {
         }
     }
 
-    Bms::Bms(const infrastructure::BmsConfig &config, net::io_context &context, BmsMessageCallback &&post_callback):
+    Bms::Bms(
+        const infrastructure::BmsConfig &config, net::io_context &context,
+        domain::BmsMessageCallback &&post_callback
+    ):
         _bms_polling_timeout(config.get_bms_polling_timeout()),
         _bms_shutdown_threshold(config.get_bms_shutdown_threshold()),
         _post_callback(std::move(post_callback))

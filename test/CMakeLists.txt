@@ -32,7 +32,7 @@ if (FEATURE_ENCODER)
     set(tests_link_libraries ${tests_link_libraries} service encoder)
 endif()
 
-if (NOT AN_PLATFORM_TYPE STREQUAL RPI)
+if (AN_PLATFORM_TYPE STREQUAL RPI)
     set(tests ${tests} test_service/test_server_streamer.cpp)
     set(tests_link_libraries ${tests_link_libraries} service)
 endif()

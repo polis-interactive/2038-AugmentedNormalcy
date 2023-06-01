@@ -72,6 +72,7 @@ namespace infrastructure {
             }
 
         }
+        _header.ResetHeader();
         std::cout << "TcpClient running async connect" << std::endl;
         auto self(shared_from_this());
         _socket->async_connect(
