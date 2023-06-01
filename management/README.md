@@ -28,5 +28,5 @@ export https_proxy=http://69.4.20.10:8888
 
 # start openvpn
 `
-sudo systemctl enable openvpn-client@augmented-client.conf
+sudo systemctl start openvpn-client@augmented-client
 `

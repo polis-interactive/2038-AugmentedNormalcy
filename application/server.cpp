@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
         config.value("websocketPort", 8008),
         config.value("websocketTimeout", 6),
         to_client_assignment_strategy(config.value("serverClientAssignmentStrategy", "IP_BOUNDS")),
-        to_camera_switching_strategy(config.value("serverCameraSwitchingStrategy", "AUTOMATIC_TIMER")),
+        to_camera_switching_strategy(config.value("serverCameraSwitchingStrategy", "HEADSET_CONTROLLED")),
         config.value("serverCameraSwitchingAutomaticTimeout", 45)
     );
     auto service = service::ServerStreamer::Create(conf);
