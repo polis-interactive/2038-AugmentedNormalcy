@@ -166,6 +166,8 @@ namespace infrastructure {
         }
     }
 
+    void DisplayGraphics::PostGraphicsHeadsetState(const domain::HeadsetStates state) {}
+
     void DisplayGraphics::run() {
         bool has_run = false;
         while (!_stop_running) {

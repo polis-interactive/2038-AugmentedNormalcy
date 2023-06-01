@@ -2,8 +2,8 @@
 // Created by brucegoose on 4/15/23.
 //
 
-#ifndef INFRASTRUCTURE_GRAPHICS_GLFW_GRAPHICS_HPP
-#define INFRASTRUCTURE_GRAPHICS_GLFW_GRAPHICS_HPP
+#ifndef INFRASTRUCTURE_GRAPHICS_DISPLAY_GRAPHICS_HPP
+#define INFRASTRUCTURE_GRAPHICS_DISPLAY_GRAPHICS_HPP
 
 #include <memory>
 #include <thread>
@@ -14,22 +14,18 @@
 
 #include "graphics.hpp"
 
-struct EglBuffer
-{
-    EglBuffer() : fd(-1) {}
-    int fd;
-    size_t size;
-    GLuint texture;
-};
 
 namespace infrastructure {
 
-    class MyFuckingGraphics : public std::enable_shared_from_this<MyFuckingGraphics>, public Graphics {
+    class DisplayGraphics : public std::enable_shared_from_this<DisplayGraphics>, public Graphics {
     public:
-        explicit MyFuckingGraphics(const GraphicsConfig &conf);
-        ~MyFuckingGraphics();
+        explicit DisplayGraphics(const GraphicsConfig &conf);
+        ~DisplayGraphics();
 
         void PostImage(std::shared_ptr<DecoderBuffer>&& buffer) override;
+
+        // not used
+        void PostGraphicsHeadsetState(const domain::HeadsetStates state) override;
     private:
 
         void StartGraphics() override;
@@ -55,4 +51,4 @@ namespace infrastructure {
     };
 }
 
-#endif //INFRASTRUCTURE_GRAPHICS_GLFW_GRAPHICS_HPP
+#endif //INFRASTRUCTURE_GRAPHICS_DISPLAY_GRAPHICS_HPP

@@ -10,5 +10,6 @@
   "tcpReadBuffers": 4,
   "decoderBuffersDownstream": 4,
   "decoderType": "NONE",
-  "graphicsType": "NONE"
+  "graphicsType": "NONE",
+  "displayRotateTimeout": 10
 }

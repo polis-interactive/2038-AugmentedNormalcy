@@ -10,7 +10,7 @@
   "tcpReadBuffers": 4,
   "decoderBuffersDownstream": 4,
   "decoderType": "SW",
-  "graphicsType": "GLFW",
+  "graphicsType": "HEADSET",
   "gpioType": "PIGPIO",
   "bmsType": "SERIAL"
 }

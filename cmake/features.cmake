@@ -14,7 +14,7 @@ if (
         (AN_PLATFORM STREQUAL BROOSE_LINUX_LAPTOP)
 )
     set(FEATURE_DECODER true)
-    set(FEATURE_DISPLAY true)
+    set(FEATURE_GRAPHICS true)
     set(FEATURE_BMS true)
     set(FEATURE_GPIO true)
 endif()
@@ -25,7 +25,7 @@ if (
         (AN_PLATFORM STREQUAL BROOSE_LINUX_LAPTOP)
 )
     set(FEATURE_DECODER true)
-    set(FEATURE_DISPLAY true)
+    set(FEATURE_GRAPHICS true)
 endif()
 
 if (NOT AN_PLATFORM_TYPE STREQUAL JETSON)

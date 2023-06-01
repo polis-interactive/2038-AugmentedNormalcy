@@ -17,7 +17,8 @@ static infrastructure::DecoderType to_decoder_type(const std::string& type) {
 }
 
 static infrastructure::GraphicsType to_graphics_type(const std::string& type) {
-    if (type == "GLFW") return infrastructure::GraphicsType::GLFW;
+    if (type == "HEADSET") return infrastructure::GraphicsType::HEADSET;
+    if (type == "DISPLAY") return infrastructure::GraphicsType::DISPLAY;
     else if (type == "NONE") return infrastructure::GraphicsType::NONE;
     throw std::runtime_error("Unknown graphics type: " + type);
 }
@@ -43,7 +44,8 @@ int main(int argc, char* argv[]) {
             config.value("tcpReadBuffers", 4),
             config.value("decoderBuffersDownstream", 4),
             to_decoder_type(config.value("decoderType", "SW")),
-            to_graphics_type(config.value("graphicsType", "GLFW"))
+            to_graphics_type(config.value("graphicsType", "DISPLAY")),
+            config.value("displayRotateTimeout", 10)
     );
     auto service = service::DisplayStreamer::Create(display_config);
     service->Start();

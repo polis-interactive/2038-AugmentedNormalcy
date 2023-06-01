@@ -129,7 +129,7 @@ namespace service {
             return 10;
         };
         [[nodiscard]] int get_bms_shutdown_threshold() const override {
-            return 3;
+            return 0;
         };
         [[nodiscard]] int get_bms_read_timeout() const override {
             return 5;

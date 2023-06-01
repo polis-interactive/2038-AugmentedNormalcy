@@ -160,10 +160,15 @@ namespace infrastructure {
         }
     }
     void HeadsetGraphics::PostImage(std::shared_ptr<DecoderBuffer>&& buffer) {
-        if (_is_ready) {
+        if (_is_ready && _is_display) {
             std::unique_lock<std::mutex> lock(_image_mutex);
             _image_queue.push(std::move(buffer));
         }
+    }
+
+    void HeadsetGraphics::PostGraphicsHeadsetState(const domain::HeadsetStates state) {
+        std::unique_lock lk(_state_mutex);
+        _state = state;
     }
 
     void HeadsetGraphics::run() {
@@ -258,18 +263,18 @@ namespace infrastructure {
                     0, 1, 3, // first triangle
                     1, 2, 3, // second triangle
             };
-            unsigned int VBO, VAO, EBO;
-            glGenVertexArrays(1, &VAO);
-            glGenBuffers(1, &VBO);
-            glGenBuffers(1, &EBO);
+
+            glGenVertexArrays(1, &IMAGE_VAO);
+            glGenBuffers(1, &IMAGE_VBO);
+            glGenBuffers(1, &IMAGE_EBO);
 
 
-            glBindVertexArray(VAO);
+            glBindVertexArray(IMAGE_VAO);
 
-            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+            glBindBuffer(GL_ARRAY_BUFFER, IMAGE_VBO);
             glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IMAGE_EBO);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
             // position attribute
@@ -286,40 +291,103 @@ namespace infrastructure {
 
             std::cout << "At graphics loop" << std::endl;
             _is_ready = true;
+            auto last_state = domain::HeadsetStates::CONNECTING;
 
-            EglBuffer *egl_buffer = nullptr;
             while (!glfwWindowShouldClose(_window) && !_stop_running) {
                 glfwPollEvents();
-                std::shared_ptr<DecoderBuffer> data = nullptr;
+                glClearColor(0, 0, 0, 1.0);
+                glClear(GL_COLOR_BUFFER_BIT);
+
+                // get the state
+                auto state = domain::HeadsetStates::CONNECTING;
                 {
+                    std::shared_lock lk(_state_mutex);
+                    state = _state;
+                }
+                const bool is_transition = state != last_state;
+
+                // transition if necessary
+                if (state == domain::HeadsetStates::RUNNING && !is_transition) {
+                    _is_display = true;
+                } else if (last_state == domain::HeadsetStates::RUNNING){
+                    _is_display = false;
                     std::unique_lock<std::mutex> lock(_image_mutex);
                     while (!_image_queue.empty()) {
-                        data = _image_queue.front();
                         _image_queue.pop();
                     }
                 }
-                glClearColor(0, 0, 0, 1.0);
-                glClear(GL_COLOR_BUFFER_BIT);
-                if (data) {
-                    EglBuffer &tmp_egl_buffer = _buffers[data->GetFd()];
-                    if (tmp_egl_buffer.fd == -1) {
-                        makeBuffer(data->GetFd(), data->GetSize(), tmp_egl_buffer);
-                    }
-                    egl_buffer = &tmp_egl_buffer;
-                }
-                if (egl_buffer) {
-                    glBindTexture(GL_TEXTURE_EXTERNAL_OES, egl_buffer->texture);
-                    glBindVertexArray(VAO);
-                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+                switch (state) {
+                    case domain::HeadsetStates::CONNECTING:
+                        handleConnectingState(is_transition);
+                        break;
+                    case domain::HeadsetStates::READY:
+                        handleReadyState(is_transition);
+                        break;
+                    case domain::HeadsetStates::RUNNING:
+                        handleRunningState(is_transition);
+                        break;
+                    case domain::HeadsetStates::PLUGGED_IN:
+                        handlePluggedInState(is_transition);
+                        break;
+                    case domain::HeadsetStates::DYING:
+                        handleDyingState(is_transition);
+                        break;
+                    case domain::HeadsetStates::CLOSING:
+                        // nothing to do
+                        break;
                 }
                 EGLBoolean success [[maybe_unused]] = eglSwapBuffers(egl_display, egl_surface);
+                last_state = state;
             }
 
             _is_ready = false;
-            glDeleteVertexArrays(1, &VAO);
-            glDeleteBuffers(1, &VBO);
-            glDeleteBuffers(1, &EBO);
+            glDeleteVertexArrays(1, &IMAGE_VAO);
+            glDeleteBuffers(1, &IMAGE_VBO);
+            glDeleteBuffers(1, &IMAGE_EBO);
         }
+    }
+
+    void HeadsetGraphics::handleConnectingState(const bool is_transition) {
+
+    }
+
+    void HeadsetGraphics::handleReadyState(const bool is_transition) {
+
+    }
+
+    void HeadsetGraphics::handleRunningState(const bool is_transition) {
+        static EglBuffer *egl_buffer = nullptr;
+        std::shared_ptr<DecoderBuffer> data = nullptr;
+        {
+            std::unique_lock<std::mutex> lock(_image_mutex);
+            while (!_image_queue.empty()) {
+                data = _image_queue.front();
+                _image_queue.pop();
+            }
+        }
+
+        if (data) {
+            EglBuffer &tmp_egl_buffer = _buffers[data->GetFd()];
+            if (tmp_egl_buffer.fd == -1) {
+                makeBuffer(data->GetFd(), data->GetSize(), tmp_egl_buffer);
+            }
+            egl_buffer = &tmp_egl_buffer;
+        }
+
+        if (egl_buffer) {
+            glBindTexture(GL_TEXTURE_EXTERNAL_OES, egl_buffer->texture);
+            glBindVertexArray(IMAGE_VAO);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        }
+    }
+
+    void HeadsetGraphics::handlePluggedInState(const bool is_transition) {
+
+    }
+
+    void HeadsetGraphics::handleDyingState(const bool is_transition) {
+
     }
 
     void HeadsetGraphics::setWindowHints() {
