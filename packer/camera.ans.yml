@@ -143,7 +143,7 @@
         cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/ntp.client.conf /etc/ntp.conf
     - name: Copy Camera flip boot config
       shell:
-        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/camera.boot_config.conf /boot/config.txt
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/camera.boot_config.txt /boot/config.txt
     # MANAGEMENT
     - name: Create ssh dir
       become: yes
