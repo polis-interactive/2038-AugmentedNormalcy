@@ -3,6 +3,8 @@
   "serverPort": 6969,
   "clientTimeoutOnRead": 6,
   "clientUseFixedPort": true,
+  "websocketServerHost": "127.0.0.1",
+  "websocketServerPort": 8008,
   "imageWidth": 8,
   "imageHeight": 8,
   "tcpReadBuffers": 4,
@@ -10,5 +12,5 @@
   "decoderType": "NONE",
   "graphicsType": "NONE",
   "gpioType": "NONE",
-  "bmsType": "SERIAL"
+  "bmsType": "NONE"
 }

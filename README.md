@@ -83,3 +83,10 @@ After, sudo reboot and make sure it works!
 $ sudo -E $(which packer) build camera.pkr.hcl
 $ sudo -E $(which packer) build headset.pkr.hcl
 ```
+
+## Edit the pi
+```
+$ sudo vim /media/brucegoose/rootfs/etc/hostname 
+$ sudo vim /media/brucegoose/rootfs/etc/hosts
+$ sudo vim /media/brucegoose/rootfs/etc/dhcpcd.conf 
+```

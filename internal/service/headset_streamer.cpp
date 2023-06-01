@@ -12,16 +12,14 @@ namespace service {
         return headset_streamer;
     }
 
-    void HeadsetStreamer::PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) {
-        _decoder->PostJpegBuffer(std::move(buffer));
-    }
-
     void HeadsetStreamer::initialize(const service::HeadsetStreamerConfig &config) {
         _asio_context = AsioContext::Create(config);
-        auto self(shared_from_this());
-        _tcp_client = infrastructure::TcpClient::Create(config, _asio_context->GetContext(), std::move(self));
+        _tcp_client = infrastructure::TcpClient::Create(config, _asio_context->GetContext(), shared_from_this());
+        _websocket_client = infrastructure::WebsocketClient::Create(
+            config, _asio_context->GetContext(), shared_from_this()
+        );
         _graphics = infrastructure::Graphics::Create(config);
-        self = shared_from_this();
+        auto self(shared_from_this());
         _decoder = infrastructure::Decoder::Create(
             config,
             [this, self](std::shared_ptr<DecoderBuffer> &&buffer) {
@@ -39,5 +37,13 @@ namespace service {
 
             }
         );
+    }
+
+    void HeadsetStreamer::PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) {
+        _decoder->PostJpegBuffer(std::move(buffer));
+    }
+
+    bool HeadsetStreamer::PostWebsocketServerMessage(nlohmann::json &&message) {
+        throw std::runtime_error("HeadsetStreamer::PostWebsocketServerMessage not implemented");
     }
 }

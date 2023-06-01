@@ -45,6 +45,8 @@ int main(int argc, char* argv[]) {
         config.value("serverPort", 6969),
         config.value("clientTimeoutOnRead", 3),
         config.value("clientUseFixedPort", false),
+        config.value("websocketServerHost", "69.4.20.10"),
+        config.value("websocketServerPort", 8008),
         {
             config.value("imageWidth", 1536),
             config.value("imageHeight", 864)

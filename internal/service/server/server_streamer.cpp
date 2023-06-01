@@ -113,9 +113,9 @@ namespace service {
 
     ConnectionType ServerStreamer::ConnectionAssignEndpointPort(const tcp::endpoint &endpoint) {
         const auto &port = endpoint.port();
-        if (port == 11111) {
+        if (port == 11111 || port == 33333) {
             return ConnectionType::CAMERA_CONNECTION;
-        } else if (port == 22222) {
+        } else if (port == 22222 || port == 44444) {
             return ConnectionType::HEADSET_CONNECTION;
         } else {
             return ConnectionType::UNKNOWN_CONNECTION;

@@ -36,52 +36,55 @@ struct TestServerClientConfig:
     [[nodiscard]] int get_websocket_server_timeout() const override {
         return 10;
     };
+
+    [[nodiscard]] bool get_websocket_client_is_camera() const override {
+        return false;
+    };
+    [[nodiscard]] bool get_websocket_client_used_fixed_port() const override {
+        return false;
+    };
 };
 
-class WebsocketServerManager: public infrastructure::WebsocketServerManager {
+class WebsocketClientServerManager:
+        public infrastructure::WebsocketServerManager,
+        public infrastructure::WebsocketClientManager{
 public:
-    WebsocketServerManager(std::function<void(nlohmann::json &&)> callback):
-        _callback(std::move(callback))
+    WebsocketClientServerManager(
+        std::function<void(nlohmann::json &&)> server_callback,
+        std::function<void(nlohmann::json &&)> client_callback
+    ):
+        _server_callback(std::move(server_callback)),
+        _client_callback(std::move(client_callback))
     {}
+    // server
     [[nodiscard]] ConnectionType GetConnectionType(const tcp::endpoint &endpoint) override {
         return ConnectionType::CAMERA_CONNECTION;
     };
     [[nodiscard]] bool PostWebsocketMessage(
             const bool is_camera, const tcp_addr addr, nlohmann::json &&message
-    ) {
-        _callback(std::move(message));
+    ) override {
+        _server_callback(std::move(message));
         return return_success;
     };
-    void SetRetSuccess(const bool ret_success) {
-        return_success = ret_success;
-    }
-private:
-    std::function<void(nlohmann::json &&)> _callback;
-    bool return_success = true;
-};
-
-class WebsocketClientManager: public infrastructure::WebsocketClientManager {
-public:
-    WebsocketClientManager(std::function<void(nlohmann::json &&)> callback):
-            _callback(std::move(callback))
-    {}
+    // client
     [[nodiscard]] bool PostWebsocketServerMessage(nlohmann::json &&message) override {
-        _callback(std::move(message));
+        _client_callback(std::move(message));
         return return_success;
     };
     void CreateWebsocketClientConnection() override {
-        is_connected = true;
+        _client_is_connected = true;
     };
     void DestroyWebsocketClientConnection() override {
-        is_connected = false;
+        _client_is_connected = false;
     };
     void SetRetSuccess(const bool ret_success) {
         return_success = ret_success;
     }
-private:
-    std::function<void(nlohmann::json &&)> _callback;
+    std::function<void(nlohmann::json &&)> _server_callback;
+    std::function<void(nlohmann::json &&)> _client_callback;
     bool return_success = true;
-    std::atomic<bool> is_connected;
+    std::atomic<bool> _client_is_connected;
 };
+
 
 #endif //AUGMENTEDNORMALCY_TEST_WEBSOCKET_HPP

@@ -27,7 +27,9 @@ namespace infrastructure {
         _manager(std::move(manager)),
         _op_timeout(config.get_websocket_client_op_timeout()),
         _connection_timeout(config.get_websocket_client_connection_timeout()),
-        _strand(net::make_strand(context))
+        _strand(net::make_strand(context)),
+        _use_fixed_port(config.get_websocket_client_used_fixed_port()),
+        _is_camera(config.get_websocket_client_is_camera())
     {}
 
     void WebsocketClient::Start() {
@@ -66,7 +68,12 @@ namespace infrastructure {
         if (!is_initial_connection) {
             std::this_thread::sleep_for(1s);
         }
-        _ws = std::make_shared<websocket::stream<beast::tcp_stream>>(_strand);
+        if (_use_fixed_port) {
+            auto endpoint = tcp::endpoint(tcp::v4(), _is_camera ? 33333 : 44444);
+            _ws = std::make_shared<websocket::stream<beast::tcp_stream>>(_strand, endpoint);
+        } else {
+            _ws = std::make_shared<websocket::stream<beast::tcp_stream>>(_strand);
+        }
         beast::get_lowest_layer(*_ws).expires_after(std::chrono::seconds(_connection_timeout));
         beast::get_lowest_layer(*_ws).async_connect(
             _remote_endpoint, beast::bind_front_handler(
@@ -178,7 +185,9 @@ namespace infrastructure {
     void WebsocketClient::write(std::string &&message) {
         _send_queue.push(std::move(message));
         auto session_number = _session_number.load();
-        doWrite(session_number);
+        if (_send_queue.size() == 1) {
+            doWrite(session_number);
+        }
     }
 
     void WebsocketClient::doWrite(const unsigned long session_number) {
@@ -202,7 +211,7 @@ namespace infrastructure {
         auto current_session_number = _session_number.load();
         if (!ec && bytes_transferred == _send_queue.front().size()) {
             _send_queue.pop();
-            if (session_number == current_session_number) {
+            if (session_number == current_session_number && !_send_queue.empty()) {
                 doWrite(session_number);
             }
             return;

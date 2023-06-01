@@ -65,9 +65,7 @@ namespace infrastructure {
         if (_is_stopped) return;
         if (_socket == nullptr) {
             if (_use_fixed_port) {
-                auto endpoint = _is_camera
-                                ? tcp::endpoint(tcp::v4(), 11111)
-                                : tcp::endpoint(tcp::v4(), 22222);
+                auto endpoint = tcp::endpoint(tcp::v4(), _is_camera ? 33333 : 22222);
                 _socket = std::make_shared<tcp::socket>(_read_timer.get_executor(), endpoint);
             } else {
                 _socket = std::make_shared<tcp::socket>(_read_timer.get_executor());
