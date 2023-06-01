@@ -156,9 +156,8 @@ namespace infrastructure {
         }
 
         auto buffers = _read_buffer.data();
-        std::string data = boost::beast::buffers_to_string(buffers);
         try {
-            auto js = nlohmann::json::parse(data);
+            auto js = nlohmann::json::parse(net::buffers_begin(buffers), net::buffers_end(buffers));
             const bool success = _manager->PostWebsocketServerMessage(std::move(js));
             if (success) {
                 _read_buffer.consume(bytes_transferred);
@@ -167,8 +166,9 @@ namespace infrastructure {
                 std::cout << "WebsocketSession::onRead failed to send valid json; bailing" << std::endl;
                 disconnect(session_number);
             }
-        } catch (nlohmann::json::parse_error& e) {
-            std::cout << "WebsocketSession::onRead failed to parse json; bailing" << std::endl;
+        } catch (nlohmann::json::exception& e) {
+            std::cout << "WebsocketSession::onRead failed to parse json with err:" << e.what()
+                << "; bailing" << std::endl;
             disconnect(session_number);
         }
     }

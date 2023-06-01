@@ -18,7 +18,7 @@
 namespace infrastructure {
 
     SerialBms::SerialBms(
-        const infrastructure::BmsConfig &config, net::io_context &context, BmsMessageCallback &&post_callback
+        const infrastructure::BmsConfig &config, net::io_context &context, domain::BmsMessageCallback &&post_callback
     ):
         Bms(config, context, std::move(post_callback)),
         _strand(net::make_strand(context)),
@@ -182,14 +182,14 @@ namespace infrastructure {
         std::cout << "SerialBms::readAndReport stopping" << std::endl;
     }
 
-    std::pair<bool, BmsMessage> SerialBms::tryParseResponse(const std::string &input) {
+    std::pair<bool, domain::BmsMessage> SerialBms::tryParseResponse(const std::string &input) {
         const static std::string version_clause = "SmartUPS V3.2P";
         const static std::regex vin_pattern(R"(Vin\s*(NG|GOOD))");
         const static std::regex batcap_pattern(R"(BATCAP\s*(100|[1-9]?[0-9]))");
 
         const static std::string plugged_in_string = "GOOD";
 
-        BmsMessage msg{};
+        domain::BmsMessage msg{};
 
         // make sure we have a good packet
         std::smatch result;

@@ -8,8 +8,8 @@
 #include <memory>
 #include <functional>
 
-#include "utils/messages.hpp"
 #include "utils/asio_context.hpp"
+#include "domain/message.hpp"
 
 namespace infrastructure {
 
@@ -28,13 +28,13 @@ namespace infrastructure {
     class Bms {
     public:
         [[nodiscard]] static std::shared_ptr<Bms> Create(
-            const BmsConfig &config, net::io_context &context, BmsMessageCallback &&post_callback
+            const BmsConfig &config, net::io_context &context, domain::BmsMessageCallback &&post_callback
         );
-        Bms(const BmsConfig &config, net::io_context &context, BmsMessageCallback &&post_callback);
+        Bms(const BmsConfig &config, net::io_context &context, domain::BmsMessageCallback &&post_callback);
         virtual void Start() = 0;
         virtual void Stop() = 0;
     protected:
-        BmsMessageCallback _post_callback;
+        domain::BmsMessageCallback _post_callback;
         const int _bms_polling_timeout;
         const int _bms_shutdown_threshold;
     };

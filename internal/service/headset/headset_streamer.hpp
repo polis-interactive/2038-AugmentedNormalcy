@@ -15,7 +15,7 @@
 #include "infrastructure/gpio/gpio.hpp"
 #include "infrastructure/bms/bms.hpp"
 
-#include "domain/headset_state.hpp"
+#include "domain/headset_domain.hpp"
 
 namespace service {
     struct HeadsetStreamerConfig:
@@ -203,9 +203,9 @@ namespace service {
         void PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) override;
         void DestroyHeadsetClientConnection() override;
 
-        void CreateWebsocketClientConnection() override {};
+        void CreateWebsocketClientConnection() override;
         [[nodiscard]] bool PostWebsocketServerMessage(nlohmann::json &&message) override;
-        void DestroyWebsocketClientConnection() override {};
+        void DestroyWebsocketClientConnection() override;
     private:
         void initialize(const HeadsetStreamerConfig &config);
         void handleStateChange(const domain::HeadsetStates state);

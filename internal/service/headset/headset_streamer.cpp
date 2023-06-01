@@ -2,9 +2,11 @@
 // Created by brucegoose on 4/15/23.
 //
 
+#include "domain/message.hpp"
+
 #include "headset_streamer.hpp"
 
-// probably need to check if we are on the pi here...
+// not using, but maybe we can dim the screen instead?
 
 static void turnOnScreen() {
     std::string command = "uhubctl -l 1-1 -a 1";
@@ -39,27 +41,24 @@ namespace service {
         _gpio = infrastructure::Gpio::Create(
             config,
             [this, self]() {
-
+                const auto state = _state.GetState();
+                if (state == domain::HeadsetStates::READY) {
+                    _state.PostState(domain::HeadsetStates::RUNNING);
+                } else if (state == domain::HeadsetStates::RUNNING) {
+                    _websocket_client->PostWebsocketClientMessage(
+                        domain::RotateCameraMessage().GetMessage()
+                    );
+                }
             }
         );
         _bms = infrastructure::Bms::Create(
-            config, _asio_context->GetContext(), [this, self](const BmsMessage message) {
+            config, _asio_context->GetContext(), [this, self](const domain::BmsMessage message) {
                 const auto [state_change, state] = _state.PostBmsMessage(message);
                 if (state_change) {
-                    std::cout << "is plugged in?" << message.bms_is_plugged_in << std::endl;
-                    std::cout << "New state: " << (int) state << std::endl;
                     handleStateChange(state);
                 }
             }
         );
-    }
-
-    void HeadsetStreamer::PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) {
-        _decoder->PostJpegBuffer(std::move(buffer));
-    }
-
-    bool HeadsetStreamer::PostWebsocketServerMessage(nlohmann::json &&message) {
-        throw std::runtime_error("HeadsetStreamer::PostWebsocketServerMessage not implemented");
     }
 
     void HeadsetStreamer::CreateHeadsetClientConnection() {
@@ -69,8 +68,30 @@ namespace service {
         }
     }
 
+    void HeadsetStreamer::PostHeadsetClientBuffer(std::shared_ptr<SizedBuffer> &&buffer) {
+        _decoder->PostJpegBuffer(std::move(buffer));
+    }
+
     void HeadsetStreamer::DestroyHeadsetClientConnection() {
         const auto [state_change, state] = _state.PostTcpConnection(false);
+        if (state_change) {
+            handleStateChange(state);
+        }
+    }
+
+    void HeadsetStreamer::CreateWebsocketClientConnection() {
+        const auto [state_change, state] = _state.PostWebsocketConnection(true);
+        if (state_change) {
+            handleStateChange(state);
+        }
+    }
+
+    bool HeadsetStreamer::PostWebsocketServerMessage(nlohmann::json &&message) {
+        throw std::runtime_error("HeadsetStreamer::PostWebsocketServerMessage not implemented");
+    }
+
+    void HeadsetStreamer::DestroyWebsocketClientConnection() {
+        const auto [state_change, state] = _state.PostWebsocketConnection(false);
         if (state_change) {
             handleStateChange(state);
         }
@@ -93,23 +114,29 @@ namespace service {
             case domain::HeadsetStates::DYING:
                 handleStateChangeDying();
                 break;
+            case domain::HeadsetStates::CLOSING:
+                // nothing to do as we are getting the fk out of here
+                break;
         }
     }
 
     void HeadsetStreamer::handleStateChangeConnecting() {
         // here, we assume we were either plugged in; can universally apply though as we don't care how we got here
         // turnOnScreen();
+        _websocket_client->Start();
         _tcp_client->Start();
         _decoder->Start();
     }
 
     void HeadsetStreamer::handleStateChangePluggedIn() {
         // turnOffScreen();
+        _websocket_client->Stop();
         _tcp_client->Stop();
         _decoder->Stop();
     }
 
     void HeadsetStreamer::handleStateChangeDying() {
+        _websocket_client->Stop();
         _tcp_client->Stop();
         _decoder->Stop();
     }

@@ -15,7 +15,7 @@ using net::serial_port;
 namespace infrastructure {
     class SerialBms: public Bms, public std::enable_shared_from_this<SerialBms> {
     public:
-        SerialBms(const BmsConfig &config, net::io_context &context, BmsMessageCallback &&post_callback);
+        SerialBms(const BmsConfig &config, net::io_context &context, domain::BmsMessageCallback &&post_callback);
         void Start() override;
         void Stop() override;
         ~SerialBms();
@@ -23,7 +23,7 @@ namespace infrastructure {
         void run();
         bool setupConnection();
         void readAndReport();
-        std::pair<bool, BmsMessage> tryParseResponse(const std::string &input);
+        std::pair<bool, domain::BmsMessage> tryParseResponse(const std::string &input);
 
         std::atomic<bool> _work_stop = { true };
         std::unique_ptr<std::thread> _work_thread;
