@@ -16,8 +16,20 @@ if (NOT AN_PLATFORM_TYPE STREQUAL RPI)
 endif()
 
 if (FEATURE_DISPLAY)
-    set(SOURCES ${SOURCES} headset/headset_streamer.cpp)
-    set(TARGET_LIBS ${TARGET_LIBS} decoder graphics websocket gpio bms)
+    if (
+        (AN_PLATFORM STREQUAL RPI_HEADSET) OR (AN_PLATFORM STREQUAL RPI_HEADSET_CC)
+    )
+        set(SOURCES ${SOURCES} headset/headset_streamer.cpp)
+        set(TARGET_LIBS ${TARGET_LIBS} decoder graphics websocket gpio bms)
+    elseif(
+        (AN_PLATFORM STREQUAL RPI_DISPLAY) OR (AN_PLATFORM STREQUAL RPI_DISPLAY_CC)
+    )
+        set(SOURCES ${SOURCES} display_streamer.cpp)
+        set(TARGET_LIBS ${TARGET_LIBS} decoder graphics websocket)
+    else()
+        set(SOURCES ${SOURCES} headset/headset_streamer.cpp display_streamer.cpp)
+        set(TARGET_LIBS ${TARGET_LIBS} decoder graphics websocket gpio bms)
+    endif()
 endif()
 
 add_library(service STATIC ${SOURCES})

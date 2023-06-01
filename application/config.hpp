@@ -11,7 +11,8 @@ namespace application {
     enum class AppType {
         CAMERA,
         HEADSET,
-        SERVER
+        SERVER,
+        DISPLAY
     };
 
     nlohmann::json get_json_config(const AppType &app_type, int argc, char * argv[]) {
@@ -25,6 +26,9 @@ namespace application {
                 break;
             case AppType::SERVER:
                 config_name = "server.";
+                break;
+            case AppType::DISPLAY:
+                config_name = "display.";
                 break;
         }
         if (argc > 1) {

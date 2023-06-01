@@ -25,6 +25,7 @@ $ mkdir build
 $ cd build
 $ cmake -DAN_PLATFORM:STRING=RPI_CAMERA ..
     (or cmake -DAN_PLATFORM:STRING=RPI_HEADSET ..)
+    (or cmake -DAN_PLATFORM:STRING=RPI_DISPLAY ..)
 $ make -j4
 ```
 
@@ -82,6 +83,7 @@ After, sudo reboot and make sure it works!
 ```
 $ sudo -E $(which packer) build camera.pkr.hcl
 $ sudo -E $(which packer) build headset.pkr.hcl
+$ sudo -E $(which packer) build display.pkr.hcl
 ```
 
 ## Edit the pi
