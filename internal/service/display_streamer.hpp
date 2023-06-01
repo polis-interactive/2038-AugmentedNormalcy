@@ -55,7 +55,7 @@ namespace service {
             return _tcp_server_port;
         }
         [[nodiscard]] ConnectionType get_tcp_client_connection_type() const override {
-            return ConnectionType::HEADSET_CONNECTION;
+            return ConnectionType::DISPLAY_CONNECTION;
         }
         [[nodiscard]] bool get_tcp_client_used_fixed_port() const override {
             return _tcp_client_use_fixed_port;
@@ -73,7 +73,7 @@ namespace service {
             return 10;
         };
         [[nodiscard]] ConnectionType get_websocket_client_connection_type() const override {
-            return ConnectionType::HEADSET_CONNECTION;
+            return ConnectionType::DISPLAY_CONNECTION;
         };
         [[nodiscard]] bool get_websocket_client_used_fixed_port() const override {
             return _tcp_client_use_fixed_port;

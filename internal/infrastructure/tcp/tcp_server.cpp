@@ -118,7 +118,7 @@ namespace infrastructure {
                                     _tcp_camera_session_buffer_count, _tcp_session_buffer_size
                             )
                         )->Run();
-                    } else if (connection_type == ConnectionType::HEADSET_CONNECTION) {
+                    } else if (connection_type != ConnectionType::UNKNOWN_CONNECTION) {
                         std::shared_ptr<TcpHeadsetSession>(
                             new TcpHeadsetSession(
                                     std::move(socket), _manager, addr, _read_write_timeout,
