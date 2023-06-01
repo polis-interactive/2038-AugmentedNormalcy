@@ -37,8 +37,8 @@ struct TestServerClientConfig:
         return 10;
     };
 
-    [[nodiscard]] bool get_websocket_client_is_camera() const override {
-        return false;
+    [[nodiscard]] ConnectionType get_websocket_client_connection_type() const override {
+        return ConnectionType::HEADSET_CONNECTION;
     };
     [[nodiscard]] bool get_websocket_client_used_fixed_port() const override {
         return false;
@@ -61,7 +61,7 @@ public:
         return ConnectionType::CAMERA_CONNECTION;
     };
     [[nodiscard]] bool PostWebsocketMessage(
-            const bool is_camera, const tcp_addr addr, nlohmann::json &&message
+            const ConnectionType connection_type, const tcp_addr addr, nlohmann::json &&message
     ) override {
         _server_callback(std::move(message));
         return return_success;

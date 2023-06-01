@@ -91,7 +91,7 @@ namespace infrastructure {
                 std::cout << "WebsocketServer: Unknown connection, abort" << std::endl;
                 socket.shutdown(tcp::socket::shutdown_both, ec);
             } else {
-                handleConnection(connection_type == ConnectionType::CAMERA_CONNECTION, addr, std::move(socket));
+                handleConnection(connection_type, addr, std::move(socket));
             }
 
         } else {
@@ -101,14 +101,18 @@ namespace infrastructure {
         acceptConnections();
     }
 
-    void WebsocketServer::handleConnection(const bool is_camera, const tcp_addr &addr, tcp::socket &&socket) {
+    void WebsocketServer::handleConnection(
+        const ConnectionType connection_type, const tcp_addr &addr, tcp::socket &&socket
+    ) {
         auto session = std::make_shared<WebsocketSession>(
-              is_camera, std::move(socket), _manager, [this, self = shared_from_this()](WebsocketSessionPtr &&ptr) {
+              connection_type, std::move(socket), _manager,
+              [this, self = shared_from_this()](WebsocketSessionPtr &&ptr) {
                     destroySession(std::move(ptr));
               },
               addr, ++_last_session_number, _read_write_timeout
         );
         WebsocketSessionPtr session_to_remove = nullptr;
+        const bool is_camera = connection_type == ConnectionType::CAMERA_CONNECTION;
         auto &session_mutex = is_camera ? _camera_mutex : _headset_mutex;
         auto &session_pool = is_camera ? _camera_sessions : _headset_sessions;
         {
@@ -125,8 +129,9 @@ namespace infrastructure {
     }
 
     void WebsocketServer::destroySession(WebsocketSessionPtr &&session) {
-        auto &session_mutex = session->_is_camera ? _camera_mutex : _headset_mutex;
-        auto &session_pool = session->_is_camera ? _camera_sessions : _headset_sessions;
+        const bool is_camera = session->_connection_type == ConnectionType::CAMERA_CONNECTION;
+        auto &session_mutex = is_camera ? _camera_mutex : _headset_mutex;
+        auto &session_pool = is_camera ? _camera_sessions : _headset_sessions;
         std::unique_lock lk(session_mutex);
         if (
             auto dead_session = session_pool.find(session->_addr);
@@ -178,11 +183,11 @@ namespace infrastructure {
     }
 
     WebsocketSession::WebsocketSession(
-        const bool is_camera, tcp::socket &&socket, std::shared_ptr<WebsocketServerManager> &_manager,
+        const ConnectionType connection_type, tcp::socket &&socket, std::shared_ptr<WebsocketServerManager> &_manager,
         DestroyHandler &&destroy_callback, tcp_addr addr, const unsigned long session_number,
         const int op_timeout
     ):
-        _is_camera(is_camera), _ws(std::move(socket)), _manager(_manager),
+        _connection_type(connection_type), _ws(std::move(socket)), _manager(_manager),
         _destroy_callback(std::move(destroy_callback)), _addr(std::move(addr)), _session_number(session_number),
         _op_timeout(op_timeout)
     {}
@@ -266,7 +271,7 @@ namespace infrastructure {
         auto buffers = _read_buffer.data();
         try {
             auto js = nlohmann::json::parse(net::buffers_begin(buffers), net::buffers_end(buffers));
-            const bool success = _manager->PostWebsocketMessage(_is_camera, _addr, std::move(js));
+            const bool success = _manager->PostWebsocketMessage(_connection_type, _addr, std::move(js));
             if (success) {
                 _read_buffer.consume(bytes_transferred);
                 read();

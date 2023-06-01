@@ -23,7 +23,7 @@ if (LIBCAMERA_AVAILABLE)
 endif()
 
 
-if (FEATURE_ENCODER)
+if (FEATURE_ENCODER AND AN_PLATFORM_TYPE STREQUAL RPI)
     set(tests ${tests}
             test_service/test_camera_streamer.cpp
             test_infrastructure/test_encoder/fake_camera.cpp
@@ -32,7 +32,7 @@ if (FEATURE_ENCODER)
     set(tests_link_libraries ${tests_link_libraries} service encoder)
 endif()
 
-if (AN_PLATFORM_TYPE STREQUAL RPI)
+if (NOT AN_PLATFORM_TYPE STREQUAL RPI)
     set(tests ${tests} test_service/test_server_streamer.cpp)
     set(tests_link_libraries ${tests_link_libraries} service)
 endif()

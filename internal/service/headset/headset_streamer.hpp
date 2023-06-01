@@ -62,8 +62,8 @@ namespace service {
         [[nodiscard]] int get_tcp_server_port() const override {
             return _tcp_server_port;
         }
-        [[nodiscard]] bool get_tcp_client_is_camera() const override {
-            return false;
+        [[nodiscard]] ConnectionType get_tcp_client_connection_type() const override {
+            return ConnectionType::HEADSET_CONNECTION;
         }
         [[nodiscard]] bool get_tcp_client_used_fixed_port() const override {
             return _tcp_client_use_fixed_port;
@@ -80,8 +80,8 @@ namespace service {
         [[nodiscard]] int get_websocket_client_op_timeout() const override {
             return 10;
         };
-        [[nodiscard]] bool get_websocket_client_is_camera() const override {
-            return false;
+        [[nodiscard]] ConnectionType get_websocket_client_connection_type() const override {
+            return ConnectionType::HEADSET_CONNECTION;
         };
         [[nodiscard]] bool get_websocket_client_used_fixed_port() const override {
             return _tcp_client_use_fixed_port;

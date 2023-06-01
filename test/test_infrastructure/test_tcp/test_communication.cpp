@@ -31,7 +31,7 @@ TEST_CASE("INFRASTRUCTURE_TCP_SERVER-Start-and-stop") {
 }
 
 TEST_CASE("INFRASTRUCTURE_TCP_CLIENT-Camera-Start-and-stop") {
-    TestClientServerConfig conf(2, 42069, "127.0.0.1", true);
+    TestClientServerConfig conf(2, 42069, "127.0.0.1", ConnectionType::CAMERA_CONNECTION);
     auto ctx = AsioContext::Create(conf);
     ctx->Start();
     auto manager = std::make_shared<TcpClientManager>();
@@ -44,7 +44,7 @@ TEST_CASE("INFRASTRUCTURE_TCP_CLIENT-Camera-Start-and-stop") {
 }
 
 TEST_CASE("INFRASTRUCTURE_TCP_CLIENT-Headset-Start-and-stop") {
-    TestClientServerConfig conf(2, 42069, "127.0.0.1", false);
+    TestClientServerConfig conf(2, 42069, "127.0.0.1", ConnectionType::HEADSET_CONNECTION);
     auto ctx = AsioContext::Create(conf);
     ctx->Start();
     auto manager = std::make_shared<TcpClientManager>();
@@ -58,7 +58,7 @@ TEST_CASE("INFRASTRUCTURE_TCP_CLIENT-Headset-Start-and-stop") {
 
 
 TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
-    TestClientServerConfig conf(3, 42069, "127.0.0.1", true);
+    TestClientServerConfig conf(3, 42069, "127.0.0.1", ConnectionType::CAMERA_CONNECTION);
     auto ctx = AsioContext::Create(conf);
     ctx->Start();
 
@@ -108,7 +108,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server") {
 }
 
 TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
-    TestClientServerConfig conf(3, 42069, "127.0.0.1", true);
+    TestClientServerConfig conf(3, 42069, "127.0.0.1", ConnectionType::CAMERA_CONNECTION);
     auto ctx = AsioContext::Create(conf);
     ctx->Start();
 
@@ -160,7 +160,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Camera-to-Server-Stress") {
 
 TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset")  {
     /* this looks really similar, but all the buffers are pushed from server to client in this case */
-    TestClientServerConfig conf(3, 42069, "127.0.0.1", false);
+    TestClientServerConfig conf(3, 42069, "127.0.0.1", ConnectionType::HEADSET_CONNECTION);
     auto ctx = AsioContext::Create(conf);
     ctx->Start();
 
@@ -212,7 +212,7 @@ TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset")  {
 
 TEST_CASE("INFRASTRUCTURE_TCP-Server-to-Headset-Stress"){
     /* again, looks really similar, but all the buffers are pushed from server to client in this case */
-    TestClientServerConfig conf(3, 42069, "127.0.0.1", false);
+    TestClientServerConfig conf(3, 42069, "127.0.0.1", ConnectionType::HEADSET_CONNECTION);
     auto ctx = AsioContext::Create(conf);
     ctx->Start();
 

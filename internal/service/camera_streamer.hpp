@@ -48,8 +48,8 @@ namespace service {
         [[nodiscard]] int get_tcp_server_port() const override {
             return _tcp_server_port;
         }
-        [[nodiscard]] bool get_tcp_client_is_camera() const override {
-            return true;
+        [[nodiscard]] ConnectionType get_tcp_client_connection_type() const override {
+            return ConnectionType::CAMERA_CONNECTION;
         }
         [[nodiscard]] bool get_tcp_client_used_fixed_port() const override {
             return _tcp_client_use_fixed_port;
