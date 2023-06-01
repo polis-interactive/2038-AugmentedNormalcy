@@ -21,7 +21,7 @@ namespace infrastructure {
         [[nodiscard]] virtual int get_websocket_server_port() const = 0;
         [[nodiscard]] virtual int get_websocket_client_connection_timeout() const = 0;
         [[nodiscard]] virtual int get_websocket_client_op_timeout() const = 0;
-        [[nodiscard]] virtual bool get_websocket_client_is_camera() const = 0;
+        [[nodiscard]] virtual ConnectionType get_websocket_client_connection_type() const = 0;
         [[nodiscard]] virtual bool get_websocket_client_used_fixed_port() const = 0;
     };
 
@@ -68,7 +68,7 @@ namespace infrastructure {
 
         const int _connection_timeout;
         const int _op_timeout;
-        const bool _is_camera;
+        const ConnectionType _connection_type;
         const bool _use_fixed_port;
         const std::string _host;
         std::atomic<bool> _is_stopped = {true};

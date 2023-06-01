@@ -29,3 +29,12 @@ if (
     add_executable(app_headset headset.cpp runtime.cpp)
     target_link_libraries(app_headset PRIVATE pthread service graphics decoder tcp)
 endif()
+
+if (
+        AN_PLATFORM STREQUAL RPI_DISPLAY
+        OR AN_PLATFORM STREQUAL RPI_DISPLAY_CC
+        OR AN_PLATFORM STREQUAL BROOSE_LINUX_LAPTOP
+)
+    add_executable(app_display display.cpp runtime.cpp)
+    target_link_libraries(app_display PRIVATE pthread service graphics decoder tcp)
+endif()

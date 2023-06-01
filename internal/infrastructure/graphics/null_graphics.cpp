@@ -10,6 +10,7 @@ namespace infrastructure {
     {}
 
     void NullGraphics::PostImage(std::shared_ptr<DecoderBuffer> &&buffer) {}
+    void NullGraphics::PostGraphicsHeadsetState(const domain::HeadsetStates state) {}
     void NullGraphics::StartGraphics() {}
     void NullGraphics::StopGraphics() {}
 }

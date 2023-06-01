@@ -29,7 +29,7 @@ namespace infrastructure {
         _connection_timeout(config.get_websocket_client_connection_timeout()),
         _strand(net::make_strand(context)),
         _use_fixed_port(config.get_websocket_client_used_fixed_port()),
-        _is_camera(config.get_websocket_client_is_camera())
+        _connection_type(config.get_websocket_client_connection_type())
     {}
 
     void WebsocketClient::Start() {
@@ -69,7 +69,19 @@ namespace infrastructure {
             std::this_thread::sleep_for(1s);
         }
         if (_use_fixed_port) {
-            auto endpoint = tcp::endpoint(tcp::v4(), _is_camera ? 33333 : 44444);
+            uint32_t port = 0;
+            switch (_connection_type) {
+                case ConnectionType::CAMERA_CONNECTION:
+                    port = 12111;
+                    break;
+                case ConnectionType::HEADSET_CONNECTION:
+                    port = 22222;
+                    break;
+                case ConnectionType::DISPLAY_CONNECTION:
+                    port = 32333;
+                    break;
+            }
+            auto endpoint = tcp::endpoint(tcp::v4(), port);
             _ws = std::make_shared<websocket::stream<beast::tcp_stream>>(_strand, endpoint);
         } else {
             _ws = std::make_shared<websocket::stream<beast::tcp_stream>>(_strand);

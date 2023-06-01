@@ -2,8 +2,8 @@
 // Created by brucegoose on 4/15/23.
 //
 
-#ifndef SERVICE_HEADSET_STREAMER_HPP
-#define SERVICE_HEADSET_STREAMER_HPP
+#ifndef SERVICE_DISPLAY_STREAMER_HPP
+#define SERVICE_DISPLAY_STREAMER_HPP
 
 #include <utility>
 
@@ -12,22 +12,18 @@
 #include "infrastructure/websocket/websocket_client.hpp"
 #include "infrastructure/decoder/decoder.hpp"
 #include "infrastructure/graphics/graphics.hpp"
-#include "infrastructure/gpio/gpio.hpp"
-#include "infrastructure/bms/bms.hpp"
 
 #include "domain/headset_domain.hpp"
 
 namespace service {
-    struct HeadsetStreamerConfig:
-        public AsioContextConfig,
-        public infrastructure::TcpClientConfig,
-        public infrastructure::DecoderConfig,
-        public infrastructure::GraphicsConfig,
-        public infrastructure::GpioConfig,
-        public infrastructure::BmsConfig,
-        public infrastructure::WebsocketClientConfig
+    struct DisplayStreamerConfig:
+            public AsioContextConfig,
+            public infrastructure::TcpClientConfig,
+            public infrastructure::DecoderConfig,
+            public infrastructure::GraphicsConfig,
+            public infrastructure::WebsocketClientConfig
     {
-        HeadsetStreamerConfig(
+        DisplayStreamerConfig(
                 std::string tcp_server_host, int tcp_server_port,
                 int tcp_client_timeout_on_read,
                 bool tcp_client_use_fixed_port,
@@ -36,22 +32,20 @@ namespace service {
                 int tcp_read_buffers, int decoder_buffers_downstream,
                 infrastructure::DecoderType decoder_type,
                 infrastructure::GraphicsType graphics_type,
-                infrastructure::GpioType gpio_type,
-                infrastructure::BmsType bms_type
+                int switch_automatic_timeout
         ):
-            _tcp_server_host(std::move(tcp_server_host)),
-            _tcp_server_port(tcp_server_port),
-            _tcp_client_timeout_on_read(tcp_client_timeout_on_read),
-            _tcp_client_use_fixed_port(tcp_client_use_fixed_port),
-            _tcp_read_buffers(tcp_read_buffers),
-            _websocket_server_host(std::move(websocket_server_host)),
-            _websocket_server_port(websocket_server_port),
-            _decoder_type(decoder_type),
-            _decoder_buffers_downstream(decoder_buffers_downstream),
-            _graphics_type(graphics_type),
-            _image_width_height(std::move(image_width_height)),
-            _gpio_type(gpio_type),
-            _bms_type(bms_type)
+                _tcp_server_host(std::move(tcp_server_host)),
+                _tcp_server_port(tcp_server_port),
+                _tcp_client_timeout_on_read(tcp_client_timeout_on_read),
+                _tcp_client_use_fixed_port(tcp_client_use_fixed_port),
+                _tcp_read_buffers(tcp_read_buffers),
+                _websocket_server_host(std::move(websocket_server_host)),
+                _websocket_server_port(websocket_server_port),
+                _decoder_type(decoder_type),
+                _decoder_buffers_downstream(decoder_buffers_downstream),
+                _graphics_type(graphics_type),
+                _image_width_height(std::move(image_width_height)),
+                _switch_automatic_timeout(switch_automatic_timeout)
         {}
         [[nodiscard]] int get_asio_pool_size() const override {
             return 3;
@@ -63,7 +57,7 @@ namespace service {
             return _tcp_server_port;
         }
         [[nodiscard]] ConnectionType get_tcp_client_connection_type() const override {
-            return ConnectionType::HEADSET_CONNECTION;
+            return ConnectionType::DISPLAY_CONNECTION;
         }
         [[nodiscard]] bool get_tcp_client_used_fixed_port() const override {
             return _tcp_client_use_fixed_port;
@@ -81,7 +75,7 @@ namespace service {
             return 10;
         };
         [[nodiscard]] ConnectionType get_websocket_client_connection_type() const override {
-            return ConnectionType::HEADSET_CONNECTION;
+            return ConnectionType::DISPLAY_CONNECTION;
         };
         [[nodiscard]] bool get_websocket_client_used_fixed_port() const override {
             return _tcp_client_use_fixed_port;
@@ -110,29 +104,8 @@ namespace service {
         [[nodiscard]] int get_tcp_client_read_buffer_size() const override {
             return _image_width_height.first * _image_width_height.second * 3 / 2;
         };
-        [[nodiscard]] infrastructure::GpioType get_gpio_type() const override {
-            return _gpio_type;
-        };
-        [[nodiscard]] int get_button_pin() const override {
-            return 17;
-        };
-        [[nodiscard]] int get_button_debounce_ms() const override {
-            return 75;
-        };
-        [[nodiscard]] int get_button_polling_ms() const override {
-            return 20;
-        }
-        [[nodiscard]] infrastructure::BmsType get_bms_type() const override {
-            return _bms_type;
-        }
-        [[nodiscard]] int get_bms_polling_timeout() const override {
-            return 10;
-        };
-        [[nodiscard]] int get_bms_shutdown_threshold() const override {
-            return 0;
-        };
-        [[nodiscard]] int get_bms_read_timeout() const override {
-            return 5;
+        [[nodiscard]] int get_server_camera_switching_automatic_timeout() const {
+            return _switch_automatic_timeout;
         }
     private:
         const std::string _tcp_server_host;
@@ -146,55 +119,22 @@ namespace service {
         const int _decoder_buffers_downstream;
         const std::pair<int, int> _image_width_height;
         const infrastructure::GraphicsType _graphics_type;
-        const infrastructure::GpioType _gpio_type;
-        const infrastructure::BmsType _bms_type;
+        const int _switch_automatic_timeout;
     };
 
-    class HeadsetStreamer:
-        public std::enable_shared_from_this<HeadsetStreamer>,
-        public infrastructure::TcpClientManager,
-        public infrastructure::WebsocketClientManager
+    class DisplayStreamer:
+            public std::enable_shared_from_this<DisplayStreamer>,
+            public infrastructure::TcpClientManager,
+            public infrastructure::WebsocketClientManager
     {
     public:
-        static std::shared_ptr<HeadsetStreamer> Create(const HeadsetStreamerConfig &config);
-        HeadsetStreamer(): _is_started(false) {}
-        void Start() {
-            if (_is_started) {
-                return;
-            }
-            _state.PostState(domain::HeadsetStates::CONNECTING);
-            _graphics->Start();
-            _decoder->Start();
-            _asio_context->Start();
-            _tcp_client->Start();
-            _websocket_client->Start();
-            _gpio->Start();
-            _bms->Start();
-            _is_started = true;
-        }
-        void Stop() {
-            if (!_is_started) {
-                return;
-            }
-            _state.PostState(domain::HeadsetStates::CLOSING);
-            _bms->Stop();
-            _gpio->Stop();
-            _websocket_client->Stop();
-            _tcp_client->Stop();
-            _asio_context->Stop();
-            _graphics->Stop();
-            _decoder->Stop();
-            _is_started = false;
-        }
-        void Unset() {
-            _tcp_client.reset();
-            _websocket_client.reset();
-            _asio_context.reset();
-            _graphics.reset();
-            _decoder.reset();
-            _gpio.reset();
-            _bms.reset();
-        }
+        static std::shared_ptr<DisplayStreamer> Create(const DisplayStreamerConfig &config);
+        DisplayStreamer(DisplayStreamerConfig config);
+
+        void Start();
+        void Stop();
+        void Unset();
+
         // camera isn't an option so no need to initialize
         void CreateCameraClientConnection() override {};
         void DestroyCameraClientConnection() override {};
@@ -207,21 +147,21 @@ namespace service {
         [[nodiscard]] bool PostWebsocketServerMessage(nlohmann::json &&message) override;
         void DestroyWebsocketClientConnection() override;
     private:
-        void initialize(const HeadsetStreamerConfig &config);
-        void handleStateChange(const domain::HeadsetStates state);
-        void handleStateChangeConnecting();
-        void handleStateChangePluggedIn();
-        void handleStateChangeDying();
+        void initialize();
+        void runAutomaticSwitching();
+
+        const DisplayStreamerConfig _conf;
+
         std::atomic_bool _is_started = false;
         std::shared_ptr<AsioContext> _asio_context = nullptr;
         std::shared_ptr<infrastructure::TcpClient> _tcp_client = nullptr;
         infrastructure::WebsocketClientPtr _websocket_client = nullptr;
         std::shared_ptr<infrastructure::Graphics> _graphics = nullptr;
         std::shared_ptr<infrastructure::Decoder> _decoder = nullptr;
-        std::shared_ptr<infrastructure::Gpio> _gpio = nullptr;
-        std::shared_ptr<infrastructure::Bms> _bms = nullptr;
-        domain::HeadsetState _state;
+
+        std::unique_ptr<std::thread> _work_thread;
+        std::atomic<bool> _work_stop = { true };
     };
 }
 
-#endif //SERVICE_HEADSET_STREAMER_HPP
+#endif //SERVICE_DISPLAY_STREAMER_HPP

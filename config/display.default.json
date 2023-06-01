@@ -10,7 +10,6 @@
   "tcpReadBuffers": 4,
   "decoderBuffersDownstream": 4,
   "decoderType": "SW",
-  "graphicsType": "HEADSET",
-  "gpioType": "PIGPIO",
-  "bmsType": "SERIAL"
+  "graphicsType": "DISPLAY",
+  "displayRotateTimeout": 10
 }

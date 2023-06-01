@@ -19,11 +19,14 @@ namespace infrastructure {
         ),
         _manager(std::move(manager)),
         _use_fixed_port(config.get_tcp_client_used_fixed_port()),
-        _is_camera(config.get_tcp_client_is_camera()),
+        _connection_type(config.get_tcp_client_connection_type()),
         _read_timer(net::make_strand(context)),
         _read_timeout(config.get_tcp_client_timeout_on_read())
     {
-        if (!_is_camera) {
+        if (_connection_type == ConnectionType::UNKNOWN_CONNECTION) {
+            throw std::runtime_error("TcpClient::TcpClient INVALID CONNECTION TYPE");
+        }
+        if (_connection_type != ConnectionType::CAMERA_CONNECTION) {
             _receive_buffer_pool = TcpReadBufferPool::Create(
                 config.get_tcp_client_read_buffer_count(),
                 config.get_tcp_client_read_buffer_size()
@@ -55,7 +58,9 @@ namespace infrastructure {
             done_future.wait();
         }
     }
-    TcpClient::~TcpClient() {}
+    TcpClient::~TcpClient() {
+        std::cout << "TcpClient Deconstructed" << std::endl;
+    }
 
     void TcpClient::startConnection(const bool is_initial_connection) {
         if (!is_initial_connection) {
@@ -65,7 +70,20 @@ namespace infrastructure {
         if (_is_stopped) return;
         if (_socket == nullptr) {
             if (_use_fixed_port) {
-                auto endpoint = tcp::endpoint(tcp::v4(), _is_camera ? 33333 : 22222);
+                uint32_t port = 0;
+                switch (_connection_type) {
+                    case ConnectionType::CAMERA_CONNECTION:
+                        port = 11111;
+                        break;
+                    case ConnectionType::HEADSET_CONNECTION:
+                        port = 21222;
+                        break;
+                    case ConnectionType::DISPLAY_CONNECTION:
+                        port = 31333;
+                        break;
+                }
+                std::cout << port << std::endl;
+                auto endpoint = tcp::endpoint(tcp::v4(), port);
                 _socket = std::make_shared<tcp::socket>(_read_timer.get_executor(), endpoint);
             } else {
                 _socket = std::make_shared<tcp::socket>(_read_timer.get_executor());
@@ -86,7 +104,7 @@ namespace infrastructure {
                     _socket->set_option(reuse_port(true));
                     _socket->set_option(tcp::socket::reuse_address(true));
                     _is_connected = true;
-                    if (_is_camera) {
+                    if (_connection_type == ConnectionType::CAMERA_CONNECTION) {
                         startWrite();
                     } else {
                         startRead();
@@ -294,7 +312,7 @@ namespace infrastructure {
             _socket.reset();
             _socket = nullptr;
         }
-        if (_is_camera) {
+        if (_connection_type == ConnectionType::CAMERA_CONNECTION) {
             {
                 std::unique_lock<std::mutex> lock(_send_buffer_mutex);
                 while(!_send_buffer_queue.empty()) {

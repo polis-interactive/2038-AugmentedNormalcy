@@ -102,10 +102,13 @@ namespace service {
 
     ConnectionType ServerStreamer::ConnectionAssignIpBounds(const tcp::endpoint &endpoint) {
         static const tcp_addr min_headset_address = ip_bound("69.4.20.100");
+        static const tcp_addr min_display_address = ip_bound("69.4.20.190");
         static const tcp_addr min_camera_address = ip_bound("69.4.20.200");
         const auto &addr = endpoint.address().to_v4();
         if (addr >= min_camera_address) {
             return ConnectionType::CAMERA_CONNECTION;
+        } else if (addr >= min_display_address) {
+            return ConnectionType::DISPLAY_CONNECTION;
         } else if (addr >= min_headset_address) {
             return ConnectionType::HEADSET_CONNECTION;
         }
@@ -114,10 +117,12 @@ namespace service {
 
     ConnectionType ServerStreamer::ConnectionAssignEndpointPort(const tcp::endpoint &endpoint) {
         const auto &port = endpoint.port();
-        if (port == 11111 || port == 33333) {
+        if (port == 11111 || port == 12111) {
             return ConnectionType::CAMERA_CONNECTION;
-        } else if (port == 22222 || port == 44444) {
+        } else if (port == 21222 || port == 22222) {
             return ConnectionType::HEADSET_CONNECTION;
+        } else if (port == 31333 || port == 32333) {
+            return ConnectionType::DISPLAY_CONNECTION;
         } else {
             return ConnectionType::UNKNOWN_CONNECTION;
         }
@@ -214,15 +219,17 @@ namespace service {
         return _connection_manager.RemoveWriterSession(std::move(headset_session));
     }
 
-    bool ServerStreamer::PostWebsocketMessage(const bool is_camera, const tcp_addr addr, nlohmann::json &&message) {
+    bool ServerStreamer::PostWebsocketMessage(
+        const ConnectionType connection_type, const tcp_addr addr, nlohmann::json &&message
+    ) {
         auto domain_message = domain::DomainMessage::TryParseMessage(std::move(message));
         if (domain_message == nullptr) {
             return false;
         }
         switch (const auto message_type = domain_message->GetMessageType(); message_type) {
             case domain::DomainMessage::RotateCamera:
-                if (is_camera) {
-                    std::cout << "ServerStreamer::PostWebsocketMessage only headsets can call RotateCamera"
+                if (connection_type == ConnectionType::CAMERA_CONNECTION) {
+                    std::cout << "ServerStreamer::PostWebsocketMessage cameras can't can call RotateCamera"
                         << std::endl;
                     return false;
                 }

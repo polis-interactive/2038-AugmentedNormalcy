@@ -20,7 +20,7 @@ namespace infrastructure {
         // tcp server
         [[nodiscard]] virtual ConnectionType GetConnectionType(const tcp::endpoint &endpoint) = 0;
         [[nodiscard]] virtual bool PostWebsocketMessage(
-            const bool is_camera, const tcp_addr addr, nlohmann::json &&message
+            const ConnectionType connection_type, const tcp_addr addr, nlohmann::json &&message
         ) = 0;
     };
 
@@ -32,7 +32,7 @@ namespace infrastructure {
     class WebsocketSession: public std::enable_shared_from_this<WebsocketSession> {
     public:
         WebsocketSession(
-            const bool is_camera, tcp::socket &&socket, std::shared_ptr<WebsocketServerManager> &_manager,
+            const ConnectionType connection_type, tcp::socket &&socket, std::shared_ptr<WebsocketServerManager> &_manager,
             DestroyHandler &&destroy_callback, const tcp_addr addr, const unsigned long session_number,
             const int op_timeout
         );
@@ -47,7 +47,7 @@ namespace infrastructure {
         void Start();
         void TryClose(bool internal_close);
 
-        const bool _is_camera;
+        const ConnectionType _connection_type;
         const tcp_addr _addr;
         const unsigned long _session_number;
     private:
@@ -93,7 +93,7 @@ namespace infrastructure {
     private:
         void acceptConnections();
         void onAccept(beast::error_code ec, tcp::socket socket);
-        void handleConnection(const bool is_camera, const tcp_addr &addr, tcp::socket &&socket);
+        void handleConnection(const ConnectionType connection_type, const tcp_addr &addr, tcp::socket &&socket);
         void destroySession(WebsocketSessionPtr &&session);
         std::atomic<bool> _is_stopped = { true };
         net::io_context &_context;

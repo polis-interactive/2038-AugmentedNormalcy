@@ -143,7 +143,9 @@ namespace service {
         ) override;
 
         // websocket session
-        [[nodiscard]] bool PostWebsocketMessage(const bool is_camera, const tcp_addr addr, nlohmann::json &&message);
+        [[nodiscard]] bool PostWebsocketMessage(
+            const ConnectionType connection_type, const tcp_addr addr, nlohmann::json &&message
+        ) override;
 
     private:
         void assignStrategies();

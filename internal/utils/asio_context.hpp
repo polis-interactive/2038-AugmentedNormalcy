@@ -33,6 +33,7 @@ typedef net::detail::socket_option::boolean<SOL_SOCKET, SO_REUSEPORT> reuse_port
 enum class ConnectionType {
     CAMERA_CONNECTION,
     HEADSET_CONNECTION,
+    DISPLAY_CONNECTION,
     UNKNOWN_CONNECTION
 };
 

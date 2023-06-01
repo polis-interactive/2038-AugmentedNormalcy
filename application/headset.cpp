@@ -17,7 +17,8 @@ static infrastructure::DecoderType to_decoder_type(const std::string& type) {
 }
 
 static infrastructure::GraphicsType to_graphics_type(const std::string& type) {
-    if (type == "GLFW") return infrastructure::GraphicsType::GLFW;
+    if (type == "HEADSET") return infrastructure::GraphicsType::HEADSET;
+    if (type == "DISPLAY") return infrastructure::GraphicsType::DISPLAY;
     else if (type == "NONE") return infrastructure::GraphicsType::NONE;
     throw std::runtime_error("Unknown graphics type: " + type);
 }

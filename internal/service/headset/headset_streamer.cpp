@@ -100,6 +100,7 @@ namespace service {
     }
 
     void HeadsetStreamer::handleStateChange(const domain::HeadsetStates state) {
+        _graphics->PostGraphicsHeadsetState(state);
         switch (state) {
             case domain::HeadsetStates::CONNECTING:
                 handleStateChangeConnecting();

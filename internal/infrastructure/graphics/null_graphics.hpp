@@ -12,6 +12,7 @@ namespace infrastructure {
     public:
         explicit NullGraphics(const GraphicsConfig &conf);
         void PostImage(std::shared_ptr<DecoderBuffer>&& buffer) override;
+        void PostGraphicsHeadsetState(const domain::HeadsetStates state) override;
     private:
         void StartGraphics() override;
         void StopGraphics() override;

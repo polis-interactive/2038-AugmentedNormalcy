@@ -9,7 +9,7 @@ typedef std::chrono::high_resolution_clock Clock;
 
 #include <libdrm/drm_fourcc.h>
 
-#include "glfw_graphics.hpp"
+#include "display_graphics.hpp"
 
 #define BUFFER_OFFSET(idx) (static_cast<char*>(0) + (idx))
 
@@ -120,16 +120,16 @@ static void displaySetup(int width, int height, int window_width, int window_hei
 
 namespace infrastructure {
 
-    GlfwGraphics::GlfwGraphics(const GraphicsConfig &conf):
+    DisplayGraphics::DisplayGraphics(const GraphicsConfig &conf):
             Graphics(conf),
             _image_width(conf.get_image_width_height().first),
             _image_height(conf.get_image_width_height().second)
     {}
-    GlfwGraphics::~GlfwGraphics() {
+    DisplayGraphics::~DisplayGraphics() {
         StopGraphics();
     }
 
-    void GlfwGraphics::StartGraphics() {
+    void DisplayGraphics::StartGraphics() {
         if (!_stop_running) {
             return;
         }
@@ -140,7 +140,7 @@ namespace infrastructure {
         });
     }
 
-    void GlfwGraphics::StopGraphics() {
+    void DisplayGraphics::StopGraphics() {
         if (_stop_running) {
             return;
         }
@@ -159,14 +159,16 @@ namespace infrastructure {
             }
         }
     }
-    void GlfwGraphics::PostImage(std::shared_ptr<DecoderBuffer>&& buffer) {
+    void DisplayGraphics::PostImage(std::shared_ptr<DecoderBuffer>&& buffer) {
         if (_is_ready) {
             std::unique_lock<std::mutex> lock(_image_mutex);
             _image_queue.push(std::move(buffer));
         }
     }
 
-    void GlfwGraphics::run() {
+    void DisplayGraphics::PostGraphicsHeadsetState(const domain::HeadsetStates state) {}
+
+    void DisplayGraphics::run() {
         bool has_run = false;
         while (!_stop_running) {
             if (has_run) {
@@ -322,7 +324,7 @@ namespace infrastructure {
         }
     }
 
-    void GlfwGraphics::setWindowHints() {
+    void DisplayGraphics::setWindowHints() {
         glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
@@ -342,7 +344,7 @@ namespace infrastructure {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     }
 
-    void GlfwGraphics::makeBuffer(int fd, size_t size, EglBuffer &buffer)
+    void DisplayGraphics::makeBuffer(int fd, size_t size, EglBuffer &buffer)
     {
 
         std::cout << "making buffer for: " << fd << std::endl;
