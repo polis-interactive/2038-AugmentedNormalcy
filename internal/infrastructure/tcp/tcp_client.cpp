@@ -82,7 +82,6 @@ namespace infrastructure {
                         port = 31333;
                         break;
                 }
-                std::cout << port << std::endl;
                 auto endpoint = tcp::endpoint(tcp::v4(), port);
                 _socket = std::make_shared<tcp::socket>(_read_timer.get_executor(), endpoint);
             } else {

@@ -16,10 +16,12 @@ namespace application {
     };
 
     nlohmann::json get_json_config(const AppType &app_type, int argc, char * argv[]) {
-        std::string config_name;
+        std::string config_name = "";
+        std::string dir_name = "";
         switch (app_type) {
             case AppType::CAMERA:
                 config_name = "camera.";
+                dir_name = "camera";
                 break;
             case AppType::HEADSET:
                 config_name = "headset.";
@@ -40,6 +42,9 @@ namespace application {
         std::filesystem::path app_dir = APPLICATION_DIR;
         auto normalcy_dir = app_dir.parent_path();
         auto conf_dir = normalcy_dir / "config";
+        if (dir_name != "") {
+            conf_dir /= dir_name;
+        }
         auto conf_file_path = conf_dir / config_name;
         if (!std::filesystem::exists(conf_file_path)) {
             throw std::runtime_error("Couldn't find config file at path: " + conf_file_path.string());

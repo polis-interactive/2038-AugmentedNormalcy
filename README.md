@@ -91,4 +91,6 @@ $ sudo -E $(which packer) build display.pkr.hcl
 $ sudo vim /media/brucegoose/rootfs/etc/hostname 
 $ sudo vim /media/brucegoose/rootfs/etc/hosts
 $ sudo vim /media/brucegoose/rootfs/etc/dhcpcd.conf 
+# camera only
+$ sudo vim /media/brucegoose/rootfs/etc/systemd/system/camera.service
 ```
