@@ -5,26 +5,25 @@
 #include <iostream>
 #include <regex>
 
-#include <termios.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
+#include <CppLinuxSerial/SerialPort.hpp>
+using namespace mn::CppLinuxSerial;
+
 
 #include "serial_bms.hpp"
 
 #include "utils/clock.hpp"
 
+
 namespace infrastructure {
 
     SerialBms::SerialBms(
-        const infrastructure::BmsConfig &config, net::io_context &context, domain::BmsMessageCallback &&post_callback
+        const infrastructure::BmsConfig &config, domain::BmsMessageCallback &&post_callback
     ):
-        Bms(config, context, std::move(post_callback)),
-        _strand(net::make_strand(context)),
-        _bms_read_timeout(config.get_bms_read_timeout()),
-        _timer(_strand)
-    {}
+        Bms(config, std::move(post_callback)),
+        _bms_read_timeout(config.get_bms_read_timeout())
+    {
+        _bms_read_buffer.reserve(250);
+    }
 
     void SerialBms::Start() {
         if (!_work_stop) {
@@ -39,141 +38,43 @@ namespace infrastructure {
     void SerialBms::run() {
         std::cout << "SerialBms::run running" << std::endl;
         while (!_work_stop) {
-            bool success = setupConnection();
-
-
-            if (success) {
-                std::cout << "SerialBms::run successfully connected" << std::endl;
-                readAndReport();
-            } else {
-                std::cout << "SerialBms::run failed to connect" << std::endl;
+            SerialPort serial_port(
+                "/dev/ttyAMA0", BaudRate::B_9600, NumDataBits::EIGHT, Parity::NONE, NumStopBits::ONE,
+                HardwareFlowControl::ON, SoftwareFlowControl::OFF
+            );
+            serial_port.SetTimeout(_bms_read_timeout);
+            try {
+                readAndReport(serial_port);
+            } catch (const std::exception& ex) {
+                std::cout << "SerialBms::run reported error: " << ex.what() << std::endl;
+            } catch (...) {
+                std::cout << "SerialBms::run reported unknown error" << std::endl;
             }
-
-            if (_port_fd >= 0) {
-                close(_port_fd);
-                _port_fd = -1;
-            }
+            serial_port.Close();
         }
     }
 
-    bool SerialBms::setupConnection() {
-        _port_fd = open("/dev/ttyAMA0", O_RDWR|O_NOCTTY);
-        if (_port_fd < 0) {
-            std::cout << "SerialBms::setupConnection failed to open /dev/ttyAMA0" << std::endl;
-            return false;
-        }
-
-        if(flock(_port_fd, LOCK_EX | LOCK_NB) == -1) {
-            std::cout << "SerialBms::setupConnection failed to lock serial connection /dev/ttyAMA0" << std::endl;
-            return false;
-        }
-
-        struct termios tty;
-        if(tcgetattr(_port_fd, &tty) != 0) {
-            std::cout << "SerialBms::setupConnection failed to get tty setup" << std::endl;
-            return false;
-        }
-
-        // 8n1
-        tty.c_cflag &= ~PARENB; // Clear parity bit, disabling parity (most common)
-        tty.c_cflag &= ~CSTOPB; // Clear stop field, only one stop bit used in communication (most common)
-        tty.c_cflag &= ~CSIZE; // Clear all bits that set the data size
-        tty.c_cflag |= CS8; // 8 bits per byte (most common)
-
-
-        // raw, no echo
-        tty.c_iflag &= ~(IGNBRK | IGNCR | INLCR | ICRNL | IUCLC |
-                         IXANY | IXON | IXOFF | INPCK | ISTRIP);
-        tty.c_iflag |= (BRKINT | IGNPAR);
-        tty.c_oflag &= ~OPOST;
-        tty.c_lflag &= ~(XCASE|ECHONL|NOFLSH);
-        tty.c_lflag &= ~(ICANON | ISIG | ECHO);
-        tty.c_cflag |= CREAD;
-        tty.c_cc[VTIME] = 5;
-        tty.c_cc[VMIN] = 1;
-
-        tty.c_iflag &= ~(IXOFF | IXON); // disable software flow control
-        tty.c_cflag |= CRTSCTS; // enable hardware flow controll
-
-
-        bool success = cfsetispeed(&tty, B9600);
-        if (success != 0) {
-            std::cout << "SerialBms::setupConnection failed to set output speed" << std::endl;
-            return false;
-        }
-
-        success = cfsetispeed(&tty, B9600);
-        if (success != 0) {
-            std::cout << "SerialBms::setupConnection failed to set input speed" << std::endl;
-            return false;
-        }
-
-        success = tcsetattr(_port_fd, TCSANOW, &tty);
-        if (success != 0) {
-            std::cout << "SerialBms::setupConnection failed to set serial parameters" << std::endl;
-            return false;
-        }
-
-        return true;
-    }
-
-    void SerialBms::readAndReport() {
+    void SerialBms::readAndReport(SerialPort &serial_port) {
 
         std::cout << "SerialBms::readAndReport running" << std::endl;
 
-        static char breaker = '\n';
-        std::this_thread::sleep_for(100ms);
-
         while (!_work_stop) {
 
-            int total_bytes_read = 0;
-            std::memset(_bms_read_buffer.data(), 0, _bms_read_buffer.size());
+            if (serial_port.Available() < 100) {
+                std::this_thread::sleep_for(250ms);
+                continue;
+            }
+            _bms_read_buffer.clear();
+            serial_port.ReadBinary(_bms_read_buffer);
 
-            while (!_work_stop) {
+            std::string response(_bms_read_buffer.begin(), _bms_read_buffer.end());
+            auto [success, bms_message] = tryParseResponse(response);
 
-                fd_set readfs; /* file descriptor set */
-                FD_ZERO(&readfs);
-                FD_SET(_port_fd, &readfs);
-
-                struct timeval Timeout;
-                Timeout.tv_usec = 0;  /* microseconds */
-                Timeout.tv_sec = 1;  /* seconds */
-                int ready_descriptors = select(_port_fd+1, &readfs, NULL, NULL, &Timeout);
-                if(ready_descriptors < 0) {
-                    std::cout << "SerialBms::readAndReport select failed; leaving" << std::endl;
-                    return;
-                } else if(ready_descriptors == 0) {
-                    continue;
-                }
-
-                auto bytes_read = read(
-                    _port_fd, _bms_read_buffer.data() + total_bytes_read,
-                    _bms_read_buffer.size() - total_bytes_read
-                );
-                if (bytes_read < 0) {
-                    std::cout << "SerialBms::readAndReport read failed; leaving" << std::endl;
-                    return;
-                } else if (bytes_read == 0) {
-                    std::cout << "SerialBms::readAndReport read EOF while trying to read; leaving" << std::endl;
-                    return;
-                }
-                total_bytes_read += bytes_read;
-                if (total_bytes_read < (_bms_read_buffer.size() - 5)) {
-                    continue;
-                }
-
-                std::string response(_bms_read_buffer.begin(), _bms_read_buffer.begin() + total_bytes_read);
-                auto [success, bms_message] = tryParseResponse(response);
-
-                if (!success) {
-                    std::cout << "SerialBms::readAndReport parse string; leaving" << std::endl;
-                    return;
-                } else {
-                    _post_callback(bms_message);
-                    std::this_thread::sleep_for(100ms);
-                    break;
-                }
-
+            if (!success) {
+                std::cout << "SerialBms::readAndReport parse string; leaving" << std::endl;
+                return;
+            } else {
+                _post_callback(bms_message);
             }
 
         }

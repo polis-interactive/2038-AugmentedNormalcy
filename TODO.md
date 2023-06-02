@@ -14,6 +14,11 @@
 - Need to add config file for each ip / update camera.service to pass the ip as config option
 
 # Problems
-- Why when a camera disconnects is it having trouble reconnecting? its like the server
-   holds a reference to it or something
 - Headset 104 is not working; might work on it
+
+# Could do
+- track down dropped frames
+- try a serial library so the charging guy is more efficient
+
+# install in general
+- need to superglue the facial interfaces
