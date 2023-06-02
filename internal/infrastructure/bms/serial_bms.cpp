@@ -43,7 +43,7 @@ namespace infrastructure {
             try {
                 serial_port = std::make_shared<SerialPort>(
                     "/dev/ttyAMA0", BaudRate::B_9600, NumDataBits::EIGHT, Parity::NONE, NumStopBits::ONE,
-                    HardwareFlowControl::OFF, SoftwareFlowControl::OFF
+                    HardwareFlowControl::ON, SoftwareFlowControl::ON
                 );
                 serial_port->SetTimeout(1000);
                 serial_port->Open();
@@ -80,7 +80,6 @@ namespace infrastructure {
             }
 
             std::string response(_bms_read_buffer.begin(), _bms_read_buffer.end());
-            std::cout << response << std::endl;
             auto [success, bms_message] = tryParseResponse(response);
 
             if (!success) {
