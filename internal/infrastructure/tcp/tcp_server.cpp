@@ -196,7 +196,7 @@ namespace infrastructure {
                     std::cout << "TcpCameraSession: error reading header: ";
                     if (ec) {
                         std::cout << ec;
-                    } else if (_header.Ok()) {
+                    } else if (!_header.Ok()) {
                         std::cout << "unable to parse header";
                     } else {
                         std::cout << "unknown error";
@@ -245,7 +245,12 @@ namespace infrastructure {
     }
 
     void TcpCameraSession::TryClose(bool internal_close) {
-        if (!_is_live) return;
+        std::cout << "Do i never set is live? lol" << std::endl;
+        if (!_is_live) {
+            std::cout << "Negatory sailor" << std::endl;
+            return;
+        }
+        std::cout << "NANI THE FK" << std::endl;
         _is_live = false;
         if (internal_close) {
             doClose();
