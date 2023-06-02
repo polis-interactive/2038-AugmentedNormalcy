@@ -93,7 +93,7 @@ namespace domain {
                     _state == HeadsetStates::READY;
                 }
             }
-            tcp_is_connected = is_connected;
+            websocket_is_connected = is_connected;
             return { last_state != _state, _state };
 
         }
