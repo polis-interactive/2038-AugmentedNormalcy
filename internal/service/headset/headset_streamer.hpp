@@ -208,6 +208,7 @@ namespace service {
         void DestroyWebsocketClientConnection() override;
     private:
         void initialize(const HeadsetStreamerConfig &config);
+        void doStateChange(const domain::HeadsetStates state);
         void handleStateChange(const domain::HeadsetStates state);
         void handleStateChangeConnecting();
         void handleStateChangePluggedIn();
