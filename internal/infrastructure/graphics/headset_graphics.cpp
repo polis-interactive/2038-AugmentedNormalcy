@@ -9,6 +9,9 @@ typedef std::chrono::high_resolution_clock Clock;
 
 #include <libdrm/drm_fourcc.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.hpp"
+
 #include "headset_graphics.hpp"
 
 #define BUFFER_OFFSET(idx) (static_cast<char*>(0) + (idx))
@@ -289,6 +292,13 @@ namespace infrastructure {
             glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
             glEnableVertexAttribArray(2);
 
+            // load textures
+            std::filesystem::path assets_dir = ASSETS_DIR;
+            _connecting_screen.LoadTexture(assets_dir / "connecting_screen.jpg");
+            _ready_screen.LoadTexture(assets_dir / "ready_screen.jpg");
+            _plugged_in_screen.LoadTexture(assets_dir / "plugged_in_screen.jpg");
+            _dying_screen.LoadTexture(assets_dir / "dying_screen.jpg");
+
             std::cout << "At graphics loop" << std::endl;
             _is_ready = true;
             auto last_state = domain::HeadsetStates::CONNECTING;
@@ -345,6 +355,12 @@ namespace infrastructure {
             glDeleteVertexArrays(1, &IMAGE_VAO);
             glDeleteBuffers(1, &IMAGE_VBO);
             glDeleteBuffers(1, &IMAGE_EBO);
+
+            // unload
+            _connecting_screen.UnloadTexture();
+            _ready_screen.UnloadTexture();
+            _plugged_in_screen.UnloadTexture();
+            _dying_screen.UnloadTexture();
         }
     }
 
@@ -456,5 +472,35 @@ namespace infrastructure {
         glEGLImageTargetTexture2DOES(GL_TEXTURE_EXTERNAL_OES, image);
 
         eglDestroyImageKHR(display, image);
+    }
+
+    void HeadsetGraphics::Screen::LoadTexture(const std::string &image_path) {
+        if (has_loaded) return;
+        data = stbi_load(image_path.c_str(), &width, &height, &nrChannels, 0);
+
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        // set texture parameters
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        has_loaded = true;
+    }
+
+    void HeadsetGraphics::Screen::UnloadTexture() {
+        if (has_loaded) {
+            glDeleteTextures(1, &texture);
+            stbi_image_free(data);
+            has_loaded = false;
+        }
+    }
+
+    HeadsetGraphics::Screen::~Screen() {
+        UnloadTexture();
     }
 }

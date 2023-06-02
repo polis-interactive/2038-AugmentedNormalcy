@@ -16,9 +16,9 @@
 # Camera
 - Need to add dtoverlay=imx708,rotation=0 to rotate cameras (copied to system dir)
 - Need to add config file for each ip / update camera.service to pass the ip as config option
+- rebuild camera image
 
 # Problems
 - Why when a camera disconnects is it having trouble reconnecting? its like the server
    holds a reference to it or something
 - Headset is not working; need to work on it
-- 
