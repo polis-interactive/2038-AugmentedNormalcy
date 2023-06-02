@@ -54,7 +54,7 @@ namespace service {
             _bms_type(bms_type)
         {}
         [[nodiscard]] int get_asio_pool_size() const override {
-            return 3;
+            return 2;
         }
         [[nodiscard]] std::string get_tcp_server_host() const override {
             return _tcp_server_host;
