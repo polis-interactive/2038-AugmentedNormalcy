@@ -43,9 +43,9 @@ namespace infrastructure {
             try {
                 serial_port = std::make_shared<SerialPort>(
                     "/dev/ttyAMA0", BaudRate::B_9600, NumDataBits::EIGHT, Parity::NONE, NumStopBits::ONE,
-                    HardwareFlowControl::ON, SoftwareFlowControl::OFF
+                    HardwareFlowControl::OFF, SoftwareFlowControl::OFF
                 );
-                serial_port->SetTimeout(100);
+                serial_port->SetTimeout(_bms_read_timeout);
                 serial_port->Open();
                 readAndReport(serial_port);
             } catch (const std::exception& ex) {
