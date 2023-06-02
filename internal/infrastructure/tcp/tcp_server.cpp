@@ -143,7 +143,8 @@ namespace infrastructure {
             const int buffer_size
     ):
         _socket(std::move(socket)), _manager(manager), _addr(std::move(addr)),
-        _read_timer(socket.get_executor()), _read_timeout(read_timeout)
+        _read_timer(socket.get_executor()), _read_timeout(read_timeout),
+        _is_live(true)
     {
         _receive_buffer_pool = TcpReadBufferPool::Create(buffer_count, buffer_size);
     }
@@ -183,6 +184,9 @@ namespace infrastructure {
                         return;
                     }
                     _read_timer.cancel();
+                    if (!_is_live) {
+                        return;
+                    }
                     auto total_bytes = last_bytes + bytes_written;
                     if (!ec) {
                         if (total_bytes == _header.Size() && _header.Ok()) {
@@ -222,6 +226,9 @@ namespace infrastructure {
                     return;
                 }
                 _read_timer.cancel();
+                if (!_is_live) {
+                    return;
+                }
                 if (ec) {
                     std::cout << "TcpCameraSession: error reading body: " << ec << "; closing" << std::endl;
                     TryClose(true);
@@ -245,12 +252,7 @@ namespace infrastructure {
     }
 
     void TcpCameraSession::TryClose(bool internal_close) {
-        std::cout << "Do i never set is live? lol" << std::endl;
-        if (!_is_live) {
-            std::cout << "Negatory sailor" << std::endl;
-            return;
-        }
-        std::cout << "NANI THE FK" << std::endl;
+        if (!_is_live) return;
         _is_live = false;
         if (internal_close) {
             doClose();
