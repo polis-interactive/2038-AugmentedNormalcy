@@ -43,7 +43,9 @@ namespace service {
         _gpio = infrastructure::Gpio::Create(
             config,
             [this, self]() {
+                std::cout << "Button push" << std::endl;
                 const auto state = _state.GetState();
+                std::cout << (int) state << std::endl;
                 if (state == domain::HeadsetStates::READY) {
                     _state.PostState(domain::HeadsetStates::RUNNING);
                 } else if (state == domain::HeadsetStates::RUNNING) {
