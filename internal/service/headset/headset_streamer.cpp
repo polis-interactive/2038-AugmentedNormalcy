@@ -44,7 +44,6 @@ namespace service {
             config,
             [this, self]() {
                 const auto state = _state.GetState();
-                std::cout << (int) state << std::endl;
                 if (state == domain::HeadsetStates::READY) {
                     doStateChange(domain::HeadsetStates::RUNNING);
                 } else if (state == domain::HeadsetStates::RUNNING) {
