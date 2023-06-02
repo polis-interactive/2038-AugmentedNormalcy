@@ -69,7 +69,7 @@ namespace infrastructure {
             _bms_tmp_buffer.clear();
             serial_port->ReadBinary(_bms_tmp_buffer);
 
-            if (_bms_tmp_buffer.size() == 0) {
+            if (_bms_tmp_buffer.empty()) {
                 continue;
             }
 
