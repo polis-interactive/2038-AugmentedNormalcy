@@ -204,9 +204,7 @@ namespace service {
     }
 
     void ServerStreamer::DestroyCameraServerConnection(std::shared_ptr<infrastructure::TcpSession> &&camera_session) {
-        std::cout << "ServerStreamer::DestroyCameraServerConnection trying" << std::endl;
         _connection_manager.RemoveReaderSession(std::move(camera_session));
-        std::cout << "ServerStreamer::DestroyCameraServerConnection finished" << std::endl;
     }
 
     unsigned long ServerStreamer::CreateHeadsetServerConnection(
