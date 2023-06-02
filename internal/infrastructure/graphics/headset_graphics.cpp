@@ -340,11 +340,7 @@ namespace infrastructure {
                 glClear(GL_COLOR_BUFFER_BIT);
 
                 // get the state
-                auto state = domain::HeadsetStates::CONNECTING;
-                {
-                    std::shared_lock lk(_state_mutex);
-                    state = _state;
-                }
+                auto state = domain::HeadsetStates::RUNNING;
                 const bool is_transition = state != last_state;
 
                 // transition if necessary
