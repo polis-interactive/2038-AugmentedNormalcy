@@ -1,12 +1,7 @@
 
-# technically, anyone with asio can use bms_serial... but it'll only work on the pi
+# good enough
 
-if (
-    FEATURE_BMS AND NOT (
-        (AN_PLATFORM STREQUAL RPI_HEADSET) OR
-        (AN_PLATFORM STREQUAL RPI_HEADSET_CC)
-    )
-)
+if (FEATURE_BMS)
     set(CppLinuxSerial_INCLUDE_DIRS /usr/local/include/)
     set(CppLinuxSerial_LIBRARIES /usr/local/lib/libCppLinuxSerial.a)
     find_package(CppLinuxSerial REQUIRED)
