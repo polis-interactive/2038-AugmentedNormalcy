@@ -80,6 +80,7 @@ namespace infrastructure {
             }
 
             std::string response(_bms_read_buffer.begin(), _bms_read_buffer.end());
+            std::cout << response << std::endl;
             auto [success, bms_message] = tryParseResponse(response);
 
             if (!success) {
