@@ -129,7 +129,8 @@ static GLint simpleShader() {
              "void main() {\n"
              "  gl_Position = vec4(v_pos, 1.0);\n"
              "  our_color = v_color;\n"
-             "  tex_coord = v_tex;\n"
+             "  tex_coord.x = v_tex.x;\n"
+             "  tex_coord.y = 1.0 - v_tex.y;\n"
              "}\n"
     );
     vs[sizeof(vs) - 1] = 0;
@@ -340,7 +341,11 @@ namespace infrastructure {
                 glClear(GL_COLOR_BUFFER_BIT);
 
                 // get the state
-                auto state = domain::HeadsetStates::RUNNING;
+                auto state = domain::HeadsetStates::CONNECTING;
+                {
+                    std::shared_lock lk(_state_mutex);
+                    state = _state;
+                }
                 const bool is_transition = state != last_state;
 
                 // transition if necessary

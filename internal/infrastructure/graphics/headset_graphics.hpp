@@ -64,7 +64,7 @@ namespace infrastructure {
         std::atomic_bool _is_display = false;
         std::unique_ptr<std::thread> graphics_thread = nullptr;
         mutable std::shared_mutex _state_mutex;
-        domain::HeadsetStates _state;
+        domain::HeadsetStates _state = domain::HeadsetStates::CONNECTING;
         std::mutex _image_mutex;
         std::queue<std::shared_ptr<DecoderBuffer>> _image_queue;
         GLint _image_shader;
