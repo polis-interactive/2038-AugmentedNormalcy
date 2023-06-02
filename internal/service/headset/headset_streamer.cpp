@@ -45,7 +45,7 @@ namespace service {
             [this, self]() {
                 const auto state = _state.GetState();
                 if (state == domain::HeadsetStates::READY) {
-                    _state.PostState(domain::HeadsetStates::RUNNING);
+                    doStateChange(domain::HeadsetStates::RUNNING);
                 } else if (state == domain::HeadsetStates::RUNNING) {
                     _websocket_client->PostWebsocketClientMessage(
                         domain::RotateCameraMessage().GetMessage()
@@ -97,6 +97,11 @@ namespace service {
         if (state_change) {
             handleStateChange(state);
         }
+    }
+
+    void HeadsetStreamer::doStateChange(const domain::HeadsetStates state) {
+        _state.PostState(state);
+        handleStateChange(state);
     }
 
     void HeadsetStreamer::handleStateChange(const domain::HeadsetStates state) {

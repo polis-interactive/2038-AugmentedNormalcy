@@ -9,6 +9,9 @@ typedef std::chrono::high_resolution_clock Clock;
 
 #include <libdrm/drm_fourcc.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.hpp"
+
 #include "headset_graphics.hpp"
 
 #define BUFFER_OFFSET(idx) (static_cast<char*>(0) + (idx))
@@ -69,13 +72,8 @@ static GLint link_program(GLint vs, GLint fs)
     return prog;
 }
 
-static void displaySetup(int width, int height, int window_width, int window_height)
+static GLint displaySetup(int width, int height, int window_width, int window_height)
 {
-    float w_factor = width / (float)window_width;
-    float h_factor = height / (float)window_height;
-    float max_dimension = std::max(w_factor, h_factor);
-    w_factor /= max_dimension;
-    h_factor /= max_dimension;
     char vs[512];
     snprintf(vs, sizeof(vs),
              "#version 310 es\n"
@@ -115,7 +113,43 @@ static void displaySetup(int width, int height, int window_width, int window_hei
     GLint fs_s = compile_shader(GL_FRAGMENT_SHADER, fs);
     GLint prog = link_program(vs_s, fs_s);
 
-    glUseProgram(prog);
+    return prog;
+}
+
+static GLint simpleShader() {
+    char vs[512];
+    snprintf(vs, sizeof(vs),
+             "#version 310 es\n"
+             "layout (location = 0) in vec3 v_pos;\n"
+             "layout (location = 1) in vec3 v_color;\n"
+             "layout (location = 2) in vec2 v_tex;\n"
+             "out vec3 our_color;\n"
+             "out vec2 tex_coord;\n"
+             "\n"
+             "void main() {\n"
+             "  gl_Position = vec4(v_pos, 1.0);\n"
+             "  our_color = v_color;\n"
+             "  tex_coord.x = v_tex.x;\n"
+             "  tex_coord.y = 1.0 - v_tex.y;\n"
+             "}\n"
+    );
+    vs[sizeof(vs) - 1] = 0;
+    GLint vs_s = compile_shader(GL_VERTEX_SHADER, vs);
+
+    const char *fs =
+            "#version 310 es\n"
+            "precision mediump float;\n"
+            "in vec3 our_color;\n"
+            "in vec2 tex_coord;\n"
+            "uniform sampler2D our_texture;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  frag_color = texture(our_texture, tex_coord);\n"
+            "}\n";
+    GLint fs_s = compile_shader(GL_FRAGMENT_SHADER, fs);
+    GLint prog = link_program(vs_s, fs_s);
+
+    return prog;
 }
 
 namespace infrastructure {
@@ -234,7 +268,8 @@ namespace infrastructure {
             glfwSwapInterval(0);
             glfwSwapBuffers(_window);
 
-            displaySetup(_image_width, _image_height, _width, _height);
+            _image_shader = displaySetup(_image_width, _image_height, _width, _height);
+            _screen_shader = simpleShader();
             glfwSetKeyCallback(_window,
                 [](GLFWwindow * w, int key, int scancode, int action, int mods) {
                     if(key == GLFW_KEY_ESCAPE) {
@@ -288,6 +323,13 @@ namespace infrastructure {
             // texture coord attribute
             glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
             glEnableVertexAttribArray(2);
+
+            // load textures
+            std::filesystem::path assets_dir = ASSETS_DIR;
+            _connecting_screen.LoadTexture(assets_dir / "connecting_screen.jpg");
+            _ready_screen.LoadTexture(assets_dir / "ready_screen.jpg");
+            _plugged_in_screen.LoadTexture(assets_dir / "plugged_in_screen.jpg");
+            _dying_screen.LoadTexture(assets_dir / "dying_screen.jpg");
 
             std::cout << "At graphics loop" << std::endl;
             _is_ready = true;
@@ -345,15 +387,27 @@ namespace infrastructure {
             glDeleteVertexArrays(1, &IMAGE_VAO);
             glDeleteBuffers(1, &IMAGE_VBO);
             glDeleteBuffers(1, &IMAGE_EBO);
+
+            // unload
+            _connecting_screen.UnloadTexture();
+            _ready_screen.UnloadTexture();
+            _plugged_in_screen.UnloadTexture();
+            _dying_screen.UnloadTexture();
         }
     }
 
     void HeadsetGraphics::handleConnectingState(const bool is_transition) {
-
+        glUseProgram(_screen_shader);
+        glBindTexture(GL_TEXTURE_2D, _connecting_screen.texture);
+        glBindVertexArray(IMAGE_VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 
     void HeadsetGraphics::handleReadyState(const bool is_transition) {
-
+        glUseProgram(_screen_shader);
+        glBindTexture(GL_TEXTURE_2D, _ready_screen.texture);
+        glBindVertexArray(IMAGE_VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 
     void HeadsetGraphics::handleRunningState(const bool is_transition) {
@@ -376,6 +430,7 @@ namespace infrastructure {
         }
 
         if (egl_buffer) {
+            glUseProgram(_image_shader);
             glBindTexture(GL_TEXTURE_EXTERNAL_OES, egl_buffer->texture);
             glBindVertexArray(IMAGE_VAO);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -383,11 +438,17 @@ namespace infrastructure {
     }
 
     void HeadsetGraphics::handlePluggedInState(const bool is_transition) {
-
+        glUseProgram(_screen_shader);
+        glBindTexture(GL_TEXTURE_2D, _plugged_in_screen.texture);
+        glBindVertexArray(IMAGE_VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 
     void HeadsetGraphics::handleDyingState(const bool is_transition) {
-
+        glUseProgram(_screen_shader);
+        glBindTexture(GL_TEXTURE_2D, _dying_screen.texture);
+        glBindVertexArray(IMAGE_VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 
     void HeadsetGraphics::setWindowHints() {
@@ -456,5 +517,35 @@ namespace infrastructure {
         glEGLImageTargetTexture2DOES(GL_TEXTURE_EXTERNAL_OES, image);
 
         eglDestroyImageKHR(display, image);
+    }
+
+    void HeadsetGraphics::Screen::LoadTexture(const std::string &image_path) {
+        if (has_loaded) return;
+        data = stbi_load(image_path.c_str(), &width, &height, &nrChannels, 0);
+
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        // set texture parameters
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        has_loaded = true;
+    }
+
+    void HeadsetGraphics::Screen::UnloadTexture() {
+        if (has_loaded) {
+            glDeleteTextures(1, &texture);
+            stbi_image_free(data);
+            has_loaded = false;
+        }
+    }
+
+    HeadsetGraphics::Screen::~Screen() {
+        UnloadTexture();
     }
 }

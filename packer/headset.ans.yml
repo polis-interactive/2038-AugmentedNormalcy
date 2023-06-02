@@ -26,6 +26,7 @@
           - libdrm-dev
           - libjpeg-dev
           - libegl1-mesa-dev
+          - pigpio
     # SETUP PI STUFF
     - name: Remove default pi user
       ansible.builtin.user:
@@ -177,9 +178,18 @@
     - name: Enable Weston Service
       shell:
         cmd: systemctl enable weston.service
+    - name: Copy NTP client config
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/ntp.client.conf /etc/ntp.conf
     - name: Copy Cron Reboot
       shell:
         cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/cron-reboot /etc/cron.d/reboot
+    - name: Copy boot config
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/headset.boot_config.txt /boot/config.txt
+    - name: Copy sysctl config
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/headset.sysctl.conf /etc/sysctl.conf
     # MANAGEMENT
     - name: Create ssh dir
       become: yes

@@ -65,6 +65,8 @@ if (FEATURE_DECODER)
     add_subdirectory(${internal_dir}/infrastructure/decoder)
 endif()
 if (FEATURE_GRAPHICS)
+    include_directories(${third_party_dir}/stb)
+    add_definitions(-DASSETS_DIR="${root_dir}/assets")
     set(glad_dir ${third_party_dir}/glad)
     include_directories(${glad_dir}/include)
     # for some reason, can only get this to build if I directly include glad instead of compiling it as a shared lib

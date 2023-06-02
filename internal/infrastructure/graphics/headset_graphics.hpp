@@ -17,10 +17,26 @@
 
 #include "graphics.hpp"
 
+
 namespace infrastructure {
 
     class HeadsetGraphics : public std::enable_shared_from_this<HeadsetGraphics>, public Graphics {
     public:
+
+        struct Screen {
+            GLuint texture = 0;
+            int width = 0;
+            int height = 0;
+            int nrChannels = 0;
+            unsigned char *data = nullptr;
+            bool has_loaded = false;
+
+            void LoadTexture(const std::string &image_path);
+            void UnloadTexture();
+            ~Screen();
+
+        };
+
         explicit HeadsetGraphics(const GraphicsConfig &conf);
         ~HeadsetGraphics();
 
@@ -48,9 +64,16 @@ namespace infrastructure {
         std::atomic_bool _is_display = false;
         std::unique_ptr<std::thread> graphics_thread = nullptr;
         mutable std::shared_mutex _state_mutex;
-        domain::HeadsetStates _state;
+        domain::HeadsetStates _state = domain::HeadsetStates::CONNECTING;
         std::mutex _image_mutex;
         std::queue<std::shared_ptr<DecoderBuffer>> _image_queue;
+        GLint _image_shader;
+
+        GLint _screen_shader;
+        Screen _connecting_screen;
+        Screen _ready_screen;
+        Screen _plugged_in_screen;
+        Screen _dying_screen;
 
         const int _image_width;
         const int _image_height;
