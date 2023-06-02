@@ -90,6 +90,8 @@ namespace infrastructure {
                 _post_callback(bms_message);
             }
 
+            _bms_read_buffer.clear();
+
         }
 
         std::cout << "SerialBms::readAndReport stopping" << std::endl;
