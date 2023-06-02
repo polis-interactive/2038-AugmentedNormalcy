@@ -106,7 +106,6 @@ namespace infrastructure {
         domain::BmsMessage msg{};
 
         // make sure we have a good packet
-        std::smatch result;
         if (std::count(input.begin(), input.end(), '$') < 2) {
             std::cout << "SerialBms::tryParseResponse failed to parse the string" << std::endl;
             return { false, msg };
@@ -118,21 +117,31 @@ namespace infrastructure {
             return { false, msg };
         }
 
-        // check if its plugged in or not
-        bool ret = std::regex_search(input, result, vin_pattern);
-        if (!ret) {
+        // check if plugged in
+        std::smatch vin_match;
+        auto begin = std::sregex_iterator(input.begin(), input.end(), vin_pattern);
+        auto end = std::sregex_iterator();
+        for (std::sregex_iterator i = begin; i != end; ++i) {
+            vin_match = *i;
+        }
+        if (vin_match.empty()) {
             std::cout << "SerialBms::tryParseResponse failed to find vin in payload" << std::endl;
             return { false, msg };
         }
-        msg.bms_is_plugged_in = result[1] == plugged_in_string;
+        msg.bms_is_plugged_in = vin_match[1] == plugged_in_string;
 
-        // check the battery level
-        ret = std::regex_search(input, result, batcap_pattern);
-        if (!ret) {
+        // check battery level
+        std::smatch battery_match;
+        begin = std::sregex_iterator(input.begin(), input.end(), batcap_pattern);
+        end = std::sregex_iterator();
+        for (std::sregex_iterator i = begin; i != end; ++i) {
+            battery_match = *i;
+        }
+        if (battery_match.empty()) {
             std::cout << "SerialBms::tryParseResponse failed to find batcap in payload" << std::endl;
             return { false, msg };
         }
-        msg.battery_level = std::stoi(result[1]);
+        msg.battery_level = std::stoi(battery_match[1]);
         msg.bms_wants_shutdown = msg.battery_level <= _bms_shutdown_threshold;
 
         return { true, msg };
