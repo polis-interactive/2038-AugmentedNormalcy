@@ -66,7 +66,8 @@ namespace infrastructure {
 
         while (!_work_stop) {
 
-            if (serial_port->Available() < 100) {
+            if (const auto data_available = serial_port->Available(); data_available < 100) {
+                std::cout << "Not enough data available, only: " << data_available << std::endl;
                 std::this_thread::sleep_for(250ms);
                 continue;
             }
