@@ -67,7 +67,9 @@ namespace infrastructure {
         domain::HeadsetStates _state;
         std::mutex _image_mutex;
         std::queue<std::shared_ptr<DecoderBuffer>> _image_queue;
+        GLint _image_shader;
 
+        GLint _screen_shader;
         Screen _connecting_screen;
         Screen _ready_screen;
         Screen _plugged_in_screen;

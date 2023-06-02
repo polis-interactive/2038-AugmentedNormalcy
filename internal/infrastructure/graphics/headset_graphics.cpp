@@ -72,13 +72,8 @@ static GLint link_program(GLint vs, GLint fs)
     return prog;
 }
 
-static void displaySetup(int width, int height, int window_width, int window_height)
+static GLint displaySetup(int width, int height, int window_width, int window_height)
 {
-    float w_factor = width / (float)window_width;
-    float h_factor = height / (float)window_height;
-    float max_dimension = std::max(w_factor, h_factor);
-    w_factor /= max_dimension;
-    h_factor /= max_dimension;
     char vs[512];
     snprintf(vs, sizeof(vs),
              "#version 310 es\n"
@@ -118,7 +113,42 @@ static void displaySetup(int width, int height, int window_width, int window_hei
     GLint fs_s = compile_shader(GL_FRAGMENT_SHADER, fs);
     GLint prog = link_program(vs_s, fs_s);
 
-    glUseProgram(prog);
+    return prog;
+}
+
+static GLint simpleShader() {
+    char vs[512];
+    snprintf(vs, sizeof(vs),
+             "#version 310 es\n"
+             "layout (location = 0) in vec3 v_pos;\n"
+             "layout (location = 1) in vec3 v_color;\n"
+             "layout (location = 2) in vec2 v_tex;\n"
+             "out vec3 our_color;\n"
+             "out vec2 tex_coord;\n"
+             "\n"
+             "void main() {\n"
+             "  gl_Position = vec4(v_pos, 1.0);\n"
+             "  our_color = v_color;\n"
+             "  tex_coord = v_tex\n"
+             "}\n"
+    );
+    vs[sizeof(vs) - 1] = 0;
+    GLint vs_s = compile_shader(GL_VERTEX_SHADER, vs);
+
+    const char *fs =
+            "#version 310 es\n"
+            "precision mediump float;\n"
+            "in vec3 our_color;\n"
+            "in vec2 tex_coord;\n"
+            "uniform sampler2D our_texture;\n"
+            "out vec4 frag_color;\n"
+            "void main() {\n"
+            "  frag_color = texture(our_texture, tex_coord);\n"
+            "}\n";
+    GLint fs_s = compile_shader(GL_FRAGMENT_SHADER, fs);
+    GLint prog = link_program(vs_s, fs_s);
+
+    return prog;
 }
 
 namespace infrastructure {
@@ -237,7 +267,8 @@ namespace infrastructure {
             glfwSwapInterval(0);
             glfwSwapBuffers(_window);
 
-            displaySetup(_image_width, _image_height, _width, _height);
+            _image_shader = displaySetup(_image_width, _image_height, _width, _height);
+            _screen_shader = simpleShader();
             glfwSetKeyCallback(_window,
                 [](GLFWwindow * w, int key, int scancode, int action, int mods) {
                     if(key == GLFW_KEY_ESCAPE) {
@@ -365,11 +396,17 @@ namespace infrastructure {
     }
 
     void HeadsetGraphics::handleConnectingState(const bool is_transition) {
-
+        glUseProgram(_screen_shader);
+        glBindTexture(GL_TEXTURE_2D, _connecting_screen.texture);
+        glBindVertexArray(IMAGE_VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 
     void HeadsetGraphics::handleReadyState(const bool is_transition) {
-
+        glUseProgram(_screen_shader);
+        glBindTexture(GL_TEXTURE_2D, _ready_screen.texture);
+        glBindVertexArray(IMAGE_VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 
     void HeadsetGraphics::handleRunningState(const bool is_transition) {
@@ -392,6 +429,7 @@ namespace infrastructure {
         }
 
         if (egl_buffer) {
+            glUseProgram(_image_shader);
             glBindTexture(GL_TEXTURE_EXTERNAL_OES, egl_buffer->texture);
             glBindVertexArray(IMAGE_VAO);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -399,11 +437,17 @@ namespace infrastructure {
     }
 
     void HeadsetGraphics::handlePluggedInState(const bool is_transition) {
-
+        glUseProgram(_screen_shader);
+        glBindTexture(GL_TEXTURE_2D, _plugged_in_screen.texture);
+        glBindVertexArray(IMAGE_VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 
     void HeadsetGraphics::handleDyingState(const bool is_transition) {
-
+        glUseProgram(_screen_shader);
+        glBindTexture(GL_TEXTURE_2D, _dying_screen.texture);
+        glBindVertexArray(IMAGE_VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 
     void HeadsetGraphics::setWindowHints() {
