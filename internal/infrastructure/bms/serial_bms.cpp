@@ -45,7 +45,7 @@ namespace infrastructure {
                     "/dev/ttyAMA0", BaudRate::B_9600, NumDataBits::EIGHT, Parity::NONE, NumStopBits::ONE,
                     HardwareFlowControl::ON, SoftwareFlowControl::OFF
                 );
-                serial_port->SetTimeout(_bms_read_timeout);
+                serial_port->SetTimeout(100);
                 serial_port->Open();
                 readAndReport(serial_port);
             } catch (const std::exception& ex) {
