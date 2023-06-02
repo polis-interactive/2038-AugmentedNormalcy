@@ -38,34 +38,40 @@ namespace infrastructure {
     void SerialBms::run() {
         std::cout << "SerialBms::run running" << std::endl;
         while (!_work_stop) {
-            SerialPort serial_port(
-                "/dev/ttyAMA0", BaudRate::B_9600, NumDataBits::EIGHT, Parity::NONE, NumStopBits::ONE,
-                HardwareFlowControl::ON, SoftwareFlowControl::OFF
-            );
-            serial_port.SetTimeout(_bms_read_timeout);
+            std::shared_ptr<SerialPort> serial_port = nullptr;
             try {
+                serial_port = std::make_shared<SerialPort>(
+                    "/dev/ttyAMA0", BaudRate::B_9600, NumDataBits::EIGHT, Parity::NONE, NumStopBits::ONE,
+                    HardwareFlowControl::ON, SoftwareFlowControl::OFF
+                );
+                serial_port->SetTimeout(_bms_read_timeout);
+                serial_port->Open();
                 readAndReport(serial_port);
             } catch (const std::exception& ex) {
                 std::cout << "SerialBms::run reported error: " << ex.what() << std::endl;
             } catch (...) {
                 std::cout << "SerialBms::run reported unknown error" << std::endl;
             }
-            serial_port.Close();
+            if (serial_port != nullptr) {
+                serial_port->Close();
+                serial_port.reset();
+
+            }
         }
     }
 
-    void SerialBms::readAndReport(SerialPort &serial_port) {
+    void SerialBms::readAndReport(std::shared_ptr<SerialPort> &serial_port) {
 
         std::cout << "SerialBms::readAndReport running" << std::endl;
 
         while (!_work_stop) {
 
-            if (serial_port.Available() < 100) {
+            if (serial_port->Available() < 100) {
                 std::this_thread::sleep_for(250ms);
                 continue;
             }
             _bms_read_buffer.clear();
-            serial_port.ReadBinary(_bms_read_buffer);
+            serial_port->ReadBinary(_bms_read_buffer);
 
             std::string response(_bms_read_buffer.begin(), _bms_read_buffer.end());
             auto [success, bms_message] = tryParseResponse(response);

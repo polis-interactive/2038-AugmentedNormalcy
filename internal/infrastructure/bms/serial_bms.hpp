@@ -26,7 +26,7 @@ namespace infrastructure {
     private:
         void run();
         bool setupConnection();
-        void readAndReport(mn::CppLinuxSerial::SerialPort &serial_port);
+        void readAndReport(std::shared_ptr<mn::CppLinuxSerial::SerialPort> &serial_port);
         std::pair<bool, domain::BmsMessage> tryParseResponse(const std::string &input);
 
         std::atomic<bool> _work_stop = { true };
