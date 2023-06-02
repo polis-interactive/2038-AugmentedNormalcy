@@ -129,7 +129,7 @@ static GLint simpleShader() {
              "void main() {\n"
              "  gl_Position = vec4(v_pos, 1.0);\n"
              "  our_color = v_color;\n"
-             "  tex_coord = v_tex\n"
+             "  tex_coord = v_tex;\n"
              "}\n"
     );
     vs[sizeof(vs) - 1] = 0;
