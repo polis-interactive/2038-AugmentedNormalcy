@@ -69,7 +69,7 @@ namespace domain {
                 }
             } else {
                 if (last_state == HeadsetStates::CONNECTING && websocket_is_connected) {
-                    _state == HeadsetStates::READY;
+                    _state = HeadsetStates::READY;
                 }
             }
             tcp_is_connected = is_connected;
@@ -90,7 +90,7 @@ namespace domain {
                 }
             } else {
                 if (last_state == HeadsetStates::CONNECTING && tcp_is_connected) {
-                    _state == HeadsetStates::READY;
+                    _state = HeadsetStates::READY;
                 }
             }
             websocket_is_connected = is_connected;
