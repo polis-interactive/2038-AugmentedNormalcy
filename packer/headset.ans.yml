@@ -187,6 +187,9 @@
     - name: Copy boot config
       shell:
         cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/headset.boot_config.txt /boot/config.txt
+    - name: Copy sysctl config
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/headset.sysctl.conf /etc/sysctl.conf
     # MANAGEMENT
     - name: Create ssh dir
       become: yes
