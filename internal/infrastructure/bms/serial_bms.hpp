@@ -34,6 +34,7 @@ namespace infrastructure {
 
         const int _bms_read_timeout;
         std::vector<uint8_t> _bms_read_buffer;
+        std::vector<uint8_t> _bms_tmp_buffer;
     };
 }
 

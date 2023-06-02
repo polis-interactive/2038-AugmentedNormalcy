@@ -23,6 +23,7 @@ namespace infrastructure {
         _bms_read_timeout(config.get_bms_read_timeout())
     {
         _bms_read_buffer.reserve(250);
+        _bms_tmp_buffer.reserve(250);
     }
 
     void SerialBms::Start() {
@@ -65,14 +66,18 @@ namespace infrastructure {
         std::cout << "SerialBms::readAndReport running" << std::endl;
 
         while (!_work_stop) {
+            _bms_tmp_buffer.clear();
+            serial_port->ReadBinary(_bms_tmp_buffer);
 
-            if (const auto data_available = serial_port->Available(); data_available < 100) {
-                std::cout << "Not enough data available, only: " << data_available << std::endl;
-                std::this_thread::sleep_for(250ms);
+            if (_bms_tmp_buffer.size() == 0) {
                 continue;
             }
-            _bms_read_buffer.clear();
-            serial_port->ReadBinary(_bms_read_buffer);
+
+            _bms_read_buffer.insert(_bms_read_buffer.end(), _bms_tmp_buffer.begin(), _bms_tmp_buffer.end());
+
+            if (_bms_read_buffer.size() < 100) {
+                continue;
+            }
 
             std::string response(_bms_read_buffer.begin(), _bms_read_buffer.end());
             auto [success, bms_message] = tryParseResponse(response);
