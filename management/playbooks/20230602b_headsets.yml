@@ -27,6 +27,45 @@
         http_proxy: http://69.4.20.10:8888
         https_proxy: http://69.4.20.10:8888
 
+    # CppLinuxSerial
+    - name: Download CppLinuxSerial
+      become: yes
+      become_user: pi
+      git:
+        repo: https://github.com/gbmhunter/CppLinuxSerial/
+        dest: /home/pi/build/CppLinuxSerial
+      environment:
+        http_proxy: http://69.4.20.10:8888
+        https_proxy: http://69.4.20.10:8888
+
+    - name: Create CppLinuxSerial build dir
+      become: yes
+      become_user: pi
+      file:
+        path: /home/pi/build/CppLinuxSerial/build
+        state: directory
+        mode: '0755'
+
+    - name: Setup CppLinuxSerial
+      become: yes
+      become_user: pi
+      shell:
+        chdir: /home/pi/build/CppLinuxSerial/build
+        cmd: cmake -DBUILD_TESTS=FALSE ..
+
+    - name: Make CppLinuxSerial
+      become: yes
+      become_user: pi
+      make:
+        chdir: /home/pi/build/CppLinuxSerial/build
+        params:
+          NUM_THREADS: 4
+
+    - name: Install CppLinuxSerial
+      make:
+        chdir: /home/pi/build/CppLinuxSerial/build
+        target: install
+
     - name: Copy boot config
       shell:
         cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/headset.boot_config.txt /boot/config.txt
