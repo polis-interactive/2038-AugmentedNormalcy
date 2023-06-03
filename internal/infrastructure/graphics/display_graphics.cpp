@@ -243,8 +243,8 @@ namespace infrastructure {
             glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
             glfwShowWindow(_window);
 
-            const float disp_width = _image_width / (float)_width;
-            const float disp_height = _image_height / (float)_height;
+            const float disp_width = 1.0;
+            const float disp_height = 1.0;
 
             /* setup output */
 
