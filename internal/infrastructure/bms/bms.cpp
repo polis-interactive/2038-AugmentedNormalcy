@@ -13,24 +13,22 @@
 namespace infrastructure {
 
     std::shared_ptr<Bms> Bms::Create(
-        const infrastructure::BmsConfig &config, net::io_context &context,
-        domain::BmsMessageCallback &&post_callback
+        const infrastructure::BmsConfig &config, domain::BmsMessageCallback &&post_callback
     ) {
         switch(config.get_bms_type()) {
 #ifdef _BMS_SERIAL_
             case BmsType::SERIAL:
-                return std::make_shared<SerialBms>(config, context, std::move(post_callback));
+                return std::make_shared<SerialBms>(config, std::move(post_callback));
 #endif
             case BmsType::NONE:
-                return std::make_shared<NullBms>(config, context, std::move(post_callback));
+                return std::make_shared<NullBms>(config, std::move(post_callback));
             default:
                 throw std::runtime_error("Selected BMS type unavailable...");
         }
     }
 
     Bms::Bms(
-        const infrastructure::BmsConfig &config, net::io_context &context,
-        domain::BmsMessageCallback &&post_callback
+        const infrastructure::BmsConfig &config, domain::BmsMessageCallback &&post_callback
     ):
         _bms_polling_timeout(config.get_bms_polling_timeout()),
         _bms_shutdown_threshold(config.get_bms_shutdown_threshold()),

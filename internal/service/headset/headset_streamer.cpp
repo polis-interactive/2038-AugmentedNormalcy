@@ -54,7 +54,7 @@ namespace service {
             }
         );
         _bms = infrastructure::Bms::Create(
-            config, _asio_context->GetContext(), [this, self](const domain::BmsMessage message) {
+            config, [this, self](const domain::BmsMessage message) {
                 const auto [state_change, state] = _state.PostBmsMessage(message);
                 if (state_change) {
                     handleStateChange(state);

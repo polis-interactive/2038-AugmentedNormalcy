@@ -6,9 +6,9 @@
 
 namespace infrastructure {
     NullBms::NullBms(
-        const infrastructure::BmsConfig &config, net::io_context &context, domain::BmsMessageCallback &&post_callback
+        const infrastructure::BmsConfig &config, domain::BmsMessageCallback &&post_callback
     ):
-        Bms(config, context, std::move(post_callback))
+        Bms(config, std::move(post_callback))
     {}
     void NullBms::Start() {}
     void NullBms::Stop() {}
