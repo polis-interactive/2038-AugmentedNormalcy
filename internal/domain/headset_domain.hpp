@@ -100,7 +100,7 @@ namespace domain {
     private:
         mutable std::shared_mutex _state_mutex;
         bool tcp_is_connected = false;
-        bool websocket_is_connected = false;
+        bool websocket_is_connected = true;
         HeadsetStates _state = HeadsetStates::CONNECTING;
     };
 
