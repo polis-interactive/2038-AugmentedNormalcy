@@ -37,6 +37,9 @@ namespace application {
 
     std::function<void(int)> shutdown_handler;
     void signal_handler(int signal) { shutdown_handler(signal); }
+    void ignore_handler(int signal) {
+        std::cout << "Requested a hangup? " << signal << std::endl;
+    }
 
     void WaitForShutdown() {
         bool exit = false;
@@ -48,6 +51,7 @@ namespace application {
 
         signal(SIGINT, signal_handler);
         signal(SIGTERM, signal_handler);
+        signal(SIGHUP, ignore_handler);
 
         while(!exit){
             std::this_thread::sleep_for(1s);
