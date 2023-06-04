@@ -54,7 +54,7 @@ namespace service {
             _bms_type(bms_type)
         {}
         [[nodiscard]] int get_asio_pool_size() const override {
-            return 1;
+            return 2;
         }
         [[nodiscard]] std::string get_tcp_server_host() const override {
             return _tcp_server_host;
@@ -167,7 +167,7 @@ namespace service {
             _decoder->Start();
             _asio_context->Start();
             _tcp_client->Start();
-            // _websocket_client->Start();
+            _websocket_client->Start();
             _gpio->Start();
             _bms->Start();
             _is_started = true;
@@ -179,7 +179,7 @@ namespace service {
             _state.PostState(domain::HeadsetStates::CLOSING);
             _bms->Stop();
             _gpio->Stop();
-            // _websocket_client->Stop();
+            _websocket_client->Stop();
             _tcp_client->Stop();
             _asio_context->Stop();
             _graphics->Stop();
