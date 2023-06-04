@@ -8,6 +8,6 @@
   "websocketPort": 8008,
   "websocketTimeout": 2,
   "serverClientAssignmentStrategy": "IP_BOUNDS",
-  "serverCameraSwitchingStrategy": "HEADSET_CONTROLLED",
+  "serverCameraSwitchingStrategy": "MANUAL_ENTRY",
   "serverCameraSwitchingAutomaticTimeout": 15
 }
