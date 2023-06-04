@@ -1,6 +1,6 @@
 ---
 
-- hosts: headsets
+- hosts: cameras
 
   tasks:
 
