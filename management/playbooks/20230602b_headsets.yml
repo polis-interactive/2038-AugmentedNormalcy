@@ -8,7 +8,7 @@
       shell:
         cmd: systemctl stop headset.service
 
-    - name: Stop Headset service
+    - name: Stop Weston service
       shell:
         cmd: systemctl stop weston.service
 
