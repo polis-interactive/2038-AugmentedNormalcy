@@ -79,4 +79,9 @@ namespace domain {
             return is_hold_action ? ButtonAction::SINGLE_HOLD : ButtonAction::SINGLE_PUSH;
         }
     }
+
+    void Button::Reset() {
+        transitionState(ButtonState::OPEN, Clock::now());
+        _press_count = 0;
+    }
 }
