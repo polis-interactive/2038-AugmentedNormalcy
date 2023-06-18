@@ -42,22 +42,20 @@ namespace service {
         );
         _gpio = infrastructure::Gpio::Create(
             config,
-            [this, self]() {
+            [this, self](const domain::ButtonAction action) {
+                // assume action is never NULL_ACTION
                 const auto state = _state.GetState();
                 if (state == domain::HeadsetStates::READY) {
+                    // we really don't care about the action here
                     doStateChange(domain::HeadsetStates::RUNNING);
                 } else if (state == domain::HeadsetStates::RUNNING) {
-                    _websocket_client->PostWebsocketClientMessage(
-                        domain::RotateCameraMessage().GetMessage()
-                    );
-                }
-            }
-        );
-        _bms = infrastructure::Bms::Create(
-            config, [this, self](const domain::BmsMessage message) {
-                const auto [state_change, state] = _state.PostBmsMessage(message);
-                if (state_change) {
-                    handleStateChange(state);
+                    if (ButtonActionIsHold(action)) {
+                        doStateChange(domain::HeadsetStates::READY);
+                    } else {
+                        _websocket_client->PostWebsocketClientMessage(
+                                domain::RotateCameraMessage().GetMessage()
+                        );
+                    }
                 }
             }
         );
@@ -116,12 +114,6 @@ namespace service {
             case domain::HeadsetStates::RUNNING:
                 // nothing to do as graphics loop auto pulls state
                 break;
-            case domain::HeadsetStates::PLUGGED_IN:
-                handleStateChangePluggedIn();
-                break;
-            case domain::HeadsetStates::DYING:
-                handleStateChangeDying();
-                break;
             case domain::HeadsetStates::CLOSING:
                 // nothing to do as we are getting the fk out of here
                 break;
@@ -135,19 +127,4 @@ namespace service {
         _tcp_client->Start();
         _decoder->Start();
     }
-
-    void HeadsetStreamer::handleStateChangePluggedIn() {
-        // turnOffScreen();
-        _websocket_client->Stop();
-        _tcp_client->Stop();
-        _decoder->Stop();
-    }
-
-    void HeadsetStreamer::handleStateChangeDying() {
-        _websocket_client->Stop();
-        _tcp_client->Stop();
-        _decoder->Stop();
-    }
-
-
 }

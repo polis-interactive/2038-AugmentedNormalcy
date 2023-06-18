@@ -7,11 +7,15 @@
 
 
 namespace infrastructure {
-    PiGpio::PiGpio(const infrastructure::GpioConfig &config, std::function<void()> &&button_push_callback):
+    PiGpio::PiGpio(const infrastructure::GpioConfig &config, domain::ButtonActionCallback &&button_push_callback):
         Gpio(config, std::move(button_push_callback)),
         _button_gpio_pin(config.get_button_pin()),
-        _millis_debounce_timeout(config.get_button_debounce_ms()),
-        _millis_polling_timeout(config.get_button_polling_ms())
+        _millis_polling_timeout(config.get_button_polling_ms()),
+        _button(
+            config.get_button_debounce_ms(),
+            config.get_button_hold_ms(),
+            config.get_button_pressed_ms()
+        )
     {
         int cfg = gpioCfgGetInternals();
         cfg |= PI_CFG_NOSIGHANDLER;  // (1<<10)
@@ -38,23 +42,15 @@ namespace infrastructure {
     }
 
     void PiGpio::run() {
+        _button.Reset();
         while (!_work_stop) {
             const bool button_is_pushed = gpioRead(_button_gpio_pin) == 0;
-            if (button_is_pushed != _last_button_is_pushed) {
-                // button changed state
-                if (button_is_pushed) {
-                    // button got pushed; post an event
-                    _post_button_push_callback();
-                }
-                std::this_thread::sleep_for(_millis_debounce_timeout);
-            } else {
-                // no state change; regular polling timeout
-                std::this_thread::sleep_for(_millis_polling_timeout);
+            const auto button_action = _button.UpdateButtonState(button_is_pushed);
+            if (button_action != domain::ButtonAction::NULL_ACTION) {
+                _post_button_push_callback(button_action);
             }
-            // set the state to w.e the last one we read
-            _last_button_is_pushed = button_is_pushed;
+            std::this_thread::sleep_for(_millis_polling_timeout);
         }
-
     }
 
     void PiGpio::Stop() {

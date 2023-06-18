@@ -13,7 +13,6 @@
 #include "infrastructure/decoder/decoder.hpp"
 #include "infrastructure/graphics/graphics.hpp"
 #include "infrastructure/gpio/gpio.hpp"
-#include "infrastructure/bms/bms.hpp"
 
 #include "domain/headset_domain.hpp"
 
@@ -24,7 +23,6 @@ namespace service {
         public infrastructure::DecoderConfig,
         public infrastructure::GraphicsConfig,
         public infrastructure::GpioConfig,
-        public infrastructure::BmsConfig,
         public infrastructure::WebsocketClientConfig
     {
         HeadsetStreamerConfig(
@@ -36,8 +34,7 @@ namespace service {
                 int tcp_read_buffers, int decoder_buffers_downstream,
                 infrastructure::DecoderType decoder_type,
                 infrastructure::GraphicsType graphics_type,
-                infrastructure::GpioType gpio_type,
-                infrastructure::BmsType bms_type
+                infrastructure::GpioType gpio_type
         ):
             _tcp_server_host(std::move(tcp_server_host)),
             _tcp_server_port(tcp_server_port),
@@ -50,8 +47,7 @@ namespace service {
             _decoder_buffers_downstream(decoder_buffers_downstream),
             _graphics_type(graphics_type),
             _image_width_height(std::move(image_width_height)),
-            _gpio_type(gpio_type),
-            _bms_type(bms_type)
+            _gpio_type(gpio_type)
         {}
         [[nodiscard]] int get_asio_pool_size() const override {
             return 2;
@@ -117,22 +113,16 @@ namespace service {
             return 17;
         };
         [[nodiscard]] int get_button_debounce_ms() const override {
-            return 75;
+            return 33;
+        };
+        [[nodiscard]] int get_button_hold_ms() const override {
+            return 2500;
+        };
+        [[nodiscard]] int get_button_pressed_ms() const override {
+            return 250;
         };
         [[nodiscard]] int get_button_polling_ms() const override {
             return 20;
-        }
-        [[nodiscard]] infrastructure::BmsType get_bms_type() const override {
-            return _bms_type;
-        }
-        [[nodiscard]] int get_bms_polling_timeout() const override {
-            return 10;
-        };
-        [[nodiscard]] int get_bms_shutdown_threshold() const override {
-            return 0;
-        };
-        [[nodiscard]] int get_bms_read_timeout() const override {
-            return 1000;
         }
     private:
         const std::string _tcp_server_host;
@@ -147,7 +137,6 @@ namespace service {
         const std::pair<int, int> _image_width_height;
         const infrastructure::GraphicsType _graphics_type;
         const infrastructure::GpioType _gpio_type;
-        const infrastructure::BmsType _bms_type;
     };
 
     class HeadsetStreamer:
@@ -169,7 +158,6 @@ namespace service {
             _tcp_client->Start();
             _websocket_client->Start();
             _gpio->Start();
-            _bms->Start();
             _is_started = true;
         }
         void Stop() {
@@ -177,7 +165,6 @@ namespace service {
                 return;
             }
             _state.PostState(domain::HeadsetStates::CLOSING);
-            _bms->Stop();
             _gpio->Stop();
             _websocket_client->Stop();
             _tcp_client->Stop();
@@ -193,7 +180,6 @@ namespace service {
             _graphics.reset();
             _decoder.reset();
             _gpio.reset();
-            _bms.reset();
         }
         // camera isn't an option so no need to initialize
         void CreateCameraClientConnection() override {};
@@ -211,8 +197,6 @@ namespace service {
         void doStateChange(const domain::HeadsetStates state);
         void handleStateChange(const domain::HeadsetStates state);
         void handleStateChangeConnecting();
-        void handleStateChangePluggedIn();
-        void handleStateChangeDying();
         std::atomic_bool _is_started = false;
         std::shared_ptr<AsioContext> _asio_context = nullptr;
         std::shared_ptr<infrastructure::TcpClient> _tcp_client = nullptr;
@@ -220,7 +204,6 @@ namespace service {
         std::shared_ptr<infrastructure::Graphics> _graphics = nullptr;
         std::shared_ptr<infrastructure::Decoder> _decoder = nullptr;
         std::shared_ptr<infrastructure::Gpio> _gpio = nullptr;
-        std::shared_ptr<infrastructure::Bms> _bms = nullptr;
         domain::HeadsetState _state;
     };
 }

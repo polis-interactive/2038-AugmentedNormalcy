@@ -11,13 +11,11 @@
 #include "gpio.hpp"
 #include "pigpio.h"
 
-#include "utils/clock.hpp"
-
 namespace infrastructure {
 
     class PiGpio: public Gpio, public std::enable_shared_from_this<PiGpio> {
     public:
-        explicit PiGpio(const GpioConfig &config, std::function<void()> &&button_push_callback);
+        explicit PiGpio(const GpioConfig &config, domain::ButtonActionCallback &&button_push_callback);
         void Start() override;
         void Stop() override;
         ~PiGpio();
@@ -25,10 +23,9 @@ namespace infrastructure {
         void run();
         const int _button_gpio_pin;
         const std::chrono::milliseconds _millis_polling_timeout;
-        const std::chrono::milliseconds _millis_debounce_timeout;
-        bool _last_button_is_pushed = false;
         std::unique_ptr<std::thread> _work_thread;
         std::atomic<bool> _work_stop = { true };
+        domain::Button _button;
     };
 
 }
