@@ -13,17 +13,8 @@ namespace domain {
     enum class ButtonAction {
         NULL_ACTION,
         SINGLE_PUSH,
-        SINGLE_HOLD,
-        DOUBLE_PUSH,
-        DOUBLE_HOLD,
-        TRIPLE_PUSH,
-        TRIPLE_HOLD,
+        SINGLE_HOLD
     };
-
-    inline bool ButtonActionIsHold(const ButtonAction action) {
-        return action == ButtonAction::SINGLE_HOLD || action == ButtonAction::DOUBLE_HOLD ||
-            action == ButtonAction::TRIPLE_HOLD;
-    }
 
     typedef std::function<void(const domain::ButtonAction)> ButtonActionCallback;
 
@@ -48,11 +39,9 @@ namespace domain {
             DEBOUNCED,
             PRESSED,
             HELD, // state after pressed if emitted a hold event
-            WAITING, // state after a press to see if they press again
         };
         void transitionState(const ButtonState &new_state, const ClockPoint &transition_time);
         ButtonState _state = ButtonState::OPEN;
-        int _press_count = 0;
         ClockPoint _last_state_change;
 
 

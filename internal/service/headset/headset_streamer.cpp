@@ -49,11 +49,11 @@ namespace service {
                     // we really don't care about the action here
                     doStateChange(domain::HeadsetStates::RUNNING);
                 } else if (state == domain::HeadsetStates::RUNNING) {
-                    if (ButtonActionIsHold(action)) {
+                    if (action == domain::ButtonAction::SINGLE_HOLD) {
                         doStateChange(domain::HeadsetStates::READY);
                     } else {
                         _websocket_client->PostWebsocketClientMessage(
-                                domain::RotateCameraMessage().GetMessage()
+                            domain::RotateCameraMessage().GetMessage()
                         );
                     }
                 }
