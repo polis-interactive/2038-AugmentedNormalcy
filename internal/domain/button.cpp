@@ -2,6 +2,8 @@
 // Created by brucegoose on 6/18/23.
 //
 
+#include <iostream>
+
 #include "button.hpp"
 
 namespace domain {
@@ -20,6 +22,7 @@ namespace domain {
                     transitionState(ButtonState::DEBOUNCED, now);
                     _press_count += 1;
                 }
+                break;
             case ButtonState::DEBOUNCED:
                 // check if we have fully debounced; if so, move to the correct state
                 if (elapsed > _millis_debounce_timeout) {
