@@ -113,16 +113,16 @@ namespace service {
             return 17;
         };
         [[nodiscard]] int get_button_debounce_ms() const override {
-            return 33;
+            return 20;
         };
         [[nodiscard]] int get_button_hold_ms() const override {
             return 2500;
         };
         [[nodiscard]] int get_button_pressed_ms() const override {
-            return 250;
+            return 200;
         };
         [[nodiscard]] int get_button_polling_ms() const override {
-            return 20;
+            return 15;
         }
     private:
         const std::string _tcp_server_host;
