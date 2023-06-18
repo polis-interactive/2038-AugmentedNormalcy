@@ -1,0 +1,136 @@
+---
+
+- hosts: 69.4.20.104
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    -
+    - name: Stop Headset service
+      shell:
+        cmd: systemctl stop headset.service
+
+    - name: Stop Weston service
+      shell:
+        cmd: systemctl stop weston.service
+
+    - name: Update
+      apt:
+        update_cache: yes
+      environment:
+        http_proxy: http://69.4.20.10:8888
+        https_proxy: http://69.4.20.10:8888
+
+    - name: Install pigpio
+      apt:
+        pkg:
+          - pigpio
+      environment:
+        http_proxy: http://69.4.20.10:8888
+        https_proxy: http://69.4.20.10:8888
+
+    # CppLinuxSerial
+    - name: Download CppLinuxSerial
+      become: yes
+      become_user: pi
+      git:
+        repo: https://github.com/gbmhunter/CppLinuxSerial/
+        dest: /home/pi/build/CppLinuxSerial
+      environment:
+        http_proxy: http://69.4.20.10:8888
+        https_proxy: http://69.4.20.10:8888
+
+    - name: Create CppLinuxSerial build dir
+      become: yes
+      become_user: pi
+      file:
+        path: /home/pi/build/CppLinuxSerial/build
+        state: directory
+        mode: '0755'
+
+    - name: Setup CppLinuxSerial
+      become: yes
+      become_user: pi
+      shell:
+        chdir: /home/pi/build/CppLinuxSerial/build
+        cmd: cmake -DBUILD_TESTS=FALSE ..
+
+    - name: Make CppLinuxSerial
+      become: yes
+      become_user: pi
+      make:
+        chdir: /home/pi/build/CppLinuxSerial/build
+        params:
+          NUM_THREADS: 4
+
+    - name: Install CppLinuxSerial
+      make:
+        chdir: /home/pi/build/CppLinuxSerial/build
+        target: install
+
+    - name: Copy boot config
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/headset.boot_config.txt /boot/config.txt
+
+    - name: Copy sysctl config
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/headset.sysctl.conf /etc/sysctl.conf
+
+    - name: Remove old build dir
+      file:
+        path: /home/pi/build/2038-AugmentedNormalcy/build
+        state: absent
+
+    - name: Remove old binary
+      file:
+        path: /home/pi/build/2038-AugmentedNormalcy/bin/app_headset
+        state: absent
+
+    - name: Create Normalcy build dir
+      become: yes
+      become_user: pi
+      file:
+        path: /home/pi/build/2038-AugmentedNormalcy/build
+        state: directory
+        mode: '0755'
+
+    - name: Setup Normalcy
+      become: yes
+      become_user: pi
+      shell:
+        chdir: /home/pi/build/2038-AugmentedNormalcy/build
+        cmd: cmake -DAN_PLATFORM:STRING=RPI_HEADSET ..
+
+    - name: Make Normalcy
+      become: yes
+      become_user: pi
+      make:
+        chdir: /home/pi/build/2038-AugmentedNormalcy/build
+        params:
+          NUM_THREADS: 4
+
+    - name: Reboot host and wait for it to restart
+      reboot:
+        msg: "Reboot initiated by Ansible"
+        connect_timeout: 5
+        reboot_timeout: 600
+        pre_reboot_delay: 0
+        post_reboot_delay: 30
+        test_command: whoami
+
+    - name: Get timestamp from the system
+      shell: "date +%Y-%m-%d%H-%M-%S"
+      register: tstamp
+
+    - name: Set variables
+      set_fact:
+        cur_date: "{{ tstamp.stdout[0:10]}}"
+        cur_time: "{{ tstamp.stdout[10:]}}"
+
+    - name: System timestamp - date
+      debug:
+        msg: "Current date: {{ cur_date }}"
+
+    - name: System timestamp - time
+      debug:
+        msg: "Current date: {{ cur_time }}"
+...

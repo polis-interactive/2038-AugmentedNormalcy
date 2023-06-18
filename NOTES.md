@@ -13,4 +13,4 @@
 # Bad Headsets
 - 104, 182, 102
 - 101 kind of? keep an eye on it, might have a bad bms
-
+- 103 kind of? 
