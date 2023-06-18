@@ -7,10 +7,9 @@
 #include "button.hpp"
 
 namespace domain {
-    Button::Button(const int debounce_ms, const int hold_ms, const int pressed_ms):
+    Button::Button(const int debounce_ms, const int hold_ms):
         _millis_debounce_timeout(debounce_ms),
-        _millis_hold_timeout(hold_ms),
-        _millis_pressed_timeout(pressed_ms)
+        _millis_hold_timeout(hold_ms)
     {}
 
     ButtonAction Button::UpdateButtonState(const bool button_is_pressed) {

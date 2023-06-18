@@ -20,7 +20,7 @@ namespace domain {
 
     class Button {
     public:
-        Button(const int debounce_ms, const int hold_ms, const int pressed_ms);
+        Button(const int debounce_ms, const int hold_ms);
         void Reset();
         ButtonAction UpdateButtonState(const bool button_is_pressed);
         Button() = delete;
@@ -28,10 +28,7 @@ namespace domain {
         Button& operator= (const Button&) = delete;
     private:
         const std::chrono::milliseconds _millis_debounce_timeout;
-        const std::chrono::milliseconds _millis_pressed_timeout;
         const std::chrono::milliseconds _millis_hold_timeout;
-
-        ButtonAction emitAction(const bool is_hold_action);
 
         // only pressed and waiting can emit events; otherwise, sends null action
         enum class ButtonState {

@@ -118,10 +118,6 @@ namespace service {
         [[nodiscard]] int get_button_hold_ms() const override {
             return 2500;
         };
-        [[nodiscard]] int get_button_pressed_ms() const override {
-            // with debounce and polling, this is closer to 200ms
-            return 165;
-        };
         [[nodiscard]] int get_button_polling_ms() const override {
             return 15;
         }

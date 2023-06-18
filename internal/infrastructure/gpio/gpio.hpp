@@ -23,7 +23,6 @@ namespace infrastructure {
         [[nodiscard]] virtual int get_button_pin() const = 0;
         [[nodiscard]] virtual int get_button_debounce_ms() const = 0;
         [[nodiscard]] virtual int get_button_hold_ms() const = 0;
-        [[nodiscard]] virtual int get_button_pressed_ms() const = 0;
         [[nodiscard]] virtual int get_button_polling_ms() const = 0;
     };
 

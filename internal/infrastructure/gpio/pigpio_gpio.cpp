@@ -13,8 +13,7 @@ namespace infrastructure {
         _millis_polling_timeout(config.get_button_polling_ms()),
         _button(
             config.get_button_debounce_ms(),
-            config.get_button_hold_ms(),
-            config.get_button_pressed_ms()
+            config.get_button_hold_ms()
         )
     {
         int cfg = gpioCfgGetInternals();
