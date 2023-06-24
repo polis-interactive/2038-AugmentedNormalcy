@@ -51,9 +51,12 @@ namespace service {
                 } else if (state == domain::HeadsetStates::RUNNING) {
                     if (action == domain::ButtonAction::SINGLE_HOLD) {
                         doStateChange(domain::HeadsetStates::READY);
+                        _websocket_client->PostWebsocketClientMessage(
+                            domain::HeadsetResetCameraMessage().GetMessage()
+                        );
                     } else {
                         _websocket_client->PostWebsocketClientMessage(
-                            domain::RotateCameraMessage().GetMessage()
+                            domain::HeadsetRotateCameraMessage().GetMessage()
                         );
                     }
                 }

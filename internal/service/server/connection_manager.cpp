@@ -249,11 +249,11 @@ namespace service {
         return { _reader_connections.size(), _writer_connections.size() };
     }
 
-    bool ConnectionManager::RotateWriterConnection(const tcp_addr &addr) {
+    bool ConnectionManager::RotateWriterConnection(const tcp_addr &writer_addr) {
         std::shared_lock lk1(_reader_mutex, std::defer_lock);
         std::unique_lock lk2(_connection_mutex, std::defer_lock);
         std::lock(lk1, lk2);
-        auto writer_connection = _writer_connections.find(addr);
+        auto writer_connection = _writer_connections.find(writer_addr);
         if (writer_connection == _writer_connections.end()) {
             // couldn't find the writer
             return false;
@@ -289,8 +289,8 @@ namespace service {
         auto &next_connection = next_reader_connection->second;
         // I really wish I could just compare by addr here
         auto move_it = std::find_if(
-            current_connection.begin(), current_connection.end(), [&addr](const Writer &writer) {
-                return writer->GetAddr() == addr;
+            current_connection.begin(), current_connection.end(), [&writer_addr](const Writer &writer) {
+                return writer->GetAddr() == writer_addr;
             }
         );
         if (move_it == current_connection.end()) {
@@ -301,6 +301,66 @@ namespace service {
         current_connection.erase(move_it);
         writer_connection->second = next_reader_addr;
         return true;
+    }
+
+    bool ConnectionManager::ResetWriterConnection(const tcp_addr &writer_addr) {
+        std::shared_lock lk1(_reader_mutex, std::defer_lock);
+        std::unique_lock lk2(_connection_mutex, std::defer_lock);
+        std::lock(lk1, lk2);
+        // get the writer socket by addr
+        auto writer_connection = _writer_connections.find(writer_addr);
+        if (writer_connection == _writer_connections.end()) {
+            // couldn't find the writer
+            return false;
+        }
+        // addr of current reader for writer
+        const auto &current_reader_addr = writer_connection->second;
+
+        // check if there is anything to do
+        auto reader = _reader_sessions.find(current_reader_addr);
+        if (reader == _reader_sessions.end()) {
+            // couldn't find the reader
+            return false;
+        } else if (_reader_sessions.size() == 1 || reader == _reader_sessions.begin()) {
+            // we either have one reader, or writer is currently on the first anyways; nothing to do
+            return true;
+        }
+
+        // get the connection we are about to unhook
+        auto current_reader_connection = _reader_connections.find(current_reader_addr);
+        if (current_reader_connection == _reader_connections.end() || current_reader_connection->second.empty()) {
+            // we have no recording of the connection; bail
+            return false;
+        }
+        auto &current_connection = current_reader_connection->second;
+
+        // get the connection we are about to hook
+        auto first_reader = _reader_sessions.begin();
+        const auto &first_reader_addr = first_reader->first;
+        auto first_reader_connection = _reader_connections.find(first_reader_addr);
+        if (first_reader_connection == _reader_connections.end()) {
+            // nowhere to put the new connection; bail
+            return false;
+        }
+        auto &first_connection = first_reader_connection->second;
+
+        // grab the actual connection to move
+        auto move_it = std::find_if(
+            current_connection.begin(), current_connection.end(), [&writer_addr](const Writer &writer) {
+                return writer->GetAddr() == writer_addr;
+            }
+        );
+        if (move_it == current_connection.end()) {
+            // couldn't find the connection; bail
+            return false;
+        }
+
+        // do the actual move
+        first_connection.push_back(std::move(*move_it));
+        current_connection.erase(move_it);
+        writer_connection->second = first_reader_addr;
+        return true;
+
     }
 
     bool ConnectionManager::RotateAllConnections() {

@@ -97,7 +97,7 @@ namespace service {
                 std::this_thread::sleep_for(1s);
                 continue;
             }
-            _websocket_client->PostWebsocketClientMessage(domain::RotateCameraMessage().GetMessage());
+            _websocket_client->PostWebsocketClientMessage(domain::HeadsetRotateCameraMessage().GetMessage());
             last_timer = now;
         }
     }

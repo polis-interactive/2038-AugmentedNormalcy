@@ -83,10 +83,10 @@ namespace domain {
         HeadsetStates _state = HeadsetStates::CONNECTING;
     };
 
-    class RotateCameraMessage: public DomainMessage {
+    class HeadsetRotateCameraMessage: public DomainMessage {
     public:
         [[nodiscard]] MessageType GetMessageType() const final {
-            return DomainMessage::MessageType::RotateCamera;
+            return DomainMessage::MessageType::HeadsetRotateCamera;
         };
         [[nodiscard]] nlohmann::json GetMessagePayload() const final {
             return 1;
@@ -94,7 +94,22 @@ namespace domain {
     protected:
         friend class DomainMessage;
         static DomainMessagePtr TryCreate(const nlohmann::json& json_data) {
-            return std::make_unique<RotateCameraMessage>();
+            return std::make_unique<HeadsetRotateCameraMessage>();
+        }
+    };
+
+    class HeadsetResetCameraMessage: public DomainMessage {
+    public:
+        [[nodiscard]] MessageType GetMessageType() const final {
+            return DomainMessage::MessageType::HeadsetResetCamera;
+        };
+        [[nodiscard]] nlohmann::json GetMessagePayload() const final {
+            return 1;
+        };
+    protected:
+        friend class DomainMessage;
+        static DomainMessagePtr TryCreate(const nlohmann::json& json_data) {
+            return std::make_unique<HeadsetResetCameraMessage>();
         }
     };
 
