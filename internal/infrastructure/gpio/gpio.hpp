@@ -9,6 +9,8 @@
 #include <memory>
 #include <functional>
 
+#include "domain/button.hpp"
+
 namespace infrastructure {
 
     enum class GpioType {
@@ -20,19 +22,20 @@ namespace infrastructure {
         [[nodiscard]] virtual GpioType get_gpio_type() const = 0;
         [[nodiscard]] virtual int get_button_pin() const = 0;
         [[nodiscard]] virtual int get_button_debounce_ms() const = 0;
+        [[nodiscard]] virtual int get_button_hold_ms() const = 0;
         [[nodiscard]] virtual int get_button_polling_ms() const = 0;
     };
 
     class Gpio {
     public:
         [[nodiscard]] static std::shared_ptr<Gpio> Create(
-            const GpioConfig &config, std::function<void()> &&button_push_callback
+            const GpioConfig &config, domain::ButtonActionCallback &&button_push_callback
         );
-        Gpio(const GpioConfig &config, std::function<void()> &&button_push_callback);
+        Gpio(const GpioConfig &config, domain::ButtonActionCallback &&button_push_callback);
         virtual void Start() = 0;
         virtual void Stop() = 0;
     protected:
-        std::function<void()> _post_button_push_callback;
+        domain::ButtonActionCallback _post_button_push_callback;
     };
 
 }

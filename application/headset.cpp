@@ -29,12 +29,6 @@ static infrastructure::GpioType to_gpio_type(const std::string &type) {
     throw std::runtime_error("Unknown gpio type: " + type);
 }
 
-static infrastructure::BmsType to_bms_type(const std::string &type) {
-    if (type == "SERIAL") return infrastructure::BmsType::SERIAL;
-    else if (type == "NONE") return infrastructure::BmsType::NONE;
-    throw std::runtime_error("Unknown bms type: " + type);
-}
-
 int main(int argc, char* argv[]) {
 
     application::RemoveSuccessFile();
@@ -56,8 +50,7 @@ int main(int argc, char* argv[]) {
         config.value("decoderBuffersDownstream", 4),
         to_decoder_type(config.value("decoderType", "SW")),
         to_graphics_type(config.value("graphicsType", "GLFW")),
-        to_gpio_type(config.value("gpioType", "PIGPIO")),
-        to_bms_type(config.value("bmsType", "SERIAL"))
+        to_gpio_type(config.value("gpioType", "PIGPIO"))
      );
     auto service = service::HeadsetStreamer::Create(headset_config);
     service->Start();

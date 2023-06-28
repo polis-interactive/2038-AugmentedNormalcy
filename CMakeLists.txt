@@ -73,14 +73,16 @@ if (FEATURE_GRAPHICS)
     add_subdirectory(${internal_dir}/infrastructure/graphics)
 endif()
 if (FEATURE_BMS)
-    add_subdirectory(${internal_dir}/infrastructure/bms)
+    # not used at the moment
+    # add_subdirectory(${internal_dir}/infrastructure/bms)
 endif()
 if (FEATURE_GPIO)
     add_subdirectory(${internal_dir}/infrastructure/gpio)
 endif()
 if (FEATURE_LOCATION)
-    include_directories(${third_party_dir}/libserialport)
-    add_subdirectory(${internal_dir}/infrastructure/location)
+    # not used at the moment
+    # include_directories(${third_party_dir}/libserialport)
+    # add_subdirectory(${internal_dir}/infrastructure/location)
 endif()
 
 

@@ -8,7 +8,8 @@
 #include <mutex>
 #include <shared_mutex>
 
-#include "domain/message.hpp"
+#include "message.hpp"
+#include "button.hpp"
 
 
 namespace domain {
@@ -17,8 +18,6 @@ namespace domain {
         CONNECTING,
         READY,
         RUNNING,
-        PLUGGED_IN,
-        DYING,
         CLOSING,
     };
 
@@ -34,26 +33,6 @@ namespace domain {
         void PostState(HeadsetStates state) {
             std::unique_lock lk(_state_mutex);
             _state = state;
-        }
-         [[nodiscard]] StateTransition PostBmsMessage(const domain::BmsMessage &msg) {
-            std::unique_lock lk(_state_mutex);
-            if (_state == HeadsetStates::CLOSING) {
-                return { false, _state };
-            }
-             const auto last_state = _state;
-            if (msg.bms_is_plugged_in) {
-                // bms is now plugged in
-                _state = HeadsetStates::PLUGGED_IN;
-            } else if (msg.bms_wants_shutdown) {
-                // display a "plug me in" message
-                _state = HeadsetStates::DYING;
-            } else if (last_state == HeadsetStates::PLUGGED_IN || last_state == HeadsetStates::DYING) {
-                // the display either is now unplugged or not dying. Not dying should never really occur without
-                // going through a plugged in state, but might as well handle it. Might need to rethink this if
-                // it starts flickering back and forth between not dying and dying
-                _state = HeadsetStates::CONNECTING;
-            }
-            return { last_state != _state, _state };
         }
         [[nodiscard]] StateTransition PostTcpConnection(bool is_connected) {
             std::unique_lock lk(_state_mutex);
@@ -104,10 +83,10 @@ namespace domain {
         HeadsetStates _state = HeadsetStates::CONNECTING;
     };
 
-    class RotateCameraMessage: public DomainMessage {
+    class HeadsetRotateCameraMessage: public DomainMessage {
     public:
         [[nodiscard]] MessageType GetMessageType() const final {
-            return DomainMessage::MessageType::RotateCamera;
+            return DomainMessage::MessageType::HeadsetRotateCamera;
         };
         [[nodiscard]] nlohmann::json GetMessagePayload() const final {
             return 1;
@@ -115,7 +94,22 @@ namespace domain {
     protected:
         friend class DomainMessage;
         static DomainMessagePtr TryCreate(const nlohmann::json& json_data) {
-            return std::make_unique<RotateCameraMessage>();
+            return std::make_unique<HeadsetRotateCameraMessage>();
+        }
+    };
+
+    class HeadsetResetCameraMessage: public DomainMessage {
+    public:
+        [[nodiscard]] MessageType GetMessageType() const final {
+            return DomainMessage::MessageType::HeadsetResetCamera;
+        };
+        [[nodiscard]] nlohmann::json GetMessagePayload() const final {
+            return 1;
+        };
+    protected:
+        friend class DomainMessage;
+        static DomainMessagePtr TryCreate(const nlohmann::json& json_data) {
+            return std::make_unique<HeadsetResetCameraMessage>();
         }
     };
 

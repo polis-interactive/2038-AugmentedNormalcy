@@ -227,13 +227,21 @@ namespace service {
             return false;
         }
         switch (const auto message_type = domain_message->GetMessageType(); message_type) {
-            case domain::DomainMessage::RotateCamera:
+            case domain::DomainMessage::HeadsetRotateCamera:
                 if (connection_type == ConnectionType::CAMERA_CONNECTION) {
-                    std::cout << "ServerStreamer::PostWebsocketMessage cameras can't can call RotateCamera"
+                    std::cout << "ServerStreamer::PostWebsocketMessage cameras can't can call HeadsetRotateCamera"
                         << std::endl;
                     return false;
                 }
                 _connection_manager.RotateWriterConnection(addr);
+                return true;
+            case domain::DomainMessage::HeadsetResetCamera:
+                if (connection_type == ConnectionType::CAMERA_CONNECTION) {
+                    std::cout << "ServerStreamer::PostWebsocketMessage cameras can't can call HeadsetResetCamera"
+                              << std::endl;
+                    return false;
+                }
+                _connection_manager.ResetWriterConnection(addr);
                 return true;
             default:
                 std::cout << "ServerStreamer::PostWebsocketMessage unhandled domain message type: "

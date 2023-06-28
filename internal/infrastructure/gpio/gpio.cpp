@@ -14,7 +14,7 @@
 
 namespace infrastructure {
     std::shared_ptr<Gpio> Gpio::Create(
-            const infrastructure::GpioConfig &config, std::function<void()> &&button_push_callback
+            const infrastructure::GpioConfig &config, domain::ButtonActionCallback &&button_push_callback
     ) {
         switch(config.get_gpio_type()) {
 
@@ -29,7 +29,7 @@ namespace infrastructure {
         }
     }
 
-    Gpio::Gpio(const infrastructure::GpioConfig &config, std::function<void()> &&button_push_callback):
+    Gpio::Gpio(const infrastructure::GpioConfig &config, domain::ButtonActionCallback &&button_push_callback):
         _post_button_push_callback(std::move(button_push_callback))
     {}
 }

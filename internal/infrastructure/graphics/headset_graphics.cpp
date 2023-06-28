@@ -369,12 +369,6 @@ namespace infrastructure {
                     case domain::HeadsetStates::RUNNING:
                         handleRunningState(is_transition);
                         break;
-                    case domain::HeadsetStates::PLUGGED_IN:
-                        handlePluggedInState(is_transition);
-                        break;
-                    case domain::HeadsetStates::DYING:
-                        handleDyingState(is_transition);
-                        break;
                     case domain::HeadsetStates::CLOSING:
                         // nothing to do
                         break;

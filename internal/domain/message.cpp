@@ -14,8 +14,10 @@ namespace domain {
         try {
             MessageType message_type = json_data.at("message_type").get<MessageType>();
             switch (message_type) {
-                case MessageType::RotateCamera:
-                    return RotateCameraMessage::TryCreate(json_data.at("message_payload"));
+                case MessageType::HeadsetRotateCamera:
+                    return HeadsetRotateCameraMessage::TryCreate(json_data.at("message_payload"));
+                case MessageType::HeadsetResetCamera:
+                    return HeadsetResetCameraMessage::TryCreate(json_data.at("message_payload"));
                 default:
                     std::cout << "DomainMessage::TryParseMessage: received unhandled message type: "
                         << message_type << std::endl;

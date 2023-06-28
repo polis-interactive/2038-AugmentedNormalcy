@@ -9,5 +9,6 @@
 
 using namespace std::literals;
 typedef std::chrono::high_resolution_clock Clock;
+typedef std::chrono::time_point<Clock> ClockPoint;
 
 #endif //UTILS_CLOCK_HPP

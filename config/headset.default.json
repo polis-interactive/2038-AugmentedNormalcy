@@ -11,6 +11,5 @@
   "decoderBuffersDownstream": 4,
   "decoderType": "SW",
   "graphicsType": "HEADSET",
-  "gpioType": "PIGPIO",
-  "bmsType": "SERIAL"
+  "gpioType": "PIGPIO"
 }

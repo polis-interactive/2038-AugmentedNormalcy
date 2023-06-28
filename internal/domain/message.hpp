@@ -25,7 +25,8 @@ namespace domain {
     class DomainMessage {
     public:
         enum MessageType: int {
-            RotateCamera = 0
+            HeadsetRotateCamera = 0,
+            HeadsetResetCamera
         };
 
         [[nodiscard]] virtual MessageType GetMessageType() const = 0;

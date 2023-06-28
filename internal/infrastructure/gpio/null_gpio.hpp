@@ -10,7 +10,7 @@
 namespace infrastructure {
     class NullGpio: public Gpio {
     public:
-        NullGpio(const GpioConfig &config, std::function<void()> &&button_push_callback);
+        NullGpio(const GpioConfig &config, domain::ButtonActionCallback &&button_push_callback);
         void Start() override;
         void Stop() override;
     };
