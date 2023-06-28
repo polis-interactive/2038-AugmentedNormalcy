@@ -1,6 +1,6 @@
 ---
 
-- hosts: 69.4.20.181
+- hosts: headsets
 
   tasks:
     -
@@ -18,7 +18,7 @@
       git:
         repo: https://github.com/polis-interactive/2038-AugmentedNormalcy
         dest: /home/pi/build/2038-AugmentedNormalcy
-        version: bms-less-headset
+        version: main
       environment:
         http_proxy: http://69.4.20.10:8888
         https_proxy: http://69.4.20.10:8888
