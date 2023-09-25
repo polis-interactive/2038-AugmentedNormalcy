@@ -3,22 +3,6 @@
 version = 3
 
 [[package]]
-name = "app_camera"
-version = "0.1.0"
-
-[[package]]
-name = "app_display"
-version = "0.1.0"
-
-[[package]]
-name = "app_headset"
-version = "0.1.0"
-
-[[package]]
-name = "app_server"
-version = "0.1.0"
-
-[[package]]
 name = "infra_bms"
 version = "0.1.0"
 
