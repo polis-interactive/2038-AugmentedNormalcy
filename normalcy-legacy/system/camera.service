@@ -1,0 +1,12 @@
+[Unit]
+Description=Augmented Camera
+After=network-online.target
+StartLimitBurst=6
+StartLimitIntervalSec=360
+
+[Service]
+Restart=on-failure
+ExecStart=/home/pi/build/2038-AugmentedNormalcy/bin/app_camera 200
+
+[Install]
+WantedBy=multi-user.target

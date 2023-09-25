@@ -1,0 +1,12 @@
+{
+  "serverHost": "127.0.0.1",
+  "serverPort": 6969,
+  "clientUseFixedPort": true,
+  "imageWidth": 8,
+  "imageHeight": 8,
+  "cameraType": "STRING",
+  "cameraLensPosition": 0.5,
+  "cameraFramesPerSecond": 0.25,
+  "encoderBuffersDownstream": 5,
+  "encoderType": "NONE"
+}

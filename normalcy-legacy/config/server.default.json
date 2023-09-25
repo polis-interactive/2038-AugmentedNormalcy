@@ -1,0 +1,13 @@
+{
+  "tcpPoolSize": 2,
+  "serverPort": 6969,
+  "serverTimeoutOnRead": 3,
+  "cameraBuffersCount": 8,
+  "headsetBuffersCount": 5,
+  "cameraBufferSize": 1990656,
+  "websocketPort": 8008,
+  "websocketTimeout": 2,
+  "serverClientAssignmentStrategy": "IP_BOUNDS",
+  "serverCameraSwitchingStrategy": "HEADSET_CONTROLLED",
+  "serverCameraSwitchingAutomaticTimeout": 15
+}

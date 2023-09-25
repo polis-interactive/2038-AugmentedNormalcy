@@ -1,0 +1,234 @@
+---
+- hosts: all
+  tasks:
+    # INSTALL DEPS
+    - name: Update, Upgrade
+      apt:
+        update_cache: yes
+        upgrade: dist
+    - name: Install dependencies
+      apt:
+        pkg:
+          - vim
+          - git
+          - tmux
+          - arping
+          - net-tools
+          - ntp
+          - build-essential
+          - cmake
+          - nload
+          - weston
+          - libwayland-dev
+          - libxkbcommon-dev
+          - wayland-protocols
+          - extra-cmake-modules
+          - libdrm-dev
+          - libjpeg-dev
+          - libegl1-mesa-dev
+          - pigpio
+    # SETUP PI STUFF
+    - name: Remove default pi user
+      ansible.builtin.user:
+        name: pi
+        state: absent
+    - name: Create a new pi and set password
+      ansible.builtin.user:
+        name: pi
+        password: "{{ 'raspberry' | password_hash('sha512') }}"
+        shell: /bin/bash
+    - name: Provision WiFi
+      copy:
+        src: ./headset.wpa_supplicant.conf
+        dest: /boot/wpa_supplicant.conf
+    - name: Provision SSH
+      file:
+        path: /boot/ssh
+        state: touch
+    - name: Setup dhcpcd
+      copy:
+        src: ./headset.dhcpcd.conf
+        dest: /etc/dhcpcd.conf
+    - name: Change the Timezone
+      shell:
+        cmd: raspi-config nonint do_change_timezone America/Chicago
+    - name: Change the country
+      shell:
+        cmd: raspi-config nonint do_change_locale en_US.UTF-8
+    - name: Change the keyboard
+      shell:
+        cmd: raspi-config nonint do_configure_keyboard us
+    - name: Change the hostname
+      shell:
+        cmd: raspi-config nonint do_hostname Headset
+    - name: Disable userconfig
+      shell:
+        cmd: systemctl disable userconfig
+    - name: Enable terminal still
+      shell:
+        cmd: systemctl enable getty@tty1
+    - name: Create build dir
+      become: yes
+      become_user: pi
+      file:
+        path: /home/pi/build
+        state: directory
+        mode: '0755'
+    # BOOST
+    - name: Download Boost
+      become: yes
+      become_user: pi
+      get_url:
+        url: https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.tar.gz
+        dest: /home/pi/build
+      register: BOOST_ARCHIVE
+    - name: UnArchive Boost
+      become: yes
+      become_user: pi
+      unarchive:
+        src: "{{ BOOST_ARCHIVE.dest }}"
+        dest: /home/pi/build
+        copy: no
+    - name: Setup boost
+      become: yes
+      become_user: pi
+      shell:
+        chdir: /home/pi/build/boost_1_81_0
+        cmd: ./bootstrap.sh gcc
+    - name: Build boost
+      become: yes
+      become_user: pi
+      shell:
+        chdir: /home/pi/build/boost_1_81_0
+        cmd: ./b2 --with-system --with-thread --with-date_time --with-regex --with-serialization stage
+    # GLFW
+    - name: Download GLFW
+      become: yes
+      become_user: pi
+      git:
+        repo: https://github.com/glfw/glfw
+        dest: /home/pi/build/glfw
+    - name: Create GLFW build dir
+      become: yes
+      become_user: pi
+      file:
+        path: /home/pi/build/glfw/build
+        state: directory
+        mode: '0755'
+    - name: Setup GLFW
+      become: yes
+      become_user: pi
+      shell:
+        chdir: /home/pi/build/glfw/build
+        cmd: cmake -DGLFW_BUILD_WAYLAND=ON -DGLFW_BUILD_DOCS=OFF -DGLFW_BUILD_X11=OFF ..
+    - name: Make GLFW
+      become: yes
+      become_user: pi
+      make:
+        chdir: /home/pi/build/glfw/build
+        params:
+          NUM_THREADS: 4
+    - name: Install GLFW
+      make:
+        chdir: /home/pi/build/glfw/build
+        target: install
+    # CppLinuxSerial
+    - name: Download CppLinuxSerial
+      become: yes
+      become_user: pi
+      git:
+        repo: https://github.com/gbmhunter/CppLinuxSerial/
+        dest: /home/pi/build/CppLinuxSerial
+    - name: Create CppLinuxSerial build dir
+      become: yes
+      become_user: pi
+      file:
+        path: /home/pi/build/CppLinuxSerial/build
+        state: directory
+        mode: '0755'
+    - name: Setup CppLinuxSerial
+      become: yes
+      become_user: pi
+      shell:
+        chdir: /home/pi/build/CppLinuxSerial/build
+        cmd: cmake -DBUILD_TESTS=FALSE ..
+    - name: Make CppLinuxSerial
+      become: yes
+      become_user: pi
+      make:
+        chdir: /home/pi/build/CppLinuxSerial/build
+        params:
+          NUM_THREADS: 4
+    - name: Install CppLinuxSerial
+      make:
+        chdir: /home/pi/build/CppLinuxSerial/build
+        target: install
+    # NORMALCY
+    - name: Download Normalcy
+      become: yes
+      become_user: pi
+      git:
+        repo: https://github.com/polis-interactive/2038-AugmentedNormalcy
+        dest: /home/pi/build/2038-AugmentedNormalcy
+    - name: Create Normalcy build dir
+      become: yes
+      become_user: pi
+      file:
+        path: /home/pi/build/2038-AugmentedNormalcy/build
+        state: directory
+        mode: '0755'
+    - name: Setup Normalcy
+      become: yes
+      become_user: pi
+      shell:
+        chdir: /home/pi/build/2038-AugmentedNormalcy/build
+        cmd: cmake -DAN_PLATFORM:STRING=RPI_HEADSET ..
+    - name: Make Normalcy
+      become: yes
+      become_user: pi
+      make:
+        chdir: /home/pi/build/2038-AugmentedNormalcy/build
+        params:
+          NUM_THREADS: 4
+    # SYSTEMD
+    - name: Copy Headset Service
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/headset.service /etc/systemd/system/
+    - name: Copy Weston Service
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/weston.service /etc/systemd/system/
+    - name: Copy Restart Service
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/restart-system.service /etc/systemd/system/
+    - name: Reload systemd
+      shell:
+        cmd: systemctl daemon-reload
+    - name: Enable Headset Service
+      shell:
+        cmd: systemctl enable headset.service
+    - name: Enable Weston Service
+      shell:
+        cmd: systemctl enable weston.service
+    - name: Copy NTP client config
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/ntp.client.conf /etc/ntp.conf
+    - name: Copy Cron Reboot
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/cron-reboot /etc/cron.d/reboot
+    - name: Copy boot config
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/headset.boot_config.txt /boot/config.txt
+    - name: Copy sysctl config
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/system/headset.sysctl.conf /etc/sysctl.conf
+    # MANAGEMENT
+    - name: Create ssh dir
+      become: yes
+      become_user: pi
+      file:
+        path: /home/pi/.ssh
+        state: directory
+        mode: '0755'
+    - name: Copy authorized server key
+      shell:
+        cmd: cp /home/pi/build/2038-AugmentedNormalcy/management/authorized_keys.client /home/pi/.ssh/authorized_keys

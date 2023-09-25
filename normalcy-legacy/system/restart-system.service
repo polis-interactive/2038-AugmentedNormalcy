@@ -1,0 +1,6 @@
+[Unit]
+Description=Restart System
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'if [ ! -f /tmp/augmented_normalcy_stopped_successfully ]; then /bin/systemctl reboot; fi'
