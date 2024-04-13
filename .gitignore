@@ -1,28 +1,12 @@
 .idea
 
-build
-cmake-*
+/target/
 
-!hello.cu
-!print.cu
+!assets/
+*.yuv
+*.jpeg
+*.jpg
 
-out.nv12
-out.h264
-out.yuv
-out.jpeg
-out_single.jpeg
-out_multi.jpeg
-
-testGodotOcculus
-testNativeOcculus
-
-bin/app_*
-
-images
-.img
-.img.xz
-
-id_rsa.server
-*.pem
-*.crt
-*.key
+!in.jpeg
+!in.jpg
+!in.yuv

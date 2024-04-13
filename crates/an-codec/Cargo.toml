@@ -1,0 +1,17 @@
+[package]
+name = "an-codec"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+turbojpeg = { git = "https://github.com/broose-goose/rust-turbojpeg.git?hello=sworld", branch = "encode-from-yuv" }
+
+[dev-dependencies]
+criterion.workspace = true
+
+[[bench]]
+name = "jpeg_codec"
+harness = false
+
+[[example]]
+name = "turbojpeg_codec"

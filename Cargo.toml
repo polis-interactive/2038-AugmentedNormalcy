@@ -1,0 +1,8 @@
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.dependencies]
+crossbeam-channel = { version = "0.5.12" }
+# dev dependencies
+criterion = { version = "0.5.1", features = ["html_reports"] }
