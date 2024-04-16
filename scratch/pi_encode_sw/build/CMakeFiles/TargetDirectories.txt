@@ -1,0 +1,3 @@
+/home/broosegoose/polis/2038-AugmentedNormalcy/scratch/pi_encode_sw/build/CMakeFiles/pi_encode_sw.dir
+/home/broosegoose/polis/2038-AugmentedNormalcy/scratch/pi_encode_sw/build/CMakeFiles/edit_cache.dir
+/home/broosegoose/polis/2038-AugmentedNormalcy/scratch/pi_encode_sw/build/CMakeFiles/rebuild_cache.dir

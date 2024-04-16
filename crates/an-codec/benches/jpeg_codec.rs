@@ -34,7 +34,7 @@ fn tj_encode(compressor: &mut Compressor, data: &[u8], res: &mut [u8]) -> Result
     let input = turbojpeg::YuvImage{
         pixels: data,
         width: WIDTH,
-        align: 4,
+        align: 8,
         height: HEIGHT,
         subsamp: turbojpeg::Subsamp::Sub2x2,
     };
@@ -46,7 +46,7 @@ fn tj_decode(decompressor: &mut Decompressor, data: &[u8], res: &mut[u8]) {
     let output = turbojpeg::YuvImage{
         pixels: res,
         width: WIDTH,
-        align: 4,
+        align: 8,
         height: HEIGHT,
         subsamp: turbojpeg::Subsamp::Sub2x2
     };

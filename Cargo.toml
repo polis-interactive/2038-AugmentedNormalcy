@@ -3,6 +3,11 @@ members = ["crates/*"]
 resolver = "2"
 
 [workspace.dependencies]
-crossbeam-channel = { version = "0.5.12" }
+serde = { version = "1.0.197", features = ["derive"] }
+tokio-util = { version = "0.7.10", default-features = false, features = ["codec"] }
+crossbeam-channel = { version = "0.5.12" }  # todo: get rid of infavor of tokio channel
+hashbrown = { version = "0.14.3" }
+thiserror = { version = "1.0.58" }
+anyhow = { version = "1.0.82" }
 # dev dependencies
 criterion = { version = "0.5.1", features = ["html_reports"] }

@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use crossbeam_channel::{Sender, Receiver, bounded, TrySendError};
+use crossbeam_channel::{Sender, Receiver, bounded};
 
 pub struct SyncBufferPool<T> {
     tx_ret: Sender<T>,
@@ -131,7 +131,5 @@ mod tests {
         assert_eq!(pool.count_enqueued(), 2);
         drop(a);
         assert_eq!(pool.count_enqueued(), 3);
-
-
     }
 }
