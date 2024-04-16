@@ -1,1 +1,0 @@
-/usr/bin/c++  -ggdb -D_GLIBCXX_DEBUG -fsanitize=undefined -fno-omit-frame-pointer CMakeFiles/pi_encode_sw.dir/main.cpp.o -o pi_encode_sw  -lpthread -ljpeg 
